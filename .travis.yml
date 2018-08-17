@@ -1,0 +1,34 @@
+sudo: false
+language: go
+go:
+- 1.10.x
+cache:
+  directories:
+  - "$GOPATH/pkg/dep"
+env:
+  global:
+     - COMMIT=${TRAVIS_COMMIT::8}
+before_script:
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ] && [ -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo "latest"; elif [ "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo "$TRAVIS_PULL_REQUEST_BRANCH"; else echo "$TRAVIS_BRANCH"; fi`
+before_deploy:
+- CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec main.go
+after_success:
+- CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec main.go
+deploy:
+  skip_cleanup: true
+  provider: releases
+  file: che-machine-exec
+  on:
+    tags: true
+    repo: eclipse/che-machine-exec
+  api_key:
+    secure: wIy1cvyK1g8/tKtI9uXxe2mgNAgfpJQrln+NYwgsmh8fBG+SgTPs8cio91y88wq60KVt2OWCaOY13gXqm27Vz5LM+orxdl1k7frl5NndcM56GgFGyLSSkVV7Eqn2DGPrGB9WgiGBB5GU9OegTV8W1237f2Q7/nrjN8D4znxyR+Vx1ZVy2zd7u43bH/NsPVcvxt35HQpA0Gr9XKClQ3P/uYCn68O5vsJTata3vzT9+ZW2AND7ASIje2E63/ocMj0xWTxlrtLz1AJWPlgRqA7uuyORH77wX8YCrak2j3KVwQ/y9H/g0WjLT669oN2gSyy+z8UOY67PiJpvVkaQRbqndxCyjEC439rmgQJQo8ZS+8gCq7rBAFi30PnD6FKQMwejNQ0DAAfgEoGzYo0u7yGEGORwKazECMrDlMKd8lj4Ftt5VuPnBhkZplQj08bdbGybaBttx5j4CuYYwGoiNzjjmF2E3d5kknJwZVeCM9T3uYssBCEfVvwzUtycS6yDAQg8Wy4g9XJChS3Y6eVQB5yTugA7iIIiq2E0HLnOTnyiWacvDfIvvRUBdsSruDZDxT/bst7opbjxtJ/+JE4E6eZiwLg3hwZVhO72da8x3Xu9vDJI46yvHdvJ9oIKH61oqTOryiyx3f7bVV4szIG5z4YyUMQtTTvInOqKLwWxL+85YIM=
+before_install:
+- go get -u github.com/golang/dep/cmd/dep
+install:
+- dep ensure
+script:
+- git status
+- go test ./... -test.v
+notifications:
+  email: false
