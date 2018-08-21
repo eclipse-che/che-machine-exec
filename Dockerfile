@@ -11,11 +11,9 @@
 #
 
 FROM golang:1.10.3 as builder
-
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
-RUN go get -u github.com/golang/dep/cmd/dep && \
-    ./compile.sh
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
 
 FROM registry.centos.org/centos:7
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /usr/local/bin
