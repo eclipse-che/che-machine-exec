@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -24,6 +24,22 @@
 #   go-tests = true
 #   unused-packages = true
 
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  version = "=v17.03.2-ce"
+
+[[constraint]]
+  name = "github.com/eclipse/che"
+  version = "=6.4.0"
+
+[[constraint]]
+  name = "github.com/eclipse/che-lib"
+  version = "=6.4.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
 
 [prune]
   go-tests = true
