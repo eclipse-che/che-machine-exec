@@ -13,8 +13,7 @@
 FROM golang:1.10.3 as builder
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec main.go
-
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
 
 FROM registry.centos.org/centos:7
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /usr/local/bin
