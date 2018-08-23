@@ -15,14 +15,15 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	"github.com/eclipse/che-lib/websocket"
-	"github.com/eclipse/che-machine-exec/api/model"
-	execManager "github.com/eclipse/che-machine-exec/exec"
-	"github.com/eclipse/che/agents/go-agents/core/rest"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/eclipse/che-machine-exec/api/model"
+	execManager "github.com/eclipse/che-machine-exec/exec"
+	"github.com/eclipse/che/agents/go-agents/core/rest"
+	"github.com/gorilla/websocket"
 )
 
 var (

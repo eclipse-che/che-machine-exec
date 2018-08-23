@@ -15,11 +15,12 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/eclipse/che-lib/websocket"
-	"github.com/eclipse/che-machine-exec/line-buffer"
 	"log"
 	"sync"
+
+	"github.com/docker/docker/api/types"
+	"github.com/eclipse/che-machine-exec/line-buffer"
+	"github.com/gorilla/websocket"
 )
 
 const (

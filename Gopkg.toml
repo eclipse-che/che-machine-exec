@@ -24,6 +24,9 @@
 #   go-tests = true
 #   unused-packages = true
 
+[prune]
+  go-tests = true
+  unused-packages = true
 
 [[constraint]]
   name = "github.com/docker/docker"
@@ -34,13 +37,42 @@
   version = "=6.4.0"
 
 [[constraint]]
-  name = "github.com/eclipse/che-lib"
-  version = "=6.4.0"
-
-[[constraint]]
   branch = "master"
   name = "golang.org/x/net"
 
-[prune]
-  go-tests = true
-  unused-packages = true
+# Transitive dependencies.
+[[override]]
+  name = "github.com/eclipse/che-lib"
+  version = "=6.4.0"
+
+[[override]]
+ name = "github.com/Microsoft/go-winio"
+ version = "=v0.3.8"
+
+[[override]]
+ name = "github.com/gorilla/websocket"
+ revision = "361d4c0ffd78338ebe0a9e6320cdbe115d7dc026"
+
+[[override]]
+ name = "github.com/julienschmidt/httprouter"
+ revision = "4563b0ba73e4db6c6423b60a26f3cadd2e9a1ec9"
+
+[[override]]
+ name = "github.com/docker/distribution"
+ revision = "28602af35aceda2f8d571bad7ca37a54cf0250bc"
+
+[[override]]
+ name = "github.com/docker/go-connections"
+ revision = "ecb4cb2dd420ada7df7f2593d6c25441f65f69f2"
+
+[[override]]
+ name = "github.com/docker/go-units"
+ revision = "8a7beacffa3009a9ac66bad506b18ffdd110cf97"
+
+[[override]]
+ name = "github.com/docker/runc" 
+ revision = "54296cf40ad8143b62dbcaa1d90e520a2136ddfe"
+
+[[override]]
+ name = "github.com/Sirupsen/logrus"
+ revision = "v0.11.0"

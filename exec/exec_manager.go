@@ -15,15 +15,16 @@ package exec
 import (
 	"errors"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
-	"github.com/eclipse/che-lib/websocket"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/line-buffer"
-	"golang.org/x/net/context"
 	"strconv"
 	"sync"
 	"sync/atomic"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/line-buffer"
+	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 )
 
 type MachineExecs struct {
