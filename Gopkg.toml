@@ -69,10 +69,15 @@
  name = "github.com/docker/go-units"
  revision = "8a7beacffa3009a9ac66bad506b18ffdd110cf97"
 
+# libcontainer https://github.com/docker/runc.git 
 [[override]]
  name = "github.com/docker/runc" 
  revision = "54296cf40ad8143b62dbcaa1d90e520a2136ddfe"
 
 [[override]]
  name = "github.com/Sirupsen/logrus"
- revision = "v0.11.0"
+ version = "=v0.11.0"
+
+[[override]]
+ name = "github.com/pkg/errors"
+ revision = "839d9e913e063e28dfd0e6c7b7512793e0a48be9"
