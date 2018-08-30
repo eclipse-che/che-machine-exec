@@ -9,7 +9,7 @@ CHE machine exec uses json-rpc protocol to communication with client.
 Apply docker.sock path (by default it's `/var/run/docker.sock`) to the workspace volume property `CHE_WORKSPACE_VOLUME` in the che.env file:
 Example:
  ```
-CHE_WORKSPACE_VOLUME=/var/run/docker.sock
+CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 ```
 che.env file located in the CHE `data` folder. che.env file contains configuration properties for Eclipse CHE. All changes of the file become avaliable after restart Eclipse CHE.
  
