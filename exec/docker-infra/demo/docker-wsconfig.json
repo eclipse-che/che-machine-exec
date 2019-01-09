@@ -1,0 +1,62 @@
+{
+  "defaultEnv": "default",
+  "environments": {
+    "default": {
+      "machines": {
+        "theia": {
+          "attributes": {
+            "memoryLimitBytes": "1073741824"
+          },
+          "servers": {
+            "theia": {
+              "attributes": {
+                "type": "ide"
+              },
+              "port": "3000",
+              "path": "/",
+              "protocol": "http"
+            }
+          },
+          "volumes": {
+            "theia": {
+              "path": "/home/theia"
+            }
+          },
+          "installers": [],
+          "env": {
+            "CHE_MACHINE_NAME": "theia"
+          }
+        },
+        "machine-exec": {
+          "attributes": {
+            "memoryLimitBytes": "536870912"
+          },
+          "servers": {
+            "machine-exec": {
+              "attributes": {
+                "type": "terminal"
+              },
+              "port": "4444",
+              "protocol": "ws"
+            }
+          },
+          "volumes": {},
+          "installers": [],
+          "env": {
+            "CHE_MACHINE_NAME": "machine-exec"
+          }
+        }
+      },
+      "recipe": {
+        "type": "compose",
+        "content": "services:\n theia:\n  image: 'eclipse/che-theia:plugin-id-nightly'\n  mem_limit: 2147483648\n machine-exec:\n  image: 'wsskeleton/che-machine-exec'\n  mem_limit: 2147483648\n",
+        "contentType": "application/x-yaml"
+      }
+    }
+  },
+  "projects": [],
+  "name": "exec-demo",
+  "attributes": {},
+  "commands": [],
+  "links": []
+}

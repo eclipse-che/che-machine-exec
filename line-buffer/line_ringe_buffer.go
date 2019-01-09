@@ -26,8 +26,11 @@ type LineRingBuffer struct {
 	lock *sync.Mutex
 }
 
-func CreateNewLineRingBuffer() LineRingBuffer {
-	return LineRingBuffer{ring.New(lineBufferSize), &sync.Mutex{}}
+/**
+Create new ring buffer to accumulate and restore machine-exec output.
+*/
+func New() *LineRingBuffer {
+	return &LineRingBuffer{ring.New(lineBufferSize), &sync.Mutex{}}
 }
 
 func (lineBuff *LineRingBuffer) Write(bts []byte) {

@@ -10,26 +10,40 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package exec
+package filter
 
 import (
 	"errors"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec-info"
 	"golang.org/x/net/context"
 )
 
 const (
+	Label       = "label"
 	WsId        = "org.eclipse.che.workspace.id"
 	MachineName = "org.eclipse.che.machine.name"
-	Label       = "label"
 )
 
+// Create new container filter for docker infrastructure.
+type DockerContainerFilter struct {
+	ContainerFilter
+
+	client client.ContainerAPIClient
+}
+
+// Create new docker container filter.
+func NewDockerContainerFilter(client client.ContainerAPIClient) *DockerContainerFilter {
+	return &DockerContainerFilter{client: client}
+}
+
 // Filter container by labels: wsId and machineName.
-func findMachineContainer(identifier *model.MachineIdentifier) (*types.Container, error) {
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
-		Filters: createMachineFilter(identifier),
+func (filter *DockerContainerFilter) FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo map[string]string, err error) {
+	containers, err := filter.client.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: createContainerFilter(identifier),
 	})
 	if err != nil {
 		return nil, err
@@ -39,13 +53,15 @@ func findMachineContainer(identifier *model.MachineIdentifier) (*types.Container
 		return nil, errors.New("filter found more than one machine")
 	}
 	if len(containers) == 0 {
-		return nil, errors.New("machine was not found")
+		return nil, errors.New("machine " + identifier.MachineName + " was not found")
 	}
 
-	return &containers[0], nil
+	containerInfo = make(map[string]string)
+	containerInfo[exec_info.ContainerId] = containers[0].ID
+	return containerInfo, nil
 }
 
-func createMachineFilter(identifier *model.MachineIdentifier) filters.Args {
+func createContainerFilter(identifier *model.MachineIdentifier) filters.Args {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add(Label, WsId+"="+identifier.WsId)
 	filterArgs.Add(Label, MachineName+"="+identifier.MachineName)
