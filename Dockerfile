@@ -11,11 +11,11 @@
 #
 
 FROM golang:1.10.3 as builder
-WORKDIR /go/src/github.com/ws-skeleton/che-machine-exec/
+WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
 
 FROM alpine:3.8
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /go/src/github.com/ws-skeleton/che-machine-exec/che-machine-exec /usr/local/bin
+COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /usr/local/bin
 ENTRYPOINT ["che-machine-exec"]
