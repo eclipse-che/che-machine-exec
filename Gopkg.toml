@@ -33,17 +33,22 @@
   version = "=v17.03.2-ce"
 
 [[constraint]]
-  name = "github.com/eclipse/che"
-  version = "=6.4.0"
+  name = "github.com/eclipse/che-go-jsonrpc"
+  version = "=0.1.0"
 
 [[constraint]]
-  branch = "master"
+  name = "github.com/gin-gonic/gin"
+  revision = "bd4f73af679e7d645f6d0277258fa360eda96f2d"
+
+[[override]]
+  name = "github.com/gin-contrib/sse"
+  revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
+
+[[constraint]]
   name = "golang.org/x/net"
+  branch = "1c05540f6879653db88113bc4a2b70aec4bd491f"
 
 # Transitive dependencies.
-[[override]]
-  name = "github.com/eclipse/che-lib"
-  version = "=6.4.0"
 
 [[override]]
  name = "github.com/Microsoft/go-winio"
@@ -52,10 +57,6 @@
 [[override]]
  name = "github.com/gorilla/websocket"
  revision = "361d4c0ffd78338ebe0a9e6320cdbe115d7dc026"
-
-[[override]]
- name = "github.com/julienschmidt/httprouter"
- revision = "4563b0ba73e4db6c6423b60a26f3cadd2e9a1ec9"
 
 [[override]]
  name = "github.com/docker/distribution"
@@ -69,15 +70,129 @@
  name = "github.com/docker/go-units"
  revision = "8a7beacffa3009a9ac66bad506b18ffdd110cf97"
 
-# libcontainer https://github.com/docker/runc.git 
-[[override]]
- name = "github.com/docker/runc" 
- revision = "54296cf40ad8143b62dbcaa1d90e520a2136ddfe"
-
 [[override]]
  name = "github.com/Sirupsen/logrus"
- version = "=v0.11.0"
+ version = "=v0.11.5"
 
 [[override]]
  name = "github.com/pkg/errors"
  revision = "839d9e913e063e28dfd0e6c7b7512793e0a48be9"
+
+# kubernetes client deps
+[[constraint]]
+  name = "k8s.io/client-go"
+  revision = "kubernetes-1.10.7"
+
+# Test dependencies #
+[[override]]
+  name = "github.com/davecgh/go-spew"
+  version = "=v1.1.0"
+
+[[override]]
+  name = "github.com/pmezard/go-difflib"
+  version = "=v1.0.0"
+
+[[override]]
+  name = "github.com/stretchr/testify"
+  version = "=v1.2.1"
+
+[[override]]
+  name = "github.com/stretchr/objx"
+  version = "=v0.1.0"
+# Test dependencies #
+
+[[override]]
+  name = "github.com/docker/spdystream"
+  revision = "449fdfce4d962303d702fec724ef0ad181c92528"
+
+[[override]]
+  name = "github.com/ghodss/yaml"
+  revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
+
+[[override]]
+  name = "github.com/gogo/protobuf"
+  revision = "c0656edd0d9eab7c66d1eb0c568f9039345796f7"
+
+[[override]]
+  name = "github.com/golang/glog"
+  revision = "44145f04b68cf362d9c4df2182967c2275eaefed"
+
+[[override]]
+  name = "github.com/google/gofuzz"
+  revision = "44d81051d367757e1c7c6a5a86423ece9afcf63c"
+
+[[override]]
+  name = "github.com/googleapis/gnostic"
+  revision = "0c5108395e2debce0d731cf0287ddf7242066aba"
+
+[[override]]
+  name = "github.com/json-iterator/go"
+  revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
+
+[[override]]
+  name = "github.com/modern-go/concurrent"
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+
+[[override]]
+  name = "github.com/modern-go/reflect2"
+  revision = "05fbef0ca5da472bbf96c9322b84a53edc03c9fd"
+
+[[override]]
+  name = "github.com/spf13/pflag"
+  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
+
+[[override]]
+  name = "golang.org/x/crypto"
+  revision = "81e90905daefcd6fd217b62423c0908922eadb30"
+
+[[override]]
+  name = "golang.org/x/net"
+  revision = "1c05540f6879653db88113bc4a2b70aec4bd491f"
+
+[[override]]
+  name = "golang.org/x/sys"
+  revision = "95c6576299259db960f6c5b9b69ea52422860fce"
+
+[[override]]
+  name = "golang.org/x/text"
+  revision = "b19bf474d317b857955b12035d2c5acb57ce8b01"
+
+[[override]]
+  name = "golang.org/x/time"
+  revision = "f51c12702a4d776e4c1fa9b0fabab841babae631"
+
+[[override]]
+  name = "gopkg.in/inf.v0"
+  revision = "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4"
+
+[[override]]
+  name = "gopkg.in/yaml.v2"
+  revision = "670d4cfef0544295bc27a114dbac37980d83185a"
+
+[[override]]
+  name = "k8s.io/api"
+  revision = "0f11257a8a25954878633ebdc9841c67d8f83bdb"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  revision = "e386b2658ed20923da8cc9250e552f082899a1ee"
+
+[[override]]
+  name = "github.com/mattn/go-isatty"
+  version = "=v0.0.3"
+
+[[override]]
+  name = "github.com/ugorji/go"
+  version = "=v1.1.1"
+
+[[override]]
+  name = "gopkg.in/go-playground/validator.v8"
+  version = "=v8.18.2"
+
+[[override]]
+  name = "github.com/golang/protobuf"
+  version = "=v1.2.0"
+
+[[override]]
+  name = "github.com/opencontainers/runc"
+  version = "=v0.1.1"

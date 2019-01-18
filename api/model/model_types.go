@@ -15,24 +15,30 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"sync"
-
 	"github.com/docker/docker/api/types"
+	"github.com/eclipse/che-go-jsonrpc/event"
 	"github.com/eclipse/che-machine-exec/line-buffer"
-	"github.com/gorilla/websocket"
+	"github.com/eclipse/che-machine-exec/ws-conn"
+	"io"
+	"k8s.io/client-go/tools/remotecommand"
+	"log"
 )
 
 const (
-	bufferSize = 8192
+	BufferSize = 8192
+
+	// method names to send events with information about exec to the clients.
+	OnExecExit  = "onExecExit"
+	OnExecError = "onExecError"
 )
 
-// todo remove workspace id
+// todo inside workspace we can get workspace id from env variables.
 type MachineIdentifier struct {
 	MachineName string `json:"machineName"`
 	WsId        string `json:"workspaceId"`
 }
 
+// Todo code Refactoring: MachineExec should be simple object for exec creation, without any business logic
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
@@ -40,42 +46,47 @@ type MachineExec struct {
 	Cols       int               `json:"cols"`
 	Rows       int               `json:"rows"`
 
+	ExitChan  chan bool
+	ErrorChan chan error
+
 	// unique client id, real execId should be hidden from client to prevent serialization
-	ID     int `json:"id"`
+	ID int `json:"id"`
+
+	// Todo Refactoring this code is docker specific. Create separated code layer and move it.
 	ExecId string
 	Hjr    *types.HijackedResponse
-	Buffer line_buffer.LineRingBuffer
 
-	WsConnsLock *sync.Mutex
-	WsConns     []*websocket.Conn
-	MsgChan     chan []byte
+	ws_conn.ConnectionHandler
 
-	Started bool
+	MsgChan chan []byte
+
+	// Todo Refactoring: this code is kubernetes specific. Create separated code layer and move it.
+	Executor remotecommand.Executor
+	SizeChan chan remotecommand.TerminalSize
+
+	// Todo Refactoring: Create separated code layer and move it.
+	Buffer *line_buffer.LineRingBuffer
 }
 
-func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
+type ExecExitEvent struct {
+	event.E `json:"-"`
 
-	machineExec.WsConns = append(machineExec.WsConns, wsConn)
+	ExecId int `json:"id"`
 }
 
-func (machineExec *MachineExec) RemoveWebSocket(wsConn *websocket.Conn) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
-
-	for index, wsConnElem := range machineExec.WsConns {
-		if wsConnElem == wsConn {
-			machineExec.WsConns = append(machineExec.WsConns[:index], machineExec.WsConns[index+1:]...)
-		}
-	}
+func (*ExecExitEvent) Type() string {
+	return OnExecExit
 }
 
-func (machineExec *MachineExec) getWSConns() []*websocket.Conn {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
+type ExecErrorEvent struct {
+	event.E `json:"-"`
 
-	return machineExec.WsConns
+	ExecId int    `json:"id"`
+	Stack  string `json:"stack"`
+}
+
+func (*ExecErrorEvent) Type() string {
+	return OnExecError
 }
 
 func (machineExec *MachineExec) Start() {
@@ -85,8 +96,6 @@ func (machineExec *MachineExec) Start() {
 
 	go sendClientInputToExec(machineExec)
 	go sendExecOutputToWebsockets(machineExec)
-
-	machineExec.Started = true
 }
 
 func sendClientInputToExec(machineExec *MachineExec) {
@@ -101,14 +110,18 @@ func sendClientInputToExec(machineExec *MachineExec) {
 
 func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	hjReader := machineExec.Hjr.Reader
-	buf := make([]byte, bufferSize)
+	buf := make([]byte, BufferSize)
 	var buffer bytes.Buffer
 
 	for {
 		rbSize, err := hjReader.Read(buf)
 		if err != nil {
-			//todo handle EOF error
-			fmt.Println("failed to read exec stdOut/stdError stream!!! " + err.Error())
+			if err == io.EOF {
+				machineExec.ExitChan <- true
+			} else {
+				machineExec.ErrorChan <- err
+				log.Println("failed to read exec stdOut/stdError stream. " + err.Error())
+			}
 			return
 		}
 
@@ -119,17 +132,8 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 		}
 
 		if rbSize > 0 {
-			machineExec.Buffer.Write(buffer.Bytes()) // save data to buffer to restore
-			wsConns := machineExec.getWSConns()
-
-			fmt.Println("Amount connections ", len(wsConns))
-
-			for _, wsConn := range wsConns {
-				if err := wsConn.WriteMessage(websocket.TextMessage, buffer.Bytes()); err != nil {
-					fmt.Println("failed to write to websocket message!!!" + err.Error())
-					machineExec.RemoveWebSocket(wsConn)
-				}
-			}
+			machineExec.Buffer.Write(buffer.Bytes())
+			machineExec.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()

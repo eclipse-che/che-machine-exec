@@ -14,13 +14,14 @@ package main
 
 import (
 	"flag"
+	"github.com/eclipse/che-go-jsonrpc"
+	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
+	"github.com/eclipse/che-machine-exec/api/events"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
-	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
-	"github.com/eclipse/che/agents/go-agents/core/jsonrpc/jsonrpcws"
-	"github.com/eclipse/che/agents/go-agents/core/rest"
-	"net/http"
-	"time"
+	"github.com/gin-gonic/gin"
+	"log"
 )
 
 var url string
@@ -32,52 +33,41 @@ func init() {
 func main() {
 	flag.Parse()
 
-	appRoutes := []rest.RoutesGroup{
-		{
-			Name: "Exec-Machine WebSocket routes",
-			Items: []rest.Route{
-				{
-					Method: "GET",
-					Path:   "/connect",
-					Name:   "MachineExec api end point(websocket)", // json-rpc
-					HandleFunc: func(w http.ResponseWriter, r *http.Request, _ rest.Params) error {
-						conn, err := jsonrpcws.Upgrade(w, r)
-						if err != nil {
-							return err
-						}
-						tunnel := jsonrpc.NewManagedTunnel(conn)
-						tunnel.SayHello()
-						return nil
-					},
-				},
-				// Todo: use json-rpc to send output too.
-				{
-					Method:     "GET",
-					Path:       "/attach/:id",
-					Name:       "Attach to exec(pure websocket)",
-					HandleFunc: websocket.Attach,
-				},
-			},
-		},
-	}
+	r := gin.Default()
+
+	// connect to exec api end point(websocket with json-rpc)
+	r.GET("/connect", func(c *gin.Context) {
+		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
+		if err != nil {
+			c.JSON(c.Writer.Status(), err.Error())
+			return
+		}
+
+		tunnel := jsonrpc.NewManagedTunnel(conn)
+
+		execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
+		events.EventBus.SubAny(execConsumer, model.OnExecError, model.OnExecExit)
+
+		tunnel.SayHello()
+	})
+
+	// attach to get exec output and sent user input(by simple websocket)
+	// Todo: rework to use only one websocket connection https://github.com/eclipse/che-machine-exec/issues/4
+	r.GET("/attach/:id", func(c *gin.Context) {
+		if err := websocket.Attach(c.Writer, c.Request, c.Param("id")); err != nil {
+			c.JSON(c.Writer.Status(), err.Error())
+		}
+	})
 
 	// create json-rpc routs group
 	appOpRoutes := []jsonrpc.RoutesGroup{
 		jsonRpcApi.RPCRoutes,
 	}
-
-	// register routes and http handlers
-	baseHandler := rest.NewDefaultRouter(url, appRoutes)
-	rest.PrintRoutes(appRoutes)
+	// register routes
 	jsonrpc.RegRoutesGroups(appOpRoutes)
 	jsonrpc.PrintRoutes(appOpRoutes)
 
-	server := &http.Server{
-		Handler:      baseHandler,
-		Addr:         url,
-		WriteTimeout: 10 * time.Second,
-		ReadTimeout:  10 * time.Second,
+	if err := r.Run(url); err != nil {
+		log.Fatal("Unable to start server. Cause: ", err.Error())
 	}
-
-	server.ListenAndServe()
 }

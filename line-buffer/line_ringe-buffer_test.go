@@ -20,7 +20,7 @@ import (
 )
 
 func writeContentToTheRingBuffAndGetBack(content string) string {
-	buff := CreateNewLineRingBuffer()
+	buff := New()
 	buff.Write([]byte(content))
 
 	backContent := buff.GetContent()
@@ -142,7 +142,7 @@ func generateNLines(n int) string {
 
 func TestRingShouldCollectContentDuringFewWriteOperations(t *testing.T) {
 
-	buff := CreateNewLineRingBuffer()
+	buff := New()
 
 	content := generateNLines(1000)
 	buff.Write([]byte(content))
@@ -168,7 +168,7 @@ func TestRingShouldCollectContentDuringFewWriteOperations(t *testing.T) {
 
 func TestRingShouldCollectContentDuringFewWriteOperations2(t *testing.T) {
 
-	buff := CreateNewLineRingBuffer()
+	buff := New()
 
 	content := generateNLines(1000)
 	buff.Write([]byte(content))

@@ -1,0 +1,20 @@
+# Test pod with hardcoded name `test-exec` to execute command there
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: test-exec
+  labels:
+    run: exec
+spec:
+  containers:
+  - name: exec
+    image: in-cluster2
+    ports:
+    - containerPort: 4000
+      protocol: TCP
+    imagePullPolicy: Never
+  restartPolicy: Always
+  serviceAccountName: che
+  serviceAccount: che
+  terminationGracePeriodSeconds: 30

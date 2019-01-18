@@ -13,10 +13,12 @@
 package jsonrpc
 
 import (
-	"fmt"
+	"github.com/eclipse/che-machine-exec/api/events"
 	"github.com/eclipse/che-machine-exec/api/model"
-	execManager "github.com/eclipse/che-machine-exec/exec"
-	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
+
+	"github.com/eclipse/che-go-jsonrpc"
+	"github.com/eclipse/che-machine-exec/exec"
+	"log"
 	"strconv"
 )
 
@@ -35,11 +37,20 @@ type ResizeParam struct {
 	Rows uint `json:"rows"`
 }
 
+var (
+	execManager = exec.GetExecManager()
+)
+
 func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
 
 	id, err := execManager.Create(machineExec)
+
+	healthWatcher := exec.NewHealthWatcher(machineExec, events.EventBus, execManager)
+	healthWatcher.CleanUpOnExitOrError()
+
 	if err != nil {
+		log.Println("Unable to create machine exec. Cause: ", err.Error())
 		t.SendError(jsonrpc.NewArgsError(err))
 	}
 
@@ -63,7 +74,6 @@ func jsonRpcResizeExec(_ *jsonrpc.Tunnel, params interface{}) (interface{}, erro
 	if err := execManager.Resize(resizeParam.Id, resizeParam.Cols, resizeParam.Rows); err != nil {
 		return nil, jsonrpc.NewArgsError(err)
 	}
-	fmt.Println("Resize with json RPC!")
 
 	return &OperationResult{
 		Id: resizeParam.Id, Text: "Exec with id " + strconv.Itoa(resizeParam.Id) + "  was successfully resized",

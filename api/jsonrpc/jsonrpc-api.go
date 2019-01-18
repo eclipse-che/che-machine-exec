@@ -13,18 +13,19 @@
 package jsonrpc
 
 import (
+	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 )
 
 // Constants that represent RPC methods identifiers.
 const (
+	// methods to manage exec life cycle
 	CreateMethod = "create"
 	CheckMethod  = "check"
 	ResizeMethod = "resize"
 )
 
-// RPCRoutes defines process jsonrpc routes.
+// RPCRoutes defines json-rpc exec api. This api uses to manage exec's life cycle.
 var RPCRoutes = jsonrpc.RoutesGroup{
 	Name: "Json-rpc MachineExec Routes",
 	Items: []jsonrpc.Route{
