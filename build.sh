@@ -7,7 +7,7 @@ NC='\033[0m'
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 printf "${BLUE}Building service (docker image)${NC}\n"
-docker build -t aandrienko/che-machine-exec .
+docker build -t eclipse/che-machine-exec .
 
 printf "${BLUE}Generating Che plug-in file...${NC}\n"
 cd ${DIR}/assembly && ./build.sh

@@ -34,7 +34,7 @@ CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 
 ## Test che-machine-exec with help UI on the docker infrastructure
 
-Run Eclipse CHE. You can create new Eclipse CHE workspace with integreated Theia IDE from stack 'Theia IDE on docker'. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Run Eclipse CHE. You can create new Eclipse CHE workspace with integreated Theia IDE from stack 'Theia IDE on docker'. Then You can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test che-machine-exec on the local Openshift
 
@@ -60,7 +60,7 @@ You should use "Openshift v3" auth on the login page.
 Register new user on the login page. After login You will be redirected to
 the Eclipse CHE user dashboard.
 
-Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7 Preview' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test on the Minishift
 To test che-machine-exec You need deploy Eclipse CHE to the Minishift. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
@@ -126,13 +126,13 @@ export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && .
 ```
 
 Create new workspace from openshift stack 'Java Theia on OpenShift' or
-'CHE 7 Preview' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+'CHE 7' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test on the Kubernetes (MiniKube)
 
 To test che-machine-exec You need deploy Eclipse CHE to the Minikube cluster. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
 
-Install minikube virtual machine on your computer: https://kubernetes-cn.github.io/docs/tasks/tools/install-minikube
+Install minikube virtual machine on your computer: https://github.com/kubernetes/minikube/blob/master/README.md
 
 You can deploy Eclipse CHE with help helm. So, [install Helm](https://github.com/kubernetes/helm/blob/master/docs/install.md)
 
@@ -189,7 +189,7 @@ There are two configurations to deploy Eclipse CHE on the Kubernetes:
   minikube dashboard
   ```
 
-Create new workspace from stack 'Java Theia on Kubernetes'. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Create new workspace from stack 'CHE 7'. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Prepare Eclipse CHE to deploy
 
@@ -208,15 +208,16 @@ $ cd ~/projects/che/assembly/assembly-main
 $ mvn clean install -DskipTests
 ```
 
-# Test che-machine-exec with help che-theia-terminal-extension
+# Test che-machine-exec with help eclipse-che-theia-terminal
 Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension You can test che-machine-exec.
 
-Create new terminal with help main menu of the Theia: `File` => `New multy-machine terminal`. After that IDE will propose You select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
+Create new terminal with help main menu of the Theia: `Terminal` => `Open Terminal in specific container`. After that IDE will propose You select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
+Or You could use command palette: `Ctrl + Shift + P` and type `terminal`. Than You could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
 
 # Test che-machine-exec with help che-theia-task-plugin
 
 Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin You can test che-machine-exec.
-Create new Theia task for your project: un the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
+Create new Theia task for your project: in the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
 
 ```bash
 {
@@ -229,5 +230,5 @@ Create new Theia task for your project: un the project root create folder `.thei
     ]
 }
 ```
-Run this task with help menu tasks: `Task` => `Run...`
+Run this task with help menu tasks: `Terminal` => `Run Task...`
 After that Theia should display widget with output content: 'echo hello'
