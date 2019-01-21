@@ -34,7 +34,7 @@ CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 
 ## Test che-machine-exec with help UI on the docker infrastructure
 
-Run Eclipse CHE. You can create new Eclipse CHE workspace with integreated Theia IDE from stack 'Theia IDE on docker'. Then You can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Run Eclipse CHE. You can create new Eclipse CHE workspace with integrated Theia IDE from stack 'Theia IDE on docker'. Then You can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test che-machine-exec on the local Openshift
 
