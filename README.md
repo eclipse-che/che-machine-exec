@@ -212,7 +212,7 @@ $ mvn clean install -DskipTests
 Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension You can test che-machine-exec.
 
 Create new terminal with help main menu of the Theia: `Terminal` => `Open Terminal in specific container`. After that IDE will propose You select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
-Or You could use command palette: `Ctrl + Shift + P` and type `terminal`. Than You could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
+Or You could use command palette: `Ctrl + Shift + P` and type `terminal`. Then You could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
 
 # Test che-machine-exec with help che-theia-task-plugin
 
