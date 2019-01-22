@@ -34,13 +34,13 @@ CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 
 ## Test che-machine-exec with help UI on the docker infrastructure
 
-Run Eclipse CHE. You can create new Eclipse CHE workspace with integreated Theia IDE from stack 'Theia IDE on docker'. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Run Eclipse CHE. You can create new Eclipse CHE workspace with integrated Theia IDE from stack 'Theia IDE on docker'. Then you can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test che-machine-exec on the local Openshift
 
-To test che-machine-exec You need deploy Eclipse CHE to the openshift locally. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy)
+To test che-machine-exec you need deploy Eclipse CHE to the openshift locally. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy)
 
-To deploy Eclipse CHE to the local running openshift You can use [ocp.sh sript](https://github.com/eclipse/che/blob/master/deploy/openshift/ocp.sh).
+To deploy Eclipse CHE to the local running openshift you can use [ocp.sh sript](https://github.com/eclipse/che/blob/master/deploy/openshift/ocp.sh).
 
 Move to the ocp.sh script:
 
@@ -53,17 +53,16 @@ cd ~/projects/che/deploy/openshift/
 ```bash
 ./ocp.sh --run-ocp --deploy-che --no-pull --debug --deploy-che-plugin-registry --multiuser
 ```
-In the output You will get link to the deployed Eclipse CHE project. Use it to login to Eclipse CHE.
-> Notice: for ocp.sh You could use argument `--setup-ocp-oauth`, but in this case
-You should use "Openshift v3" auth on the login page.
+In the output you will get link to the deployed Eclipse CHE project. Use it to login to Eclipse CHE.
+> Notice: for ocp.sh you could use argument `--setup-ocp-oauth`, but in this case you should use "Openshift v3" auth on the login page.
 
-Register new user on the login page. After login You will be redirected to
+Register new user on the login page. After login you will be redirected to
 the Eclipse CHE user dashboard.
 
-Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7 Preview' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test on the Minishift
-To test che-machine-exec You need deploy Eclipse CHE to the Minishift. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
+To test che-machine-exec you need deploy Eclipse CHE to the Minishift. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
 
 Install minishift with help this instractions:
  - https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html
@@ -95,13 +94,13 @@ $ minishift start --memory=8GB
        oc login -u system:admin
 ```
 
-From this command output You need:
+From this command output you need:
  - Minishift master url. In this case it's `https://192.168.42.159:8443`. Let's call it 'CHE_INFRA_KUBERNETES_MASTER__URL'. We can store this variable in the terminal session to use it for next commands:
 
  ```bash
  export CHE_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
  ```
-> Note: in case if You delete minishift virtual machine(`minishift delete`) and create it again, this url will be changed.
+> Note: in case if you delete minishift virtual machine(`minishift delete`) and create it again, this url will be changed.
 
 Register new user on the CHE_INFRA_KUBERNETES_MASTER__URL page.
 
@@ -112,7 +111,7 @@ $ oc login --server=${CHE_INFRA_KUBERNETES_MASTER__URL}
 ```
 This command activates openshift context to use minishift instance:
 
-To deploy Eclipse CHE You can use [deploy_che.sh script](https://github.com/eclipse/che/blob/master/deploy/openshift/deploy_che.sh).
+To deploy Eclipse CHE you can use [deploy_che.sh script](https://github.com/eclipse/che/blob/master/deploy/openshift/deploy_che.sh).
 
 Move to deploy_che.sh script:
 ```
@@ -126,13 +125,13 @@ export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && .
 ```
 
 Create new workspace from openshift stack 'Java Theia on OpenShift' or
-'CHE 7 Preview' stack. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Test on the Kubernetes (MiniKube)
 
-To test che-machine-exec You need deploy Eclipse CHE to the Minikube cluster. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
+To test che-machine-exec you need deploy Eclipse CHE to the Minikube cluster. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
 
-Install minikube virtual machine on your computer: https://kubernetes-cn.github.io/docs/tasks/tools/install-minikube
+Install minikube virtual machine on your computer: https://github.com/kubernetes/minikube/blob/master/README.md
 
 You can deploy Eclipse CHE with help helm. So, [install Helm](https://github.com/kubernetes/helm/blob/master/docs/install.md)
 
@@ -182,14 +181,14 @@ There are two configurations to deploy Eclipse CHE on the Kubernetes:
     helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che ./
     ```
 
-> Info: To delploy multi-user CHE you can use parameter: `-f ./values/multi-user.yaml`. Also You can set ingress domain with help parameter: `--set global.ingressDomain=<domain>`
+> Info: To delploy multi-user CHE you can use parameter: `-f ./values/multi-user.yaml`. Also you can set ingress domain with help parameter: `--set global.ingressDomain=<domain>`
 
 > Notice: You can track deploy CHE with help Minikube dashboard:
   ```bash
   minikube dashboard
   ```
 
-Create new workspace from stack 'Java Theia on Kubernetes'. Run workspace. When workspace will be running You will see Theia IDE. Then You can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-che-theia-terminal-extension) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+Create new workspace from stack 'CHE 7'. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
 # Prepare Eclipse CHE to deploy
 
@@ -208,15 +207,16 @@ $ cd ~/projects/che/assembly/assembly-main
 $ mvn clean install -DskipTests
 ```
 
-# Test che-machine-exec with help che-theia-terminal-extension
-Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension You can test che-machine-exec.
+# Test che-machine-exec with help eclipse-che-theia-terminal
+Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension you can test che-machine-exec.
 
-Create new terminal with help main menu of the Theia: `File` => `New multy-machine terminal`. After that IDE will propose You select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
+Create new terminal with help main menu of the Theia: `Terminal` => `Open Terminal in specific container`. After that IDE will propose you select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
+Or you could use command palette: `Ctrl + Shift + P` and type `terminal`. Then you could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
 
 # Test che-machine-exec with help che-theia-task-plugin
 
-Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin You can test che-machine-exec.
-Create new Theia task for your project: un the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
+Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin you can test che-machine-exec.
+Create new Theia task for your project: in the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
 
 ```bash
 {
@@ -229,5 +229,5 @@ Create new Theia task for your project: un the project root create folder `.thei
     ]
 }
 ```
-Run this task with help menu tasks: `Task` => `Run...`
+Run this task with help menu tasks: `Terminal` => `Run Task...`
 After that Theia should display widget with output content: 'echo hello'
