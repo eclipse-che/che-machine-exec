@@ -5,6 +5,7 @@ endpoints:
     attributes:
       protocol: ws
       type: terminal
+      discoverable: false
 containers:
  - name: che-machine-exec
    image: eclipse/che-machine-exec
