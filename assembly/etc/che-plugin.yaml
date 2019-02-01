@@ -6,6 +6,8 @@ endpoints:
       protocol: ws
       type: terminal
       discoverable: false
+      secure: true
+      cookiesAuthEnabled: true
 containers:
  - name: che-machine-exec
    image: eclipse/che-machine-exec
