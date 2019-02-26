@@ -77,7 +77,7 @@ func CreateExecManager() ExecManager {
 
 		return docker_infra.New(dockerClient, containerFilter, shellDetector)
 	default:
-		log.Fatal("Unable to create manager for current infrastructure.")
+		log.Println("Error: Unable to create manager for current infrastructure.")
 	}
 
 	return nil
