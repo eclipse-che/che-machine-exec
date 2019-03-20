@@ -45,6 +45,7 @@ type MachineExec struct {
 	Tty        bool              `json:"tty"`
 	Cols       int               `json:"cols"`
 	Rows       int               `json:"rows"`
+	Cwd        string            `json:"cwd"`
 
 	ExitChan  chan bool
 	ErrorChan chan error
