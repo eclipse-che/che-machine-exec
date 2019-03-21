@@ -8,7 +8,7 @@ endpoints:
       discoverable: false
 containers:
  - name: che-machine-exec
-   image: eclipse/che-machine-exec:latest
+   image: eclipse/che-machine-exec
    ports:
      - exposedPort: 4444
 editors:
