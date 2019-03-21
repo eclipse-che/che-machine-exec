@@ -7,7 +7,10 @@ NC='\033[0m'
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 printf "${BLUE}Building service (docker image)${NC}\n"
-docker build -t eclipse/che-machine-exec .
+
+docker build --no-cache -t eclipse/che-machine-exec:latest .
+GIT_HASH=$(git rev-parse --short=7 HEAD)
+docker tag eclipse/che-machine-exec:latest aandrienko/che-machine-exec:${GIT_HASH}
 
 printf "${BLUE}Generating Che plug-in file...${NC}\n"
 cd ${DIR}/assembly && ./build.sh
