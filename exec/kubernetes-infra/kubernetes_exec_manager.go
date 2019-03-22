@@ -14,6 +14,7 @@ package kubernetes_infra
 
 import (
 	"errors"
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
@@ -26,7 +27,9 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -84,6 +87,26 @@ func (manager KubernetesExecManager) setUpExecShellPath(exec *model.MachineExec,
 	}
 }
 
+func (manager KubernetesExecManager) handleCwd(exec *model.MachineExec, containerInfo map[string]string) {
+	if exec.Cwd != "" {
+		shellCdWrapper, err := manager.DetectShell(containerInfo)
+		if err != nil {
+			shellCdWrapper = shell.DefaultShell
+		}
+
+		if strings.HasPrefix(exec.Cwd, "file://") {
+			if res, err := url.Parse(exec.Cwd); err == nil {
+				exec.Cwd = res.Path
+			}
+		}
+
+		originalCmdString := strings.Join(exec.Cmd, " ")
+		cdCommand := fmt.Sprintf("cd %s;", exec.Cwd)
+
+		exec.Cmd = []string{shellCdWrapper, "-c", cdCommand + originalCmdString}
+	}
+}
+
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
 	containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
 	if err != nil {
@@ -91,6 +114,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	}
 
 	manager.setUpExecShellPath(machineExec, containerInfo)
+	manager.handleCwd(machineExec, containerInfo)
 
 	req := manager.api.RESTClient().
 		Post().
