@@ -88,23 +88,23 @@ func (manager KubernetesExecManager) setUpExecShellPath(exec *model.MachineExec,
 }
 
 func (manager KubernetesExecManager) handleCwd(exec *model.MachineExec, containerInfo map[string]string) {
-	if exec.Cwd != "" {
-		shellCdWrapper, err := manager.DetectShell(containerInfo)
-		if err != nil {
-			shellCdWrapper = shell.DefaultShell
-		}
+	shellWrapper, err := manager.DetectShell(containerInfo)
+	if err != nil {
+		shellWrapper = shell.DefaultShell
+	}
+	originalCmdString := strings.Join(exec.Cmd, " ")
+	var cdCommand string
 
+	if exec.Cwd != "" {
 		if strings.HasPrefix(exec.Cwd, "file://") {
 			if res, err := url.Parse(exec.Cwd); err == nil {
 				exec.Cwd = res.Path
 			}
 		}
 
-		originalCmdString := strings.Join(exec.Cmd, " ")
-		cdCommand := fmt.Sprintf("cd %s;", exec.Cwd)
-
-		exec.Cmd = []string{shellCdWrapper, "-c", cdCommand + originalCmdString}
+		cdCommand = fmt.Sprintf("cd %s;", exec.Cwd)
 	}
+	exec.Cmd = []string{shellWrapper, "-c", cdCommand + originalCmdString}
 }
 
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
