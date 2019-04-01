@@ -20,6 +20,7 @@ import (
 // Kubernetes pty handler
 type PtyHandlerImpl struct {
 	machineExec *model.MachineExec
+	filter      *model.Utf8StreamFilter
 }
 
 func (t PtyHandlerImpl) Read(p []byte) (int, error) {
@@ -30,10 +31,11 @@ func (t PtyHandlerImpl) Read(p []byte) (int, error) {
 
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
-	t.machineExec.Buffer.Write(p)
-	t.machineExec.WriteDataToWsConnections(p)
+	filteredCharacters := t.filter.ProcessRaw(p)
+	t.machineExec.Buffer.Write(filteredCharacters)
+	t.machineExec.WriteDataToWsConnections(filteredCharacters)
 
-	return len(p), nil
+	return len(filteredCharacters), nil
 }
 
 func (t PtyHandlerImpl) Next() *remotecommand.TerminalSize {
