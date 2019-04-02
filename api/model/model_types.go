@@ -19,7 +19,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-go-jsonrpc/event"
-	line_buffer "github.com/eclipse/che-machine-exec/line-buffer"
+	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
+	"github.com/eclipse/che-machine-exec/output/utf8stream"
 	ws_conn "github.com/eclipse/che-machine-exec/ws-conn"
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -112,7 +113,7 @@ func sendClientInputToExec(machineExec *MachineExec) {
 func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	hjReader := machineExec.Hjr.Reader
 	buffer := make([]byte, BufferSize)
-	filter := &Utf8StreamFilter{}
+	filter := &utf8stream.Utf8StreamFilter{}
 
 	for {
 		_, err := hjReader.Read(buffer)

@@ -15,19 +15,20 @@ package docker_infra
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"sync"
+	"sync/atomic"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec-info"
+	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
-	"github.com/eclipse/che-machine-exec/line-buffer"
+	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
 	"github.com/eclipse/che-machine-exec/shell"
 	ws "github.com/eclipse/che-machine-exec/ws-conn"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
-	"strconv"
-	"sync"
-	"sync/atomic"
 )
 
 // Manager to manipulate docker container execs.

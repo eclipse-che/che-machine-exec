@@ -24,7 +24,8 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
-	line_buffer "github.com/eclipse/che-machine-exec/line-buffer"
+	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
+	"github.com/eclipse/che-machine-exec/output/utf8stream"
 	"github.com/eclipse/che-machine-exec/shell"
 	ws "github.com/eclipse/che-machine-exec/ws-conn"
 	"github.com/gorilla/websocket"
@@ -186,7 +187,7 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 
 	go saveActivity(machineExec)
 
-	ptyHandler := PtyHandlerImpl{machineExec: machineExec, filter: &model.Utf8StreamFilter{}}
+	ptyHandler := PtyHandlerImpl{machineExec: machineExec, filter: &utf8stream.Utf8StreamFilter{}}
 	machineExec.Buffer = line_buffer.New()
 
 	err := machineExec.Executor.Stream(remotecommand.StreamOptions{

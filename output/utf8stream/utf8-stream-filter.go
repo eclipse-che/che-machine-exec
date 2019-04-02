@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2018 Red Hat, Inc.
+// Copyright (c) 2012-2019 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -10,7 +10,7 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package model
+package utf8stream
 
 import (
 	"bytes"
@@ -84,7 +84,7 @@ func (sf *Utf8StreamFilter) ProcessRaw(data []byte) []byte {
 // handleLastBytes processes from 1 to 3 last bytes of given data
 // which aren't complete utf-8 character (but may contain such).
 // Returns data (placeholder characters), if any, which should be returned to data stream
-// and saves remainder, if any, for the next datat part.
+// and saves remainder, if any, for the next data part.
 func (sf *Utf8StreamFilter) handleLastBytes(dataRemainder []byte) []byte {
 	l := len(dataRemainder)
 	var result bytes.Buffer
