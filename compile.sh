@@ -9,7 +9,7 @@
 #
 
 function resolveDependencies() {
-    echo "===>Resolve go-lang dependencies with help dep tool<===";
+    echo "===> Resolve go-lang dependencies with help of dep tool <===";
     dep ensure
       if [ $? != 0 ]; then
         echo "Failed to resolve dependencies";
@@ -20,7 +20,7 @@ function resolveDependencies() {
 function compile() {
     resolveDependencies;
 
-    echo "===>Compile che-machine-exec binary from source code.<===";
+    echo "===> Compile che-machine-exec binary from source code. <===";
 
     $(CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .);
 
@@ -29,7 +29,7 @@ function compile() {
         exit 0;
     fi
 
-    echo "============Compilation succesfully completed.============";
+    echo "============ Compilation succesfully completed. ============";
 }
 
 compile;

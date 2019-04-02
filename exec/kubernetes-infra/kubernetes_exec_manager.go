@@ -15,23 +15,25 @@ package kubernetes_infra
 import (
 	"errors"
 	"fmt"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec-info"
-	"github.com/eclipse/che-machine-exec/filter"
-	"github.com/eclipse/che-machine-exec/line-buffer"
-	"github.com/eclipse/che-machine-exec/shell"
-	ws "github.com/eclipse/che-machine-exec/ws-conn"
-	"github.com/gorilla/websocket"
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes/scheme"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/eclipse/che-machine-exec/api/model"
+	exec_info "github.com/eclipse/che-machine-exec/exec-info"
+	"github.com/eclipse/che-machine-exec/filter"
+	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
+	"github.com/eclipse/che-machine-exec/output/utf8stream"
+	"github.com/eclipse/che-machine-exec/shell"
+	ws "github.com/eclipse/che-machine-exec/ws-conn"
+	"github.com/gorilla/websocket"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 type MachineExecs struct {
@@ -185,7 +187,7 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 
 	go saveActivity(machineExec)
 
-	ptyHandler := PtyHandlerImpl{machineExec: machineExec}
+	ptyHandler := PtyHandlerImpl{machineExec: machineExec, filter: &utf8stream.Utf8StreamFilter{}}
 	machineExec.Buffer = line_buffer.New()
 
 	err := machineExec.Executor.Stream(remotecommand.StreamOptions{

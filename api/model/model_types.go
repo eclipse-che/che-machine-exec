@@ -13,15 +13,16 @@
 package model
 
 import (
-	"bytes"
 	"fmt"
+	"io"
+	"log"
+
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-go-jsonrpc/event"
-	"github.com/eclipse/che-machine-exec/line-buffer"
-	"github.com/eclipse/che-machine-exec/ws-conn"
-	"io"
+	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
+	"github.com/eclipse/che-machine-exec/output/utf8stream"
+	ws_conn "github.com/eclipse/che-machine-exec/ws-conn"
 	"k8s.io/client-go/tools/remotecommand"
-	"log"
 )
 
 const (
@@ -111,12 +112,18 @@ func sendClientInputToExec(machineExec *MachineExec) {
 
 func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	hjReader := machineExec.Hjr.Reader
-	buf := make([]byte, BufferSize)
-	var buffer bytes.Buffer
+	buffer := make([]byte, BufferSize)
+	filter := &utf8stream.Utf8StreamFilter{}
 
 	for {
-		rbSize, err := hjReader.Read(buf)
+		_, err := hjReader.Read(buffer)
 		if err != nil {
+			remainder := filter.FlushBuffer()
+			if len(remainder) > 0 {
+				machineExec.Buffer.Write(remainder)
+				machineExec.WriteDataToWsConnections(remainder)
+			}
+
 			if err == io.EOF {
 				machineExec.ExitChan <- true
 			} else {
@@ -126,20 +133,11 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 			return
 		}
 
-		i, err := normalizeBuffer(&buffer, buf, rbSize)
-		if err != nil {
-			log.Printf("Couldn't normalize byte buffer to UTF-8 sequence, due to an error: %s", err.Error())
-			return
-		}
+		filteredBuffer := filter.ProcessRaw(buffer)
 
-		if rbSize > 0 {
-			machineExec.Buffer.Write(buffer.Bytes())
-			machineExec.WriteDataToWsConnections(buffer.Bytes())
-		}
-
-		buffer.Reset()
-		if i < rbSize {
-			buffer.Write(buf[i:rbSize])
+		if len(filteredBuffer) > 0 {
+			machineExec.Buffer.Write(filteredBuffer)
+			machineExec.WriteDataToWsConnections(filteredBuffer)
 		}
 	}
 }
