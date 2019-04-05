@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2018 Red Hat, Inc.
+// Copyright (c) 2012-2019 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,10 +16,11 @@ import (
 	"github.com/eclipse/che-machine-exec/api/events"
 	"github.com/eclipse/che-machine-exec/api/model"
 
-	"github.com/eclipse/che-go-jsonrpc"
-	"github.com/eclipse/che-machine-exec/exec"
 	"log"
 	"strconv"
+
+	"github.com/eclipse/che-go-jsonrpc"
+	"github.com/eclipse/che-machine-exec/exec"
 )
 
 type IdParam struct {
