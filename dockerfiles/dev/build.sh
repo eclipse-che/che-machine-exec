@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2012-2019 Red Hat, Inc.
 # This program and the accompanying materials are made
@@ -8,14 +8,4 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-set -e
-set -u
-
-if [ -f che-service-plugin.tar.gz ]; then
-    rm che-service-plugin.tar.gz
-fi
-
-cd etc
-tar uvf ../che-service-plugin.tar .
-cd ..
-gzip che-service-plugin.tar
+docker build -t aandrienko/che-machine-exec-dev:latest .
