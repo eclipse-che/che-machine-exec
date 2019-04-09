@@ -27,8 +27,7 @@ components:
           protocol: http
           secure: 'false'
           public: 'true'
-          discoverable: 'false'
-    memoryLimit: 3000M
+    memoryLimit: 3Gi
   - name: dev
     type: dockerimage
     image: eclipse/che-machine-exec-dev
@@ -41,7 +40,6 @@ components:
           protocol: ws
           secure: 'false'
           public: 'true'
-          discoverable: 'false'
     memoryLimit: 512M
     env:
       - name: GOPATH
