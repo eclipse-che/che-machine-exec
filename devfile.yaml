@@ -31,7 +31,7 @@ components:
     memoryLimit: 3000M
   - name: dev
     type: dockerimage
-    image: aandrienko/che-machine-exec-dev
+    image: eclipse/che-machine-exec-dev
     mountSources: true
     endpoints:
       - name: exec-server

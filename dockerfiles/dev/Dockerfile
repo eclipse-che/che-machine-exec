@@ -14,12 +14,10 @@ FROM golang:1.10.3-alpine
 
 ARG DEP_LOCATION=/go/bin/dep
 
-RUN apk add --update git bash wget && \
+RUN apk add --update git bash wget less && \
     wget https://github.com/golang/dep/releases/download/v0.5.1/dep-linux-amd64 -O ${DEP_LOCATION} && \
-    chmod +x ${DEP_LOCATION}
-
-RUN apk del wget
-
+    chmod +x ${DEP_LOCATION} && \
+    apk del wget
 EXPOSE 5555 5555
 
 WORKDIR /projects/src
