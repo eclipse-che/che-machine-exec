@@ -8,4 +8,4 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-docker build -t aandrienko/che-machine-exec-dev:latest .
+docker build -t eclipse/che-machine-exec-dev:latest .

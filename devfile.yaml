@@ -1,0 +1,85 @@
+specVersion: 0.0.1
+name: che-machine-exec
+projects:
+- name: che-machine-exec
+  clonePath: src/github.com/eclipse/che-machine-exec
+  source:
+    type: git
+    location: https://github.com/eclipse/che-machine-exec.git
+components:
+  - name: theia-editor
+    type: cheEditor
+    id: org.eclipse.che.editor.theia:next
+  - name: exec-plugin
+    type: chePlugin
+    id: che-machine-exec-plugin:0.0.1
+  - name: ms-vscode.go
+    type: chePlugin
+    id: ms-vscode.go:0.9.2
+  - name: theia-dev
+    type: dockerimage
+    image: eclipse/che-theia-dev:next
+    mountSources: true
+    endpoints:
+      - name: theia-dev
+        port: 3130
+        attributes:
+          protocol: http
+          secure: 'false'
+          public: 'true'
+    memoryLimit: 3Gi
+  - name: dev
+    type: dockerimage
+    image: eclipse/che-machine-exec-dev
+    mountSources: true
+    endpoints:
+      - name: exec-server
+        port: 5555
+        attributes:
+          type: terminal-dev
+          protocol: ws
+          secure: 'false'
+          public: 'true'
+    memoryLimit: 512M
+    env:
+      - name: GOPATH
+        value: $(CHE_PROJECTS_ROOT)
+      - name: GOCACHE
+        value: $(GOPATH)/.cache
+commands:
+  - name: compile
+    actions:
+      - type: exec
+        component: dev
+        command: ./compile.sh
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
+  - name: test
+    actions:
+      - type: exec
+        component: dev
+        command: go test ./...
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
+  - name: format
+    actions:
+      - type: exec
+        component: dev
+        command: go fmt ./...
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
+  - name: update dependencies
+    actions:
+      - type: exec
+        component: dev
+        command: dep ensure
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
+  - name: start exec server
+    actions:
+      - type: exec
+        component: dev
+        command: ./che-machine-exec --url 0.0.0.0:5555
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
+  - name: kill exec server
+    actions:
+      - type: exec
+        component: dev
+        command: ps aux | grep "[.]/che-machine-exec" | head -1 | cut -d " " -f 2 | xargs kill
+        workdir: /projects/src/github.com/eclipse/che-machine-exec
