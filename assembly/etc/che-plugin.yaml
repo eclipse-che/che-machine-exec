@@ -4,6 +4,7 @@ endpoints:
     targetPort: 4444
     attributes:
       protocol: ws
+      secure: true
       type: terminal
       discoverable: false
 containers:
