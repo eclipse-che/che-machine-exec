@@ -7,16 +7,16 @@ projects:
     type: git
     location: https://github.com/eclipse/che-machine-exec.git
 components:
-  - name: theia-editor
+  - alias: theia-editor
     type: cheEditor
-    id: org.eclipse.che.editor.theia:next
-  - name: exec-plugin
+    id: eclipse/che-theia/next
+  - alias: exec-plugin
     type: chePlugin
-    id: che-machine-exec-plugin:0.0.1
-  - name: ms-vscode.go
+    id: eclipse/che-machine-exec-plugin/0.0.1
+  - alias: ms-vscode.go
     type: chePlugin
-    id: ms-vscode.go:0.9.2
-  - name: theia-dev
+    id: ms-vscode/go/0.9.2
+  - alias: theia-dev
     type: dockerimage
     image: eclipse/che-theia-dev:next
     mountSources: true
@@ -28,7 +28,7 @@ components:
           secure: 'false'
           public: 'true'
     memoryLimit: 3Gi
-  - name: dev
+  - alias: dev
     type: dockerimage
     image: eclipse/che-machine-exec-dev
     mountSources: true
