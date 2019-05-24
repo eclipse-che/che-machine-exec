@@ -13,6 +13,7 @@
 package kubernetes_infra
 
 import (
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/output/utf8stream"
 	"k8s.io/client-go/tools/remotecommand"
@@ -30,11 +31,17 @@ func (t PtyHandlerImpl) Read(p []byte) (int, error) {
 	return copy(p, data), nil
 }
 
+func CreatePtyHandlerImpl(machineExec *model.MachineExec, filter *utf8stream.Utf8StreamFilter) *PtyHandlerImpl {
+	return &PtyHandlerImpl{machineExec: machineExec, filter: filter}
+}
+
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
 	filteredCharacters := t.filter.ProcessRaw(p)
+
 	t.machineExec.Buffer.Write(filteredCharacters)
-	t.machineExec.WriteDataToWsConnections(filteredCharacters)
+	fmt.Println(string(filteredCharacters))
+	// t.machineExec.WriteDataToWsConnections(filteredCharacters)
 
 	// Original length of the data must be returned to continue reading of the buffer correctly.
 	return len(p), nil

@@ -43,10 +43,12 @@ type MachineIdentifier struct {
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
-	Tty        bool              `json:"tty"`
-	Cols       int               `json:"cols"`
-	Rows       int               `json:"rows"`
-	Cwd        string            `json:"cwd"`
+	IsShell    bool              `json:isShell`
+
+	Tty  bool   `json:"tty"`
+	Cols int    `json:"cols"`
+	Rows int    `json:"rows"`
+	Cwd  string `json:"cwd"`
 
 	ExitChan  chan bool
 	ErrorChan chan error
