@@ -40,8 +40,9 @@ func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 	filteredCharacters := t.filter.ProcessRaw(p)
 
 	t.machineExec.Buffer.Write(filteredCharacters)
+	fmt.Println(">>>>>>>>>>>>>>>>>>")
 	fmt.Println(string(filteredCharacters))
-	// t.machineExec.WriteDataToWsConnections(filteredCharacters)
+	t.machineExec.WriteDataToWsConnections(filteredCharacters)
 
 	// Original length of the data must be returned to continue reading of the buffer correctly.
 	return len(p), nil
