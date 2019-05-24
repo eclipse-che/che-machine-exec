@@ -43,7 +43,8 @@ type MachineIdentifier struct {
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
-	IsShell    bool              `json:isShell`
+	// Supported value for now 'shell', 'process'
+	Type       string              `json:"type"`
 
 	Tty  bool   `json:"tty"`
 	Cols int    `json:"cols"`

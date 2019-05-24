@@ -23,10 +23,10 @@ func main() {
 		// Single quotes
 		Cmd:     []string{"sh", "-c", "echo Start && { kill 6105 && echo '>>Done'; } || echo '>>Fail'"},
 		// Cmd: []string{"sh", "-c", "echo A && { kill $(echo -e '2639 \n 100000' | tr '\n' ' ') && echo \"Webpack dev server's processes are killed\"; } || echo \"Webpack dev server is not running\""},
-		IsShell: true,
+		Type: "shell",
 
 		// Cmd:        []string{"sh", "-c", "sleep 5 && echo 'ABC' && ls -a -li && pwd"},
-		// IsShell: true,
+		// Type: "shell",
 
 		Identifier: identifier,
 		Cwd:        "/projects",

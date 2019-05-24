@@ -36,8 +36,8 @@ func (cmdRslv *CmdResolver) resolveCmd(exec *model.MachineExec, containerInfo ma
 		cmd = exec.Cmd;
 		shell, cdCommand string
 	)
-
-	if exec.IsShell && len(cmd) >= 2 && cmd[1] == "-c" {
+	fmt.Println("Type" + exec.Type)
+	if (exec.Type == "" || exec.Type == "shell") && len(cmd) >= 2 && cmd[1] == "-c" {
 		shell = cmd[0]
 		argsPart = cmd[2:len(cmd)]
 	} else {
