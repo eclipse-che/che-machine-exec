@@ -16,6 +16,9 @@ components:
   - alias: ms-vscode.go
     type: chePlugin
     id: ms-vscode/go/0.9.2
+  - alias: typescript-plugin
+    type: chePlugin
+    id: che-incubator/typescript/1.30.2
   - alias: theia-dev
     type: dockerimage
     image: eclipse/che-theia-dev:next
@@ -40,7 +43,7 @@ components:
           protocol: ws
           secure: 'false'
           public: 'true'
-    memoryLimit: 512M
+    memoryLimit: 1024M
     env:
       - name: GOPATH
         value: $(CHE_PROJECTS_ROOT)
