@@ -82,6 +82,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	}
 
 	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
+	// Todo remove it before merge! And fmt from import too.
 	fmt.Println(">>>> Resolved cmd", machineExec.Cmd)
 
 	req := manager.api.RESTClient().

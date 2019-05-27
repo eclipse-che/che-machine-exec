@@ -34,7 +34,7 @@ func NewCmdResolver(shellDetector shell.ContainerShellDetector) *CmdResolver {
 	}
 }
 
-// Get original command from exec model.MachineExec#Cmd and return patched command
+// Gets original command from exec model(MachineExec#Cmd) and returns patched command
 // to support some features which original kubernetes api doesn't provide.
 func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map[string]string) (resolvedCmd []string) {
 	var (
