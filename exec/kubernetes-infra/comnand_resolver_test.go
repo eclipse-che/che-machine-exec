@@ -48,9 +48,9 @@ func TestShoudBeLaunchedShellProcessWithoutCwd(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "sleep 5 && echo 'ABC' && ls -a -li && pwd"}, resolvedCmd)
 }
 
-func TestShouldLaunchTerminalProcessWithCwd(t *testing.T) {
+func TestShouldBeLaunchedTerminalProcessWithCwd(t *testing.T) {
 	exec := model.MachineExec{
-		Type: "terminal",
+		Type: "shell",
 		Cmd:  []string{"sh", "-l"},
 		Cwd:  "/projects/testprj",
 	}
@@ -61,9 +61,9 @@ func TestShouldLaunchTerminalProcessWithCwd(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sh -l"}, resolvedCmd)
 }
 
-func TestShouldLaunchTerminalProcessWithoutCwd(t *testing.T) {
+func TestShouldBeLaunchedTerminalProcessWithoutCwd(t *testing.T) {
 	exec := model.MachineExec{
-		Type: "terminal",
+		Type: "shell",
 		Cmd:  []string{"sh", "-l"},
 	}
 
@@ -73,11 +73,11 @@ func TestShouldLaunchTerminalProcessWithoutCwd(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "sh -l"}, resolvedCmd)
 }
 
-func TestShouldAutoDetectShellForTerminalCommandWithCwd(t *testing.T) {
+func TestShouldBedAutoDetectedShellForTerminalCommandWithCwd(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("bash", nil)
 	exec := model.MachineExec{
-		Type: "terminal",
+		Type: "shell",
 		Cwd:  "/projects/testprj",
 	}
 
@@ -87,12 +87,12 @@ func TestShouldAutoDetectShellForTerminalCommandWithCwd(t *testing.T) {
 	assert.Equal(t, []string{"bash", "-c", "cd /projects/testprj; bash"}, resolvedCmd)
 }
 
-func TestShouldAutoDetectShellForTerminalCommandWithoutCwd(t *testing.T) {
+func TestShouldBeAutoDetectedShellForTerminalCommandWithoutCwd(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("bash", nil)
 
 	exec := model.MachineExec{
-		Type: "terminal",
+		Type: "shell",
 	}
 
 	cmdResolver := NewCmdResolver(shellDetectorMock)
@@ -101,20 +101,7 @@ func TestShouldAutoDetectShellForTerminalCommandWithoutCwd(t *testing.T) {
 	assert.Equal(t, []string{"bash", "-c", "bash"}, resolvedCmd)
 }
 
-func TestShouldBeLaunedShellCommandWithAnEmptyCmd(t *testing.T) {
-	shellDetectorMock := &mocks.ContainerShellDetector{}
-	shellDetectorMock.On("DetectShell", containerInfo).Return("fish", nil)
-	exec := model.MachineExec{
-		Type: "shell",
-	}
-
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
-
-	assert.Equal(t, []string{"fish", "-c", ""}, resolvedCmd)
-}
-
-func TestShouldBeResolveCwdLikeUriForShellCommand(t *testing.T) {
+func TestShouldBeResolvedCwdLikeUriForShellCommand(t *testing.T) {
 	exec := model.MachineExec{
 		Type: "shell",
 		Cmd:  []string{"sh", "-c", "mvn clean install"},
@@ -127,9 +114,9 @@ func TestShouldBeResolveCwdLikeUriForShellCommand(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; mvn clean install"}, resolvedCmd)
 }
 
-func TestShouldBeResolveCwdLikeUriForTerminalCommand(t *testing.T) {
+func TestShouldBeResolvedCwdLikeUriForTerminalCommand(t *testing.T) {
 	exec := model.MachineExec{
-		Type: "terminal",
+		Type: "shell",
 		Cmd:  []string{"sh", "-l"},
 		Cwd:  "file:///projects/testprj",
 	}
@@ -140,7 +127,7 @@ func TestShouldBeResolveCwdLikeUriForTerminalCommand(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sh -l"}, resolvedCmd)
 }
 
-func TestShouldAutoDetectShellForNonEmptyShellCommand(t *testing.T) {
+func TestShouldBeAutoDetectedShellForShellCommandWithCwd(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("zsh", nil)
 	exec := model.MachineExec{
@@ -155,41 +142,26 @@ func TestShouldAutoDetectShellForNonEmptyShellCommand(t *testing.T) {
 	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; top"}, resolvedCmd)
 }
 
-func TestShouldAutoDetectShellForNonEmptyShellCommandWithoutMinusCArgument(t *testing.T) {
+func TestShouldBeAutoDetectShellForShellCommandWithoutCwd(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("zsh", nil)
 	exec := model.MachineExec{
 		Type: "shell",
-		Cmd:  []string{"", "top"},
+		Cmd:  []string{"", "-c", "top"},
 		Cwd:  "/projects/testprj",
 	}
 
 	cmdResolver := NewCmdResolver(shellDetectorMock)
 	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
 
-	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj;  top"}, resolvedCmd)
+	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; top"}, resolvedCmd)
 }
 
-func TestShouldAutoDetectShellForEmptyShellCommand(t *testing.T) {
+func TestShouldBeLaunchedNonShellCommandWithCwd(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("zsh", nil)
 	exec := model.MachineExec{
-		Type: "shell",
-		Cmd:  []string{},
-		Cwd:  "/projects/testprj",
-	}
-
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
-
-	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; "}, resolvedCmd)
-}
-
-func TestShouldLaunchCommandWithoutAnyType(t *testing.T) {
-	shellDetectorMock := &mocks.ContainerShellDetector{}
-	shellDetectorMock.On("DetectShell", containerInfo).Return("zsh", nil)
-	exec := model.MachineExec{
-		Type: "",
+		Type: "process",
 		Cmd:  []string{"yarn", "run", "build"},
 		Cwd:  "/projects/testprj",
 	}
@@ -198,4 +170,18 @@ func TestShouldLaunchCommandWithoutAnyType(t *testing.T) {
 	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; yarn run build"}, resolvedCmd)
+}
+
+func TestShouldBeLaunchedNonShellCommandWithoutCwd(t *testing.T) {
+	shellDetectorMock := &mocks.ContainerShellDetector{}
+	shellDetectorMock.On("DetectShell", containerInfo).Return("zsh", nil)
+	exec := model.MachineExec{
+		Type: "process",
+		Cmd:  []string{"yarn", "run", "build"},
+	}
+
+	cmdResolver := NewCmdResolver(shellDetectorMock)
+	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+
+	assert.Equal(t, []string{"zsh", "-c", "yarn run build"}, resolvedCmd)
 }

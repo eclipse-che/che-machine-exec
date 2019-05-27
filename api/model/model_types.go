@@ -43,7 +43,7 @@ type MachineIdentifier struct {
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
-	// Supported value for now 'shell', "terminal", ""
+	// Supported value for now 'shell', "process". If type is empty "", than type will be "shell" like default valuechan type.
 	Type string `json:"type"`
 
 	Tty  bool   `json:"tty"`

@@ -14,10 +14,11 @@ package kubernetes_infra
 
 import (
 	"fmt"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/shell"
 	"net/url"
 	"strings"
+
+	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/shell"
 )
 
 // CmdResolver resolves exec command - MachineExec#Cmd. Needed to patch command
@@ -47,7 +48,7 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map
 
 	fmt.Println("Type" + exec.Type)
 
-	if (exec.Type == "terminal" || exec.Type == "shell") && len(cmd) > 0 {
+	if (exec.Type == "" || exec.Type == "shell") && len(cmd) > 0 {
 		shell = cmd[0]
 	}
 
@@ -58,8 +59,7 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map
 	if len(cmd) >= 2 && cmd[1] == "-c" {
 		cmd = cmd[2:len(cmd)]
 	}
-
-	if exec.Type == "terminal" && len(cmd) == 0 {
+	if len(cmd) == 0 {
 		cmd = []string{shell}
 	}
 
