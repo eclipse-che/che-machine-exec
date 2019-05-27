@@ -13,35 +13,54 @@
 package kubernetes_infra
 
 import (
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/shell"
-	"strings"
-	"fmt"
 	"net/url"
+	"strings"
 )
 
+// CmdResolver resolves exec command - MachineExec#Cmd. Needed to patch command
+// to apply some features which missed up in the original kubernetes exec api.
 type CmdResolver struct {
 	shell.ContainerShellDetector
 }
 
+// NewCmdResolver creates new instance CmdResolver.
 func NewCmdResolver(shellDetector shell.ContainerShellDetector) *CmdResolver {
 	return &CmdResolver{
 		ContainerShellDetector: shellDetector,
 	}
 }
 
-func (cmdRslv *CmdResolver) resolveCmd(exec *model.MachineExec, containerInfo map[string]string) (resolvedCmd []string) {
+// Get original command from exec model.MachineExec#Cmd and return patched command
+// to support some features which original kubernetes api doesn't provide.
+func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map[string]string) (resolvedCmd []string) {
 	var (
-		argsPart = exec.Cmd
-		cmd = exec.Cmd;
 		shell, cdCommand string
+		cmd              = exec.Cmd
 	)
+
+	if cmd == nil {
+		cmd = []string{}
+	}
+
 	fmt.Println("Type" + exec.Type)
-	if (exec.Type == "" || exec.Type == "shell") && len(cmd) >= 2 && cmd[1] == "-c" {
+
+	if (exec.Type == "terminal" || exec.Type == "shell") && len(cmd) > 0 {
 		shell = cmd[0]
-		argsPart = cmd[2:len(cmd)]
-	} else {
+	}
+
+	if shell == "" {
 		shell = cmdRslv.setUpExecShellPath(exec, containerInfo)
+	}
+
+	if len(cmd) >= 2 && cmd[1] == "-c" {
+		cmd = cmd[2:len(cmd)]
+	}
+
+	if exec.Type == "terminal" && len(cmd) == 0 {
+		cmd = []string{shell}
 	}
 
 	if exec.Cwd != "" {
@@ -50,13 +69,13 @@ func (cmdRslv *CmdResolver) resolveCmd(exec *model.MachineExec, containerInfo ma
 				exec.Cwd = res.Path
 			}
 		}
-		cdCommand = fmt.Sprintf("cd %s;", exec.Cwd)
+		cdCommand = fmt.Sprintf("cd %s; ", exec.Cwd)
 	}
 
-	return []string{shell, "-c", cdCommand + strings.Join(argsPart, " ")}
+	return []string{shell, "-c", cdCommand + strings.Join(cmd, " ")}
 }
 
-func (cmdRslv *CmdResolver) setUpExecShellPath(exec *model.MachineExec, containerInfo map[string]string) (shellPath string) {
+func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, containerInfo map[string]string) (shellPath string) {
 	if containerShell, err := cmdRslv.DetectShell(containerInfo); err == nil {
 		return containerShell
 	}

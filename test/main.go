@@ -20,10 +20,16 @@ func main() {
 	machineExec := &model.MachineExec{
 		// Cmd:        []string{"sleep 2 && echo 'ABC' && ls -a -li && pwd"},
 
-		// Single quotes
-		Cmd:     []string{"sh", "-c", "echo Start && { kill 6105 && echo '>>Done'; } || echo '>>Fail'"},
-		// Cmd: []string{"sh", "-c", "echo A && { kill $(echo -e '2639 \n 100000' | tr '\n' ' ') && echo \"Webpack dev server's processes are killed\"; } || echo \"Webpack dev server is not running\""},
+		Cmd:  []string{"sh", "-c", "sleep 2 && echo A; { dev_server=$(pgrep -f -x \"^sleep.*\") && echo $dev_server && ps ax; } || echo \"DONE\""},
 		Type: "shell",
+
+		// Cmd:  []string{"sh", "-c", "echo START && { dev_server=$(pgrep -f -x \"^sleep.*\") && echo $dev_server && kill -9 $(echo $dev_server | tr '\n' ' ') && echo \"Webpack dev servers processes are killed\"; } || echo \"Webpack dev server is not running\""},
+		// Type: "shell",
+
+		// Single quotes
+		// Cmd:     []string{"sh", "-c", "echo Start && { kill -9 3566 && echo '>>Done'; } || echo '>>Fail'"},
+		// Cmd: []string{"sh", "-c", "{ kill $(echo -e '7906 \n7907' | tr '\n' ' ') && echo \"Webpack dev server's processes are killed\"; } || echo \"Webpack dev server is not running\""},
+		// Type: "shell",
 
 		// Cmd:        []string{"sh", "-c", "sleep 5 && echo 'ABC' && ls -a -li && pwd"},
 		// Type: "shell",
@@ -46,7 +52,7 @@ func main() {
 		Tty:               true,
 	})
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(">>> Error: ", err)
 	}
 
 	fmt.Println("Work completed")

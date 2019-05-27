@@ -14,9 +14,6 @@ package kubernetes_infra
 
 import (
 	"errors"
-	"strconv"
-	"sync"
-	"sync/atomic"
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
@@ -30,6 +27,9 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"strconv"
+	"sync"
+	"sync/atomic"
 )
 
 type MachineExecs struct {
@@ -81,7 +81,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 		return -1, err
 	}
 
-	machineExec.Cmd = manager.resolveCmd(machineExec, containerInfo)
+	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
 	fmt.Println(">>>> Resolved cmd", machineExec.Cmd)
 
 	req := manager.api.RESTClient().
