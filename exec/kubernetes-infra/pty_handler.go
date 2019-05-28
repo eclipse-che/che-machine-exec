@@ -13,7 +13,6 @@
 package kubernetes_infra
 
 import (
-	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/output/utf8stream"
 	"k8s.io/client-go/tools/remotecommand"
@@ -40,10 +39,6 @@ func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 	filteredCharacters := t.filter.ProcessRaw(p)
 
 	t.machineExec.Buffer.Write(filteredCharacters)
-
-	// Remove println before merge and fmt import too.
-	fmt.Println(">>>>>>>>>>>>>>>>>>")
-	fmt.Println(string(filteredCharacters))
 
 	t.machineExec.WriteDataToWsConnections(filteredCharacters)
 

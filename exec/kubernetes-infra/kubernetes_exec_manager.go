@@ -14,7 +14,10 @@ package kubernetes_infra
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
+	"sync"
+	"sync/atomic"
+
 	"github.com/eclipse/che-machine-exec/api/model"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
@@ -27,9 +30,6 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-	"strconv"
-	"sync"
-	"sync/atomic"
 )
 
 type MachineExecs struct {
@@ -82,8 +82,6 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	}
 
 	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
-	// Todo remove it before merge! And fmt from import too.
-	fmt.Println(">>>> Resolved cmd", machineExec.Cmd)
 
 	req := manager.api.RESTClient().
 		Post().
