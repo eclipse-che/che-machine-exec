@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	DefaultShell = "/bin/sh"
+	DefaultShell = "sh"
 )
 
 // ContainerShellDetector used to get information about preferable exec shell

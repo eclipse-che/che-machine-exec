@@ -14,10 +14,7 @@ package kubernetes_infra
 
 import (
 	"errors"
-	"fmt"
-	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -26,7 +23,6 @@ import (
 	"github.com/eclipse/che-machine-exec/filter"
 	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
 	"github.com/eclipse/che-machine-exec/output/utf8stream"
-	"github.com/eclipse/che-machine-exec/shell"
 	ws "github.com/eclipse/che-machine-exec/ws-conn"
 	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
@@ -43,7 +39,7 @@ type MachineExecs struct {
 
 // Manager to manipulate kubernetes container execs.
 type KubernetesExecManager struct {
-	shell.ContainerShellDetector
+	CmdResolver
 	filter.ContainerFilter
 
 	api    corev1.CoreV1Interface
@@ -68,45 +64,15 @@ func New(
 	api corev1.CoreV1Interface,
 	config *rest.Config,
 	filter filter.ContainerFilter,
-	shellDetector shell.ContainerShellDetector,
+	cmdResolver CmdResolver,
 ) *KubernetesExecManager {
 	return &KubernetesExecManager{
-		api:                    api,
-		nameSpace:              namespace,
-		ContainerFilter:        filter,
-		ContainerShellDetector: shellDetector,
-		config:                 config,
+		api:             api,
+		nameSpace:       namespace,
+		ContainerFilter: filter,
+		config:          config,
+		CmdResolver:     cmdResolver,
 	}
-}
-
-func (manager KubernetesExecManager) setUpExecShellPath(exec *model.MachineExec, containerInfo map[string]string) {
-	if exec.Tty && len(exec.Cmd) == 0 {
-		if containerShell, err := manager.DetectShell(containerInfo); err == nil {
-			exec.Cmd = []string{containerShell}
-		} else {
-			exec.Cmd = []string{shell.DefaultShell}
-		}
-	}
-}
-
-func (manager KubernetesExecManager) handleCwd(exec *model.MachineExec, containerInfo map[string]string) {
-	shellWrapper, err := manager.DetectShell(containerInfo)
-	if err != nil {
-		shellWrapper = shell.DefaultShell
-	}
-	originalCmdString := strings.Join(exec.Cmd, " ")
-	var cdCommand string
-
-	if exec.Cwd != "" {
-		if strings.HasPrefix(exec.Cwd, "file://") {
-			if res, err := url.Parse(exec.Cwd); err == nil {
-				exec.Cwd = res.Path
-			}
-		}
-
-		cdCommand = fmt.Sprintf("cd %s;", exec.Cwd)
-	}
-	exec.Cmd = []string{shellWrapper, "-c", cdCommand + originalCmdString}
 }
 
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
@@ -115,8 +81,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 		return -1, err
 	}
 
-	manager.setUpExecShellPath(machineExec, containerInfo)
-	manager.handleCwd(machineExec, containerInfo)
+	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
 
 	req := manager.api.RESTClient().
 		Post().
