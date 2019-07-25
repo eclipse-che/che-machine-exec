@@ -17,7 +17,3 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 printf "${BLUE}Building service (docker image)${NC}\n"
 docker build -t eclipse/che-machine-exec .
-
-printf "${BLUE}Generating Che plug-in file...${NC}\n"
-cd ${DIR}/assembly && ./build.sh
-printf "${BLUE}Generated in assembly/che-service-plugin.tar.gz${NC}\n"
