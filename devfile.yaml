@@ -1,5 +1,6 @@
-specVersion: 0.0.1
-name: che-machine-exec
+apiVersion: 1.0.0
+metadata:
+  name: che-machine-exec
 projects:
 - name: che-machine-exec
   clonePath: src/github.com/eclipse/che-machine-exec
