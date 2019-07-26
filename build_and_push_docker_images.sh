@@ -15,7 +15,7 @@ BLUE='\033[1;34m'
 GREEN='\033[32m'
 NC='\033[0m'
 
-DOCKER_IMAGE_TAG="0.0.1"
+DOCKER_IMAGE_TAG="next"
 
 CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec:${DOCKER_IMAGE_TAG}
 DEV_CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec-dev:${DOCKER_IMAGE_TAG}
