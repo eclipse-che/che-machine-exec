@@ -20,6 +20,6 @@ RUN apk add --update git bash wget less && \
     apk del wget
 EXPOSE 5555 5555
 
-WORKDIR /projects/src
+WORKDIR /projects
 
 CMD tail -f /dev/null
