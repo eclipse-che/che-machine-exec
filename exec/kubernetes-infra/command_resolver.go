@@ -76,8 +76,15 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map
 }
 
 func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, containerInfo map[string]string) (shellPath string) {
-	if containerShell, err := cmdRslv.DetectShell(containerInfo); err == nil {
+	if containerShell, err := cmdRslv.DetectShell(containerInfo); err == nil && cmdRslv.shellIsInteractive(containerShell) {
 		return containerShell
 	}
 	return shell.DefaultShell
+}
+
+func (cmdRslv *CmdResolver) shellIsInteractive(shell string) bool {
+	if strings.HasSuffix(shell, "nologin") {
+		return false
+	}
+	return true
 }
