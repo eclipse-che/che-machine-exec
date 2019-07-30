@@ -186,7 +186,7 @@ func TestShouldBeLaunchedNonShellCommandWithoutCwd(t *testing.T) {
 	assert.Equal(t, []string{"zsh", "-c", "yarn run build"}, resolvedCmd)
 }
 
-func TestShouldBeLaunchedInteractiveShellCommandWithoutCwd(t *testing.T) {
+func TestShouldUseDefaultShellToLaunchCommandWithoutCwdWhenShellIsNotDefined(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("/sbin/nologin", nil)
 	exec := model.MachineExec{
@@ -200,7 +200,7 @@ func TestShouldBeLaunchedInteractiveShellCommandWithoutCwd(t *testing.T) {
 	assert.Equal(t, []string{"sh", "-c", "yarn run build"}, resolvedCmd)
 }
 
-func TestShouldBeLaunchedInteractiveShellCommandWithCwd(t *testing.T) {
+func TestShouldUseDefaultShellToLaunchCommandWithCwdWhenShellIsNotDefined(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("/sbin/nologin", nil)
 	exec := model.MachineExec{
