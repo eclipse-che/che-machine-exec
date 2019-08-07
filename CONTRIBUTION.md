@@ -1,11 +1,11 @@
 ### Recommended development flow
 
 The most natural way to develop che-machine-exec it's using Eclipse CHE workspace.
-To install Eclipse CHE you need to chose infrastructure(openshift, kubernetes or docker) and set up it.
+To install Eclipse CHE you need to choose infrastructure(openshift, kubernetes or docker) and set up it.
 To create development Eclipse CHE workspace we provide che-machine-exec devfile [devfile.yaml](devfile.yaml).
 > See more about [devfile](https://redhat-developer.github.io/devfile)
 
-### Start Eclipse CHE workspace
+### Create Eclipse CHE workspace from devfile
 
 To start Eclipse CHE workspace, install the latest [chectl](https://github.com/che-incubator/chectl/releases) and start new workspace from devfile:
 
@@ -19,9 +19,9 @@ This source code available inside development linux containers with names `dev` 
 
 #### 'dev' container target
 
-che-machine-exec wrote on the programming language go-lang, that's why development container `dev` contains
-pre-installed go-lang binaries to make it possible compile, test and launch che-machine-exec binary.
-Also `dev` container contains pre-installed `dep` tool to magage go-lang dependencies.
+che-machine-exec wrote on the programming language golang, that's why development container `dev` contains
+pre-installed golang binaries to make it possible compile, test and launch che-machine-exec binary.
+Also `dev` container contains pre-installed `dep` tool to manage golang dependencies.
 
 > See more: [Dockerfile](dockerfiles/dev/Dockerfile) for `dev` container image .
 
@@ -33,7 +33,7 @@ See more: [che-theia develompent flow](https://github.com/eclipse/che-theia/blob
 
 ### Development commands
 
-Devfile.yaml provides development `tasks` for Eclipse CHE workspace.
+devfile.yaml provides development `tasks` for Eclipse CHE workspace.
 List development tasks defined in the devfile `commands` section.
 
 To launch development commands in the Eclipse CHE workspace there are three ways:
@@ -41,7 +41,7 @@ To launch development commands in the Eclipse CHE workspace there are three ways
 1. `My Workspace` panel. In this panel you can find development tasks and launch them by click.
 
 2. `Run task...` menu: click `Terminal` menu in the main toolbar => click `Run task...` menu => select task by name and click it.
-> Notice: also you can find menu `Run task...` using command pallete. Type sortcut `Ctrl/Cmd + Shift + P` to call command pallete, type `run task`.
+> Notice: also you can find menu `Run task...` using command palette. Type shortcut `Ctrl/Cmd + Shift + P` to call command palette, type `run task`.
 
 3. Manually type task content in the terminal: `Terminal` => `Open Terminal in specific container` => select container with name `dev` and click Enter.
 > Notice: use correct working dir for commands in the terminal.
@@ -60,22 +60,22 @@ To launch che-machine-exec tests use task with name `test`.
 During development don't forget format code.
 To format che-machine-exec code use task with name `format`.
 
-#### Update go-lang dependencies
+#### Update golang dependencies
 
-To manage che-machine-exec go-lang dependencies we are using [dep tool](https://golang.github.io/dep).
+To manage che-machine-exec golang dependencies we are using [dep tool](https://golang.github.io/dep).
 List dependencies stored in the [Gopkg.toml](Gopkg.toml). To change dependencies you need modify this file.
 Use task with name `update dependencies` to flash Gopkg.toml changes:
-this task call dep tool to syncronize `vendor` folder and [Gopkg.lock](Gopkg.lock) with updated list dependencies.
+this task call dep tool to synchronize `vendor` folder and [Gopkg.lock](Gopkg.lock) with updated list dependencies.
 
 > Notice: `Gopkg.lock and vendor folder` changes should be contributed too.
 
 #### Start che-machine-exec server
 
-To start che-machine-exec server you need [Compile che-machine-exec](#compile-che-machine-exec)
+To start che-machine-exec server you need [Compile che-machine-exec](#compilation-che-machine-exec)
 and start server using `start exec server` task.
 che-machine-exec server will be started by internal url: 0.0.0.0:5555
 inside `dev` container. To find exposed route link you can use `My Workspace` panel.
-To test che-machine-exec use websocket protocol.
+For communication with che-machine-exec use websocket protocol.
 
 #### Stop che-machine-exec server
 
