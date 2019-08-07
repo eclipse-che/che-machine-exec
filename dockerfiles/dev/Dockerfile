@@ -9,6 +9,8 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
+# Dockerfile defines che-machine-exec development image eclipse/che-machine-exec-dev
+#
 
 FROM golang:1.10.3-alpine
 
