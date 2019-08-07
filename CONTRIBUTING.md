@@ -1,13 +1,14 @@
 ### Recommended development flow
 
 The most natural way to develop che-machine-exec it's using Eclipse CHE workspace.
-To install Eclipse CHE you need to choose infrastructure(openshift, kubernetes or docker) and set up it.
+To install Eclipse CHE you need to choose infrastructure(openshift, kubernetes)
+and [set up it](https://www.eclipse.org/che/docs/che-7/che-quick-starts.html#setting-up-a-local-kubernetes-or-openshift-cluster).
 To create development Eclipse CHE workspace we provide che-machine-exec devfile [devfile.yaml](devfile.yaml).
 > See more about [devfile](https://redhat-developer.github.io/devfile)
 
 ### Create Eclipse CHE workspace from devfile
 
-To start Eclipse CHE workspace, install the latest [chectl](https://github.com/che-incubator/chectl/releases) and start new workspace from devfile:
+To start Eclipse CHE workspace, [install the latest chectl](https://www.eclipse.org/che/docs/che-7/che-quick-starts.html#installing-the-chectl-management-tool) and start new workspace from devfile:
 
 ```shell
 $ chectl workspace:start --devfile=https://raw.githubusercontent.com/eclipse/che-machine-exec/master/devfile.yaml
@@ -19,8 +20,8 @@ This source code available inside development linux containers with names `dev` 
 
 #### 'dev' container target
 
-che-machine-exec wrote on the programming language golang, that's why development container `dev` contains
-pre-installed golang binaries to make it possible compile, test and launch che-machine-exec binary.
+che-machine-exec is written on the programming language golang, that's why development container `dev` contains
+pre-installed golang binaries to be able to compile, test and launch che-machine-exec binary.
 Also `dev` container contains pre-installed `dep` tool to manage golang dependencies.
 
 > See more: [Dockerfile](dockerfiles/dev/Dockerfile) for `dev` container image .
@@ -57,7 +58,7 @@ To launch che-machine-exec tests use task with name `test`.
 
 #### Format code
 
-During development don't forget format code.
+During development don't forget to format code.
 To format che-machine-exec code use task with name `format`.
 
 #### Update golang dependencies
@@ -71,8 +72,8 @@ this task call dep tool to synchronize `vendor` folder and [Gopkg.lock](Gopkg.lo
 
 #### Start che-machine-exec server
 
-To start che-machine-exec server you need [Compile che-machine-exec](#compilation-che-machine-exec)
-and start server using `start exec server` task.
+To start che-machine-exec server you need [compile che-machine-exec](#compilation-che-machine-exec)
+and start the server using `start exec server` task.
 che-machine-exec server will be started by internal url: 0.0.0.0:5555
 inside `dev` container. To find exposed route link you can use `My Workspace` panel.
 For communication with che-machine-exec use websocket protocol.
