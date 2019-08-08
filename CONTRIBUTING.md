@@ -1,6 +1,6 @@
 ### Recommended development flow
 
-The most natural way to develop che-machine-exec it's using Eclipse CHE workspace.
+The most natural way to develop che-machine-exec is using Eclipse CHE workspace.
 To install Eclipse CHE you need to choose infrastructure(openshift, kubernetes)
 and [set up it](https://www.eclipse.org/che/docs/che-7/che-quick-starts.html#setting-up-a-local-kubernetes-or-openshift-cluster).
 To create development Eclipse CHE workspace we provide che-machine-exec devfile [devfile.yaml](devfile.yaml).
