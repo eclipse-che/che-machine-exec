@@ -86,4 +86,3 @@ commands:
       - type: exec
         component: dev
         command: ps aux | grep "[.]/che-machine-exec" | head -1 | cut -d " " -f 2 | xargs kill
-        workdir: /projects/src/github.com/eclipse/che-machine-exec
