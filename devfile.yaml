@@ -16,7 +16,7 @@ components:
     id: eclipse/che-machine-exec-plugin/0.0.1
   - alias: ms-vscode.go
     type: chePlugin
-    id: ms-vscode/go/0.9.2
+    id: ms-vscode/go/0.11.0
   - alias: typescript-plugin
     type: chePlugin
     id: che-incubator/typescript/1.30.2
@@ -34,7 +34,7 @@ components:
     memoryLimit: 3Gi
   - alias: dev
     type: dockerimage
-    image: eclipse/che-machine-exec-dev
+    image: eclipse/che-machine-exec-dev:next
     mountSources: true
     endpoints:
       - name: exec-server
@@ -47,9 +47,11 @@ components:
     memoryLimit: 1024M
     env:
       - name: GOPATH
-        value: $(CHE_PROJECTS_ROOT)
+        value: /go:$(CHE_PROJECTS_ROOT)
       - name: GOCACHE
-        value: $(GOPATH)/.cache
+      # replicate the GOCACHE from the plugin, even though the cache is not shared
+      # between the two
+        value: /tmp/.cache
 commands:
   - name: compile
     actions:
@@ -67,13 +69,13 @@ commands:
     actions:
       - type: exec
         component: dev
-        command: go fmt ./...
+        command: go fmt ./... && echo -e "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
   - name: update dependencies
     actions:
       - type: exec
         component: dev
-        command: dep ensure
+        command: dep ensure && echo -e "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
   - name: start exec server
     actions:
@@ -81,8 +83,11 @@ commands:
         component: dev
         command: ./che-machine-exec --url 0.0.0.0:5555
         workdir: /projects/src/github.com/eclipse/che-machine-exec
-  - name: kill exec server
+  - name: stop exec server
     actions:
       - type: exec
         component: dev
-        command: ps aux | grep "[.]/che-machine-exec" | head -1 | cut -d " " -f 2 | xargs kill
+        command: >-
+          pid=$(pidof che-machine-exec) && kill ${pid} &&
+          printf "\033[32mDone.\033[0m" ||
+          printf "\033[32mNothing to stop... Done.\033[0m"

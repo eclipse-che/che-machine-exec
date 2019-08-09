@@ -80,4 +80,4 @@ For communication with che-machine-exec use websocket protocol.
 
 #### Stop che-machine-exec server
 
-To stop che-machine-exec server you can use task with name `kill exec server`.
+To stop che-machine-exec server you can use task with name `stop exec server`.
