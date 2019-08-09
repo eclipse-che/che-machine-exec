@@ -8,9 +8,6 @@ projects:
     type: git
     location: https://github.com/eclipse/che-machine-exec.git
 components:
-  - alias: theia-editor
-    type: cheEditor
-    id: eclipse/che-theia/next
   - alias: exec-plugin
     type: chePlugin
     id: eclipse/che-machine-exec-plugin/0.0.1
@@ -69,13 +66,13 @@ commands:
     actions:
       - type: exec
         component: dev
-        command: go fmt ./... && echo -e "\033[32mDone.\033[0m"
+        command: go fmt ./... && printf "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
   - name: update dependencies
     actions:
       - type: exec
         component: dev
-        command: dep ensure && echo -e "\033[32mDone.\033[0m"
+        command: dep ensure && printf "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
   - name: start exec server
     actions:
