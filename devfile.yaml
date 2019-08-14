@@ -10,7 +10,7 @@ projects:
 components:
   - alias: exec-plugin
     type: chePlugin
-    id: eclipse/che-machine-exec-plugin/0.0.1
+    id: eclipse/che-machine-exec-plugin/7.0.0
   - alias: ms-vscode.go
     type: chePlugin
     id: ms-vscode/go/0.11.0
@@ -19,7 +19,7 @@ components:
     id: che-incubator/typescript/1.30.2
   - alias: theia-dev
     type: dockerimage
-    image: eclipse/che-theia-dev:next
+    image: eclipse/che-theia-dev:7.0.0
     mountSources: true
     endpoints:
       - name: theia-dev
@@ -31,7 +31,7 @@ components:
     memoryLimit: 3Gi
   - alias: dev
     type: dockerimage
-    image: eclipse/che-machine-exec-dev:next
+    image: eclipse/che-machine-exec-dev:7.0.0
     mountSources: true
     endpoints:
       - name: exec-server
