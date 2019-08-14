@@ -15,6 +15,19 @@ BLUE='\033[1;34m'
 GREEN='\033[32m'
 NC='\033[0m'
 
+if [ -z "${GITHUB_TAG}" ]; then
+  echo "Variable GITHUB_TAG is missing"
+  exit 1
+fi
+if [ -z "${DOCKER_IMAGE_TAG}" ]; then
+  echo "Variable DOCKER_IMAGE_TAG is missing"
+  exit 1
+fi
+if [ -z "${RELEASE_BRANCH}" ]; then
+  echo "Variable RELEASE_BRANCH is missing"
+  exit 1
+fi
+
 
 CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec:${DOCKER_IMAGE_TAG}
 DEV_CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec-dev:${DOCKER_IMAGE_TAG}
@@ -36,7 +49,7 @@ printf "${BLUE}Building docker image ${CHE_MACHINE_EXEC_IMAGE} ==>${NC}\n"
 docker build -t ${CHE_MACHINE_EXEC_IMAGE} -f dockerfiles/ci/Dockerfile .
 printf "${BLUE}Image build ${CHE_MACHINE_EXEC_IMAGE} completed.${NC}\n"
 
-printf "${BLUE}Building development image ${DEV_CHE_MACHINE_EXEC_IMAGE} ==>${NC}\n"
+printf "${BLUE}Building docker development image ${DEV_CHE_MACHINE_EXEC_IMAGE} ==>${NC}\n"
 docker build -t ${DEV_CHE_MACHINE_EXEC_IMAGE} -f dockerfiles/dev/Dockerfile .
 printf "${BLUE}Image build ${DEV_CHE_MACHINE_EXEC_IMAGE} completed.${NC}\n"
 
@@ -44,7 +57,7 @@ printf "${BLUE}Image build ${DEV_CHE_MACHINE_EXEC_IMAGE} completed.${NC}\n"
 printf "${BLUE}Tag docker image ${CHE_MACHINE_EXEC_IMAGE} to latest\n"
 docker tag  ${CHE_MACHINE_EXEC_IMAGE} eclipse/che-machine-exec:latest
 
-printf "${BLUE}Tag development image ${DEV_CHE_MACHINE_EXEC_IMAGE} to latest\n"
+printf "${BLUE}Tag docker development image ${DEV_CHE_MACHINE_EXEC_IMAGE} to latest\n"
 docker tag ${DEV_CHE_MACHINE_EXEC_IMAGE} eclipse/che-machine-exec-dev:latest
 
 # Push images.
