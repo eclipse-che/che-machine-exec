@@ -46,7 +46,7 @@ docker push ${CHE_MACHINE_EXEC_IMAGE}
 printf "${BLUE}Image ${CHE_MACHINE_EXEC_IMAGE} pushed.${NC}\n"
 
 printf "${BLUE}Push docker image eclipse/che-machine-exec:latest ==>${NC}\n"
-docker push eclipse/che-machine-exec:
+docker push eclipse/che-machine-exec:latest
 printf "${BLUE}Image eclipse/che-machine-exec:latest pushed.${NC}\n"
 
 printf "${BLUE}Push docker image ${DEV_CHE_MACHINE_EXEC_IMAGE} ==>${NC}\n"
