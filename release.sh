@@ -19,8 +19,15 @@ NC='\033[0m'
 CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec:${DOCKER_IMAGE_TAG}
 DEV_CHE_MACHINE_EXEC_IMAGE=eclipse/che-machine-exec-dev:${DOCKER_IMAGE_TAG}
 
-# checkout to new tag
+# checkout to release branch
 git checkout $RELEASE_BRANCH
+
+# create and push new tag
+git tag $GITHUB_TAG
+git push origin $GITHUB_TAG
+
+# checkout to new tag
+git checkout $GITHUB_TAG
 
 docker login -u ${DOCKER_HUB_LOGIN} -p ${DOCKER_HUB_PASSWORD}
 
