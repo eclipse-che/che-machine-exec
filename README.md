@@ -1,3 +1,7 @@
+[![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/)
+[![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/)
+[![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/)
+
 # CHE machine exec
 
 Go-lang server side to creation machine-execs for Eclipse CHE workspaces.
@@ -5,7 +9,7 @@ Uses to spawn terminal or command processes.
 
 CHE machine exec uses json-rpc protocol to communication with client.
 
-# Build docker image
+## Build docker image
 
 Build docker image with che-machine-exec manually:
 
@@ -13,7 +17,7 @@ Build docker image with che-machine-exec manually:
 docker build --no-cache -t eclipse/che-machine-exec .
 ```
 
-# Run docker container
+## Run docker container
 
 Run docker container with che-machine-exec manually:
 
@@ -21,7 +25,7 @@ Run docker container with che-machine-exec manually:
 docker run --rm -p 4444:4444 -v /var/run/docker.sock:/var/run/docker.sock eclipse/che-machine-exec
 ```
 
-# How to use machine-exec image with Eclipse CHE workspace on the docker infrastructure
+## How to use machine-exec image with Eclipse CHE workspace on the docker infrastructure
 
 To configure Eclipse CHE on the docker infrastructure we are using che.env configuration file.
 che.env file located in the CHE `data` folder. Edit and save che.env file: apply docker.sock path (by default it's `/var/run/docker.sock`) to the workspace volume property `CHE_WORKSPACE_VOLUME`:
@@ -36,7 +40,7 @@ CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 
 Run Eclipse CHE. You can create new Eclipse CHE workspace with integrated Theia IDE from stack 'Theia IDE on docker'. Then you can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
-# Test che-machine-exec on the local Openshift
+## Test che-machine-exec on the local Openshift
 
 To test che-machine-exec you need deploy Eclipse CHE to the openshift locally. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy)
 
@@ -61,7 +65,7 @@ the Eclipse CHE user dashboard.
 
 Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
-# Test on the Minishift
+## Test on the Minishift
 To test che-machine-exec you need deploy Eclipse CHE to the Minishift. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
 
 Install minishift with help this instractions:
@@ -127,7 +131,7 @@ export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && .
 Create new workspace from openshift stack 'Java Theia on OpenShift' or
 'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
-# Test on the Kubernetes (MiniKube)
+## Test on the Kubernetes (MiniKube)
 
 To test che-machine-exec you need deploy Eclipse CHE to the Minikube cluster. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
 
@@ -190,7 +194,7 @@ There are two configurations to deploy Eclipse CHE on the Kubernetes:
 
 Create new workspace from stack 'CHE 7'. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
 
-# Prepare Eclipse CHE to deploy
+## Prepare Eclipse CHE to deploy
 
 > Requiements: installed java 8 or higher and maven 3.3.0 or higher
 
@@ -207,13 +211,13 @@ $ cd ~/projects/che/assembly/assembly-main
 $ mvn clean install -DskipTests
 ```
 
-# Test che-machine-exec with help eclipse-che-theia-terminal
+## Test che-machine-exec with help eclipse-che-theia-terminal
 Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension you can test che-machine-exec.
 
 Create new terminal with help main menu of the Theia: `Terminal` => `Open Terminal in specific container`. After that IDE will propose you select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
 Or you could use command palette: `Ctrl + Shift + P` and type `terminal`. Then you could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
 
-# Test che-machine-exec with help che-theia-task-plugin
+## Test che-machine-exec with help che-theia-task-plugin
 
 Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin you can test che-machine-exec.
 Create new Theia task for your project: in the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
@@ -231,3 +235,10 @@ Create new Theia task for your project: in the project root create folder `.thei
 ```
 Run this task with help menu tasks: `Terminal` => `Run Task...`
 After that Theia should display widget with output content: 'echo hello'
+
+## CI
+The following [CentOS CI jobs](https://ci.centos.org/) are associated with the repository:
+
+- [![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/) - builds CentOS images on each commit to the [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
+- [![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/) - builds CentOS images and pushes them to [quay.io](https://quay.io/organization/eclipse) on a daily basis from the [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch.
+- [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/) -  builds images from the [`release`](https://github.com/eclipse/che-machine-exec/tree/release) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
