@@ -12,7 +12,7 @@
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
 
-FROM golang:1.10.7-alpine as builder
+FROM golang:1.10.3-alpine as builder
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
