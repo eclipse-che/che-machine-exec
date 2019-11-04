@@ -19,7 +19,7 @@ COPY . .
 RUN adduser unprivilegeduser && \
     CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
 
-FROM scratch
+FROM registry.access.redhat.com/ubi8/ubi-minimal
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /go/bin/che-machine-exec
 USER unprivilegeduser
