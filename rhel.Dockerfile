@@ -10,16 +10,21 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
-FROM rhel8/go-toolset:1.11.13-18 as builder
+FROM registry.redhat.io/rhel8/go-toolset:1.11.13-18 as builder
 ENV PATH=/opt/rh/go-toolset-1.11/root/usr/bin:$PATH \
     GOPATH=/go/
 USER root
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
 RUN adduser unprivilegeduser && \
-    CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
+    CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . && \
+    mkdir -p /rootfs/tmp && chmod 1777 /rootfs/tmp
 
 FROM scratch
+
+# In the scratch you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
+# Add absent in the scratch /tmp folder.
+COPY --from=builder /rootfs /
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /go/bin/che-machine-exec
 USER unprivilegeduser
