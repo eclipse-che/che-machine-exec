@@ -18,15 +18,17 @@ WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
 RUN adduser unprivilegeduser && \
     CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . && \
-    mkdir -p /rootfs/tmp && chmod 1777 /rootfs/tmp
+    mkdir -p /rootfs/tmp /rootfs/etc /rootfs/go/bin && \
+    # In the `scratch` you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
+    # That's why prepare absent in the scratch /tmp folder.
+    chmod 1777 /rootfs/tmp && \
+    cp -rf /etc/passwd /rootfs/etc && \
+    cp -rf /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /rootfs/go/bin
 
 FROM scratch
 
-# In the scratch you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
-# Add absent in the scratch /tmp folder.
 COPY --from=builder /rootfs /
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /go/bin/che-machine-exec
+
 USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
 
