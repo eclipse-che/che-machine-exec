@@ -10,7 +10,7 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
-FROM registry.redhat.io/rhel8/go-toolset:1.11.13-18 as builder
+FROM rhel8/go-toolset:1.11.13-18 as builder
 ENV PATH=/opt/rh/go-toolset-1.11/root/usr/bin:$PATH \
     GOPATH=/go/
 USER root
@@ -20,7 +20,7 @@ RUN adduser unprivilegeduser && \
     CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . && \
     mkdir -p /rootfs/tmp /rootfs/etc /rootfs/go/bin && \
     # In the `scratch` you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
-    # That's why prepare absent in the scratch /tmp folder.
+    # That's why prepare absent `/tmp` folder for scratch image 
     chmod 1777 /rootfs/tmp && \
     cp -rf /etc/passwd /rootfs/etc && \
     cp -rf /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /rootfs/go/bin
