@@ -76,22 +76,45 @@ func New(
 }
 
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
-	containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
-	if err != nil {
-		return -1, err
+	if machineExec.Identifier.MachineName != "" {
+		containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
+		if err != nil {
+			return -1, err
+		}
+		if err = manager.doCreate(machineExec, containerInfo); err != nil {
+			return -1, err
+		}
+	} else {
+		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
+		containersInfo, err := manager.GetContainerList()
+		if err != nil {
+			return -1, err
+		}
+		for _, containerInfo := range containersInfo {
+			err = manager.doCreate(machineExec, containerInfo)
+			if err == nil {
+				break
+			} else {
+				return -1, err
+			}
+		}
 	}
 
+	return machineExec.ID, nil
+}
+
+func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo) error {
 	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
 
 	req := manager.api.RESTClient().
 		Post().
 		Namespace(manager.nameSpace).
 		Resource(exec_info.Pods).
-		Name(containerInfo[exec_info.PodName]).
+		Name(containerInfo.PodName).
 		SubResource(exec_info.Exec).
 		// set up params
 		VersionedParams(&v1.PodExecOptions{
-			Container: containerInfo[exec_info.ContainerName],
+			Container: containerInfo.ContainerName,
 			Command:   machineExec.Cmd,
 			Stdout:    true,
 			Stderr:    true,
@@ -101,7 +124,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 
 	executor, err := remotecommand.NewSPDYExecutor(manager.config, exec_info.Post, req.URL())
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	defer machineExecs.mutex.Unlock()
@@ -117,7 +140,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 
 	machineExecs.execMap[machineExec.ID] = machineExec
 
-	return machineExec.ID, nil
+	return nil
 }
 
 // Clean up information about exec

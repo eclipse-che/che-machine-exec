@@ -13,6 +13,7 @@
 package exec_info
 
 import (
+	"github.com/eclipse/che-machine-exec/api/model"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -39,13 +40,11 @@ func NewKubernetesInfoExecCreator(
 }
 
 // Create new kubernetes info exec.
-func (creator *KubernetesInfoExecCreator) CreateInfoExec(command []string, containerInfo map[string]string) InfoExec {
-	containerName := containerInfo[ContainerName]
-	podName := containerInfo[PodName]
+func (creator *KubernetesInfoExecCreator) CreateInfoExec(command []string, containerInfo *model.ContainerInfo) InfoExec {
 	return NewKubernetesInfoExec(
 		command,
-		containerName,
-		podName,
+		containerInfo.ContainerName,
+		containerInfo.PodName,
 		creator.namespace,
 		creator.core,
 		creator.config,

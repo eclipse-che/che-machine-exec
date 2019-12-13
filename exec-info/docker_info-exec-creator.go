@@ -14,6 +14,7 @@ package exec_info
 
 import (
 	"github.com/docker/docker/client"
+	"github.com/eclipse/che-machine-exec/api/model"
 )
 
 // Component to creation new info execs on the docker infrastructure.
@@ -29,7 +30,6 @@ func NewDockerInfoExecCreator(client client.ContainerAPIClient) *DockerInfoExecC
 }
 
 // Create new docker info exec.
-func (creator *DockerInfoExecCreator) CreateInfoExec(command []string, containerInfo map[string]string) InfoExec {
-	containerId := containerInfo[ContainerId]
-	return NewDockerInfoExec(command, containerId, creator.client)
+func (creator *DockerInfoExecCreator) CreateInfoExec(command []string, containerInfo *model.ContainerInfo) InfoExec {
+	return NewDockerInfoExec(command, containerInfo.ContainerName, creator.client)
 }

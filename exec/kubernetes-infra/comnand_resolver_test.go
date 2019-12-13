@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	containerInfo = make(map[string]string)
+	containerInfo = &model.ContainerInfo{}
 )
 
 func TestShoudBeLaunchedShellProcessWithCwd(t *testing.T) {

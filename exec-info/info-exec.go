@@ -9,8 +9,11 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
-
 package exec_info
+
+import (
+	"github.com/eclipse/che-machine-exec/api/model"
+)
 
 // Exec to spawn some simple not bash based command
 // which returns output with some useful information.
@@ -25,5 +28,5 @@ type InfoExec interface {
 // Creator for information exec.
 type InfoExecCreator interface {
 	// Create new info exec. Return error in case fail.
-	CreateInfoExec(command []string, containerInfo map[string]string) (infoExec InfoExec)
+	CreateInfoExec(command []string, containerInfo *model.ContainerInfo) (infoExec InfoExec)
 }

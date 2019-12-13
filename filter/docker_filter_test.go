@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"os"
 	"testing"
 )
 
@@ -29,7 +30,11 @@ const (
 	ContainerId3 = "someId3"
 )
 
-var machineIdentifier = &model.MachineIdentifier{"dev-machine", "workspaceIdSome"}
+var machineIdentifier = &model.MachineIdentifier{"dev-machine"}
+
+func init() {
+	os.Setenv("CHE_WORKSPACE_ID", "some_workspace")
+}
 
 func TestShouldFindContainerFromLinsWithOneContainersAndGetInfo(t *testing.T) {
 	mockContainerClient := &mocks.ContainerAPIClient{}
@@ -45,7 +50,7 @@ func TestShouldFindContainerFromLinsWithOneContainersAndGetInfo(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, containerInfo["containerId"], ContainerId)
+	assert.Equal(t, containerInfo.ContainerName, ContainerId)
 
 	mockContainerClient.AssertExpectations(t)
 	mockContainerClient.AssertExpectations(t)

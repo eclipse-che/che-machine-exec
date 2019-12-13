@@ -15,10 +15,10 @@ package filter
 import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec-info"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"os"
 )
 
 const (
@@ -46,37 +46,63 @@ func NewKubernetesContainerFilter(namespace string, podGetterApi corev1.PodsGett
 	}
 }
 
-// Find container information by pod label: "wsId" and container environment variables "machineName".
-func (filter *KubernetesContainerFilter) FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo map[string]string, err error) {
-	filterOptions := metav1.ListOptions{LabelSelector: WsIdLabel + "=" + identifier.WsId}
+func (filter *KubernetesContainerFilter) GetContainerList() (containersInfo []*model.ContainerInfo, err error) {
+	pods, err := filter.getWorkspacePods()
+	if err != nil {
+		return containersInfo, err
+	}
 
+	for _, pod := range pods.Items {
+		for _, container := range pod.Spec.Containers {
+			for _, env := range container.Env {
+				if env.Name == MachineNameEnvVar {
+					containersInfo = append(containersInfo, &model.ContainerInfo{ContainerName: env.Value, PodName: pod.Name})
+				}
+			}
+		}
+	}
+
+	return containersInfo, nil
+}
+
+// Find container information by pod label: "wsId" and container environment variables "machineName".
+func (filter *KubernetesContainerFilter) FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo *model.ContainerInfo, err error) {
+	wsPods, err := filter.getWorkspacePods()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pod := range wsPods.Items {
+		containerName := findContainerName(pod, identifier.MachineName)
+		if containerName != "" {
+			return &model.ContainerInfo{ContainerName: containerName, PodName: pod.Name}, nil
+		}
+	}
+
+	return nil, errors.New("container with name " + identifier.MachineName + " was not found.")
+}
+
+func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error) {
+	workspaceID := os.Getenv("CHE_WORKSPACE_ID")
+	if workspaceID == "" {
+		return nil, errors.New("unable to get current workspace id")
+	}
+
+	filterOptions := metav1.ListOptions{LabelSelector: WsIdLabel + "=" + workspaceID}
 	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(filterOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(wsPods.Items) == 0 {
-		return nil, errors.New("pod was not found for workspace: " + identifier.WsId)
+		return nil, errors.New("pods was not found for workspace: " + workspaceID)
 	}
 
-	for _, pod := range wsPods.Items {
-		containerName := findContainerName(pod, identifier.MachineName)
-		if containerName != "" {
-			containerInfo := make(map[string]string)
-			containerInfo[exec_info.ContainerName] = containerName
-			containerInfo[exec_info.PodName] = pod.Name
-
-			return containerInfo, nil
-		}
-	}
-
-	return nil, errors.New("container with name " + identifier.MachineName + " was not found. For workspace: " + identifier.WsId)
+	return wsPods, nil
 }
 
 func findContainerName(pod v1.Pod, machineName string) string {
-	containers := pod.Spec.Containers
-
-	for _, container := range containers {
+	for _, container := range pod.Spec.Containers {
 		for _, env := range container.Env {
 			if env.Name == MachineNameEnvVar && env.Value == machineName {
 				return container.Name

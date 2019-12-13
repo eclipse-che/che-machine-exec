@@ -22,7 +22,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
-	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
 	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
 	"github.com/eclipse/che-machine-exec/shell"
@@ -63,7 +62,7 @@ func New(dockerClient client.ContainerAPIClient, filter filter.ContainerFilter, 
 	}
 }
 
-func (manager DockerMachineExecManager) setUpExecShellPath(exec *model.MachineExec, containerInfo map[string]string) {
+func (manager DockerMachineExecManager) setUpExecShellPath(exec *model.MachineExec, containerInfo *model.ContainerInfo) {
 	if exec.Tty && len(exec.Cmd) == 0 {
 		if containerShell, err := manager.DetectShell(containerInfo); err == nil {
 			exec.Cmd = []string{containerShell}
@@ -81,7 +80,7 @@ func (manager *DockerMachineExecManager) Create(machineExec *model.MachineExec) 
 
 	manager.setUpExecShellPath(machineExec, containerInfo)
 
-	resp, err := manager.client.ContainerExecCreate(context.Background(), containerInfo[exec_info.ContainerId], types.ExecConfig{
+	resp, err := manager.client.ContainerExecCreate(context.Background(), containerInfo.ContainerName, types.ExecConfig{
 		Tty:          machineExec.Tty,
 		AttachStdin:  true,
 		AttachStdout: true,
