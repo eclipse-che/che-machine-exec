@@ -36,7 +36,7 @@ func NewCmdResolver(shellDetector shell.ContainerShellDetector) *CmdResolver {
 
 // Gets original command from exec model(MachineExec#Cmd) and returns patched command
 // to support some features which original kubernetes api doesn't provide.
-func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map[string]string) (resolvedCmd []string) {
+func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo *model.ContainerInfo) (resolvedCmd []string) {
 	var (
 		shell, cdCommand string
 		cmd              = exec.Cmd
@@ -45,8 +45,6 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map
 	if cmd == nil {
 		cmd = []string{}
 	}
-
-	fmt.Println("Type" + exec.Type)
 
 	if (exec.Type == "" || exec.Type == "shell") && len(cmd) > 0 {
 		shell = cmd[0]
@@ -75,7 +73,7 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo map
 	return []string{shell, "-c", cdCommand + strings.Join(cmd, " ")}
 }
 
-func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, containerInfo map[string]string) (shellPath string) {
+func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, containerInfo *model.ContainerInfo) (shellPath string) {
 	if containerShell, err := cmdRslv.DetectShell(containerInfo); err == nil && cmdRslv.shellIsDefined(containerShell) {
 		return containerShell
 	}

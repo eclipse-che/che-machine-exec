@@ -15,12 +15,13 @@ package filter
 import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"strings"
 	"testing"
 )
 
@@ -39,7 +40,11 @@ const (
 	PodName2 = "pod2"
 )
 
-var identifier = &model.MachineIdentifier{"dev-machine", "workspaceIdSome"}
+var identifier = &model.MachineIdentifier{"dev-machine"}
+
+func init() {
+	os.Setenv("CHE_WORKSPACE_ID", "some_workspace")
+}
 
 func TestShouldReturnContainerInfoWhenWorkspaceContainsOneContainerInThePod(t *testing.T) {
 	podGetter := &mocks.PodsGetter{}
@@ -55,8 +60,8 @@ func TestShouldReturnContainerInfoWhenWorkspaceContainsOneContainerInThePod(t *t
 	containerFilter := NewKubernetesContainerFilter(NameSpace, podGetter)
 	containerInfo, _ := containerFilter.FindContainerInfo(identifier)
 
-	assert.Equal(t, containerInfo[exec_info.ContainerName], ContainerName1)
-	assert.Equal(t, containerInfo[exec_info.PodName], PodName1)
+	assert.Equal(t, containerInfo.ContainerName, ContainerName1)
+	assert.Equal(t, containerInfo.PodName, PodName1)
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -77,8 +82,8 @@ func TestShouldReturnContainerInfoWhenWorkspaceContainsTwoContainerInThePod(t *t
 	containerFilter := NewKubernetesContainerFilter(NameSpace, podGetter)
 	containerInfo, _ := containerFilter.FindContainerInfo(identifier)
 
-	assert.Equal(t, containerInfo[exec_info.ContainerName], ContainerName1)
-	assert.Equal(t, containerInfo[exec_info.PodName], PodName1)
+	assert.Equal(t, containerInfo.ContainerName, ContainerName1)
+	assert.Equal(t, containerInfo.PodName, PodName1)
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -102,8 +107,8 @@ func TestShouldReturnContainerInfoWhenWorkspaceContainsTwoPods(t *testing.T) {
 	containerFilter := NewKubernetesContainerFilter(NameSpace, podGetter)
 	containerInfo, _ := containerFilter.FindContainerInfo(identifier)
 
-	assert.Equal(t, containerInfo[exec_info.ContainerName], ContainerName1)
-	assert.Equal(t, containerInfo[exec_info.PodName], PodName2)
+	assert.Equal(t, containerInfo.ContainerName, ContainerName1)
+	assert.Equal(t, containerInfo.PodName, PodName2)
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -140,7 +145,7 @@ func TestShouldReturnErrorIfPodListIsEmpty(t *testing.T) {
 	containerInfo, err := containerFilter.FindContainerInfo(identifier)
 
 	assert.Nil(t, containerInfo)
-	assert.Equal(t, err.Error(), "pod was not found for workspace: "+identifier.WsId)
+	assert.True(t, strings.HasPrefix(err.Error(), "pods was not found for workspace:"))
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -160,7 +165,7 @@ func TestShouldNotFindContainerInTheEmptyPod(t *testing.T) {
 	containerInfo, err := containerFilter.FindContainerInfo(identifier)
 
 	assert.Nil(t, containerInfo)
-	assert.Equal(t, err.Error(), "container with name "+identifier.MachineName+" was not found. For workspace: "+machineIdentifier.WsId)
+	assert.True(t, strings.HasPrefix(err.Error(), "container with name "+identifier.MachineName+" was not found."))
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -182,7 +187,7 @@ func TestShouldNotFindInfoContainerInThePod(t *testing.T) {
 	containerInfo, err := containerFilter.FindContainerInfo(identifier)
 
 	assert.Nil(t, containerInfo)
-	assert.Equal(t, err.Error(), "container with name "+identifier.MachineName+" was not found. For workspace: "+machineIdentifier.WsId)
+	assert.True(t, strings.HasPrefix(err.Error(), "container with name "+identifier.MachineName+" was not found."))
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)
@@ -206,7 +211,7 @@ func TestShouldNotFindInfoContainerInTwoPods(t *testing.T) {
 	containerInfo, err := containerFilter.FindContainerInfo(identifier)
 
 	assert.Nil(t, containerInfo)
-	assert.Equal(t, err.Error(), "container with name "+identifier.MachineName+" was not found. For workspace: "+machineIdentifier.WsId)
+	assert.True(t, strings.HasPrefix(err.Error(), "container with name "+identifier.MachineName+" was not found."))
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)

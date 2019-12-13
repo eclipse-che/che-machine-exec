@@ -33,10 +33,13 @@ const (
 	OnExecError = "onExecError"
 )
 
-// todo inside workspace we can get workspace id from env variables.
 type MachineIdentifier struct {
 	MachineName string `json:"machineName"`
-	WsId        string `json:"workspaceId"`
+}
+
+type ContainerInfo struct {
+	ContainerName string
+	PodName       string
 }
 
 // Todo code Refactoring: MachineExec should be simple object for exec creation, without any business logic

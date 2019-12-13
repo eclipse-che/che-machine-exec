@@ -14,11 +14,12 @@ package filter
 
 import "github.com/eclipse/che-machine-exec/api/model"
 
-// Container filter to find container information if it's possible by unique
-// workspaceId and machineName.
+// Container filter to find container information if it's possible by unique Che specific container name.
 type ContainerFilter interface {
-	// Find container information by machine identifier.
-	// Machine identifier stores workspaceId and machineName.
+	// Return list Che workspace containers.
+	GetContainerList() (containersInfo []*model.ContainerInfo, err error)
+
+	// Find container information by Che specific container identifier.
 	// Return error in case fail filter operation.
-	FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo map[string]string, err error)
+	FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo *model.ContainerInfo, err error)
 }

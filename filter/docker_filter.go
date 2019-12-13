@@ -18,8 +18,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec-info"
 	"golang.org/x/net/context"
+	"os"
 )
 
 const (
@@ -40,10 +40,20 @@ func NewDockerContainerFilter(client client.ContainerAPIClient) *DockerContainer
 	return &DockerContainerFilter{client: client}
 }
 
+func (filter *DockerContainerFilter) GetContainerList() (containersInfo []*model.ContainerInfo, err error) {
+	// See more https://github.com/eclipse/che/issues/15466
+	return nil, errors.New("Not implemented.")
+}
+
 // Filter container by labels: wsId and machineName.
-func (filter *DockerContainerFilter) FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo map[string]string, err error) {
+func (filter *DockerContainerFilter) FindContainerInfo(identifier *model.MachineIdentifier) (containerInfo *model.ContainerInfo, err error) {
+	workspaceID := os.Getenv("CHE_WORKSPACE_ID")
+	if workspaceID == "" {
+		return nil, errors.New("Unable to get current workspace id")
+	}
+
 	containers, err := filter.client.ContainerList(context.Background(), types.ContainerListOptions{
-		Filters: createContainerFilter(identifier),
+		Filters: createContainerFilter(identifier, workspaceID),
 	})
 	if err != nil {
 		return nil, err
@@ -56,14 +66,12 @@ func (filter *DockerContainerFilter) FindContainerInfo(identifier *model.Machine
 		return nil, errors.New("machine " + identifier.MachineName + " was not found")
 	}
 
-	containerInfo = make(map[string]string)
-	containerInfo[exec_info.ContainerId] = containers[0].ID
-	return containerInfo, nil
+	return &model.ContainerInfo{ContainerName: containers[0].ID}, nil
 }
 
-func createContainerFilter(identifier *model.MachineIdentifier) filters.Args {
+func createContainerFilter(identifier *model.MachineIdentifier, workspaceID string) filters.Args {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add(Label, WsId+"="+identifier.WsId)
+	filterArgs.Add(Label, WsId+"="+workspaceID)
 	filterArgs.Add(Label, MachineName+"="+identifier.MachineName)
 
 	return filterArgs
