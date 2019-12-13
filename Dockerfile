@@ -27,10 +27,22 @@ RUN adduser -D -g '' unprivilegeduser && \
     cp -rf /etc/ssl/certs/ca-certificates.crt /rootfs/etc/ssl/certs && \
     cp -rf /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /rootfs/go/bin
 
+FROM node:10.16-alpine as frontend-builder
+
+ARG SRC=/cloud-shell-src
+ARG DIST=/cloud-shell
+
+COPY cloud-shell ${SRC}
+WORKDIR ${SRC}
+RUN yarn && yarn run build && \
+    mkdir ${DIST} && \
+    cp -rf index.html dist node_modules ${DIST}
+
 FROM scratch
 
 COPY --from=builder /rootfs /
+COPY --from=frontend-builder /cloud-shell /cloud-shell
 
 USER unprivilegeduser
 
-ENTRYPOINT ["/go/bin/che-machine-exec"]
+ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
