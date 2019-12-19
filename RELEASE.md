@@ -1,7 +1,7 @@
 ## Major / Minor Release
 
 - create a branch for the release e.g. `7.6.x`
-- provide a [PR](https://github.com/eclipse/che-machine-exec/pull/66) with bumping the [VERSION](https://github.com/eclipse/che-machine-exec/blob/master/VERSION) file to the `7.6.x` branch
+- provide a [PR](https://github.com/eclipse/che-machine-exec/pull/66) with bumping the [VERSION](https://github.com/eclipse/che-machine-exec/blob/master/VERSION) file to the `7.6.x` branch (changing `7.6.0-SNAPSHOT` to `7.6.0`)
 - [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/) CI is triggered based on the changes in the [release](https://github.com/eclipse/che-machine-exec/tree/release) branch (not `7.6.x`).
 
 In order to trigger the CI once the [PR](https://github.com/eclipse/che-machine-exec/pull/66) is merged to the `7.6.x` one needs to:
