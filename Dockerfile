@@ -41,7 +41,7 @@ RUN yarn && yarn run build && \
 FROM scratch
 
 COPY --from=builder /rootfs /
-COPY --from=frontend-builder /cloud-shell /cloud-shell
+COPY --from=frontend-builder ${DIST} ${DIST}
 
 USER unprivilegeduser
 
