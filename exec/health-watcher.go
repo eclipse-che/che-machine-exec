@@ -13,6 +13,8 @@
 package exec
 
 import (
+	"fmt"
+
 	"github.com/eclipse/che-go-jsonrpc/event"
 	"github.com/eclipse/che-machine-exec/api/model"
 )
@@ -45,6 +47,7 @@ func (watcher *HealthWatcher) CleanUpOnExitOrError() {
 
 		case err := <-watcher.exec.ErrorChan:
 			watcher.manager.Remove(watcher.exec.ID)
+			fmt.Println("Error!!! ", err.Error())
 			execErrorEvent := &model.ExecErrorEvent{ExecId: watcher.exec.ID, Stack: err.Error()}
 			watcher.eventBus.Pub(execErrorEvent)
 		}

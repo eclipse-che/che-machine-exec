@@ -14,10 +14,12 @@ package exec_info
 
 import (
 	"bytes"
+	"fmt"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -106,8 +108,10 @@ func (exec *KubernetesInfoExec) Start() (err error) {
 		Tty:    false,
 	})
 	if err != nil {
+		fmt.Println("Error occurred during opening stream for ", exec.command, " in", exec.containerName, ". Cause: ", err)
 		return err
 	}
+	fmt.Println("Opened stream for ", exec.command, " in", exec.containerName)
 
 	if len(exec.stdErr.Bytes()) != 0 {
 		return errors.New(string(exec.stdErr.Bytes()))

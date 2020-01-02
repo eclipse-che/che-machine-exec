@@ -14,6 +14,7 @@ package shell
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"unicode"
 	"unicode/utf8"
@@ -56,8 +57,9 @@ func (*execInfoParser) ParseShellFromEtcPassWd(etcPassWdContent string, userId s
 	}
 
 	result := rgExp.FindStringSubmatch(etcPassWdContent)
+	fmt.Println("Matched entry in /passwd", result)
 	// First group it's all expression, second on it's "?P<ShellPath>"
-	if len(result) != 2 {
+	if len(result) != 2 || len(result[1]) == 0 {
 		return "", errors.New("unable to find default shell")
 	}
 

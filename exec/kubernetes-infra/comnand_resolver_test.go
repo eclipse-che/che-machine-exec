@@ -31,7 +31,7 @@ func TestShoudBeLaunchedShellProcessWithCwd(t *testing.T) {
 	}
 
 	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sleep 5 && echo 'ABC' && ls -a -li && pwd"}, resolvedCmd)
 }

@@ -63,7 +63,7 @@ func CreateExecManager() ExecManager {
 
 		kubernetesInfoExecCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sClient.CoreV1(), config)
 		shellDetector := shell.NewShellDetector(kubernetesInfoExecCreator, infoParser)
-		cmdResolver := kubernetes_infra.NewCmdResolver(shellDetector)
+		cmdResolver := kubernetes_infra.NewCmdResolver(shellDetector, *kubernetesInfoExecCreator)
 		containerFilter := filter.NewKubernetesContainerFilter(nameSpace, k8sClient.CoreV1())
 
 		return kubernetes_infra.New(nameSpace, k8sClient.CoreV1(), config, containerFilter, *cmdResolver)
