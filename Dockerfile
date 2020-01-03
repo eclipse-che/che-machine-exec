@@ -45,4 +45,4 @@ COPY --from=frontend-builder ${DIST} ${DIST}
 
 USER unprivilegeduser
 
-ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
+ENTRYPOINT ["/go/bin/che-machine-exec"]
