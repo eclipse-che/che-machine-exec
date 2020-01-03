@@ -75,14 +75,14 @@ func New(
 	}
 }
 
-func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (execId int, err error) {
 	if machineExec.Identifier.MachineName != "" {
 		containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
 		if err != nil {
 			return -1, err
 		}
-		if err = manager.doCreate(machineExec, containerInfo); err != nil {
-			return -1, err
+		if err = manager.doCreate(machineExec, containerInfo); err == nil {
+			return machineExec.ID, nil
 		}
 	} else {
 		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
@@ -93,18 +93,19 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 		for _, containerInfo := range containersInfo {
 			err = manager.doCreate(machineExec, containerInfo)
 			if err == nil {
-				break
-			} else {
-				return -1, err
+				return machineExec.ID, nil
 			}
 		}
 	}
 
-	return machineExec.ID, nil
+	return -1, err
 }
 
 func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo) error {
-	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
+	resolvedCmd, err := manager.ResolveCmd(*machineExec, containerInfo)
+	if err != nil {
+		return err
+	}
 
 	req := manager.api.RESTClient().
 		Post().
@@ -115,7 +116,7 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 		// set up params
 		VersionedParams(&v1.PodExecOptions{
 			Container: containerInfo.ContainerName,
-			Command:   machineExec.Cmd,
+			Command:   resolvedCmd,
 			Stdout:    true,
 			Stderr:    true,
 			Stdin:     true,
@@ -126,6 +127,7 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 	if err != nil {
 		return err
 	}
+	machineExec.Cmd = resolvedCmd
 
 	defer machineExecs.mutex.Unlock()
 	machineExecs.mutex.Lock()
