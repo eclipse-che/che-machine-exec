@@ -57,7 +57,7 @@ func (*execInfoParser) ParseShellFromEtcPassWd(etcPassWdContent string, userId s
 
 	result := rgExp.FindStringSubmatch(etcPassWdContent)
 	// First group it's all expression, second on it's "?P<ShellPath>"
-	if len(result) != 2 {
+	if len(result) != 2 || result[1] == "" {
 		return "", errors.New("unable to find default shell")
 	}
 
