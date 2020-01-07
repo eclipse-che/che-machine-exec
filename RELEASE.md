@@ -1,5 +1,9 @@
 ## Major / Minor Release
 
+Below are the steps needed to do a release. But rather than doing them by hand, you can run this script:
+
+https://github.com/eclipse/che-machine-exec/blob/master/RELEASE.sh
+
 - create a branch for the release e.g. `7.6.x`
 - provide a [PR](https://github.com/eclipse/che-machine-exec/pull/66) with bumping the [VERSION](https://github.com/eclipse/che-machine-exec/blob/master/VERSION) file to the `7.6.x` branch (changing `7.6.0-SNAPSHOT` to `7.6.0`)
 - [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/) CI is triggered based on the changes in the [release](https://github.com/eclipse/che-machine-exec/tree/release) branch (not `7.6.x`).
