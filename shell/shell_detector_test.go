@@ -14,6 +14,7 @@ package shell
 
 import (
 	"fmt"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ var (
 	shell            = "/bin/bash"
 	uidContent       = "1000\n"
 	parsedUID        = "1000"
-	containerInfo    = make(map[string]string)
+	containerInfo    = &model.ContainerInfo{}
 	etcPasswdContent = "user:x:1000:1000:user,,,:/home/user:/bin/bash"
 	testErr          = errors.New("some error")
 )

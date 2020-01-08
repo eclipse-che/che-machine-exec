@@ -75,24 +75,48 @@ func New(
 	}
 }
 
-func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
-	containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
-	if err != nil {
-		return -1, err
+func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (execId int, err error) {
+	if machineExec.Identifier.MachineName != "" {
+		containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
+		if err != nil {
+			return -1, err
+		}
+		if err = manager.doCreate(machineExec, containerInfo); err == nil {
+			return machineExec.ID, nil
+		}
+	} else {
+		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
+		containersInfo, err := manager.GetContainerList()
+		if err != nil {
+			return -1, err
+		}
+		for _, containerInfo := range containersInfo {
+			err = manager.doCreate(machineExec, containerInfo)
+			if err == nil {
+				return machineExec.ID, nil
+			}
+		}
 	}
 
-	machineExec.Cmd = manager.ResolveCmd(*machineExec, containerInfo)
+	return -1, err
+}
+
+func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo) error {
+	resolvedCmd, err := manager.ResolveCmd(*machineExec, containerInfo)
+	if err != nil {
+		return err
+	}
 
 	req := manager.api.RESTClient().
 		Post().
 		Namespace(manager.nameSpace).
 		Resource(exec_info.Pods).
-		Name(containerInfo[exec_info.PodName]).
+		Name(containerInfo.PodName).
 		SubResource(exec_info.Exec).
 		// set up params
 		VersionedParams(&v1.PodExecOptions{
-			Container: containerInfo[exec_info.ContainerName],
-			Command:   machineExec.Cmd,
+			Container: containerInfo.ContainerName,
+			Command:   resolvedCmd,
 			Stdout:    true,
 			Stderr:    true,
 			Stdin:     true,
@@ -101,8 +125,9 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 
 	executor, err := remotecommand.NewSPDYExecutor(manager.config, exec_info.Post, req.URL())
 	if err != nil {
-		return -1, err
+		return err
 	}
+	machineExec.Cmd = resolvedCmd
 
 	defer machineExecs.mutex.Unlock()
 	machineExecs.mutex.Lock()
@@ -117,7 +142,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 
 	machineExecs.execMap[machineExec.ID] = machineExec
 
-	return machineExec.ID, nil
+	return nil
 }
 
 // Clean up information about exec

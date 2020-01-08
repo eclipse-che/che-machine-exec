@@ -15,12 +15,14 @@ package kubernetes_infra
 import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/mocks"
+	"github.com/eclipse/che-machine-exec/shell"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"errors"
 )
 
 var (
-	containerInfo = make(map[string]string)
+	containerInfo = &model.ContainerInfo{}
 )
 
 func TestShoudBeLaunchedShellProcessWithCwd(t *testing.T) {
@@ -30,8 +32,8 @@ func TestShoudBeLaunchedShellProcessWithCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sleep 5 && echo 'ABC' && ls -a -li && pwd"}, resolvedCmd)
 }
@@ -42,8 +44,8 @@ func TestShoudBeLaunchedShellProcessWithoutCwd(t *testing.T) {
 		Cmd:  []string{"sh", "-c", "sleep 5 && echo 'ABC' && ls -a -li && pwd"},
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "sleep 5 && echo 'ABC' && ls -a -li && pwd"}, resolvedCmd)
 }
@@ -55,8 +57,8 @@ func TestShouldBeLaunchedTerminalProcessWithCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sh -l"}, resolvedCmd)
 }
@@ -67,8 +69,8 @@ func TestShouldBeLaunchedTerminalProcessWithoutCwd(t *testing.T) {
 		Cmd:  []string{"sh", "-l"},
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "sh -l"}, resolvedCmd)
 }
@@ -81,8 +83,8 @@ func TestShouldBedAutoDetectedShellForTerminalCommandWithCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"bash", "-c", "cd /projects/testprj; bash"}, resolvedCmd)
 }
@@ -95,8 +97,8 @@ func TestShouldBeAutoDetectedShellForTerminalCommandWithoutCwd(t *testing.T) {
 		Type: "shell",
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"bash", "-c", "bash"}, resolvedCmd)
 }
@@ -108,8 +110,8 @@ func TestShouldBeResolvedCwdLikeUriForShellCommand(t *testing.T) {
 		Cwd:  "file:///projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; mvn clean install"}, resolvedCmd)
 }
@@ -121,8 +123,8 @@ func TestShouldBeResolvedCwdLikeUriForTerminalCommand(t *testing.T) {
 		Cwd:  "file:///projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{})
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; sh -l"}, resolvedCmd)
 }
@@ -136,8 +138,8 @@ func TestShouldBeAutoDetectedShellForShellCommandWithCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; top"}, resolvedCmd)
 }
@@ -151,8 +153,8 @@ func TestShouldBeAutoDetectShellForShellCommandWithoutCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; top"}, resolvedCmd)
 }
@@ -166,8 +168,8 @@ func TestShouldBeLaunchedNonShellCommandWithCwd(t *testing.T) {
 		Cwd:  "/projects/testprj",
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"zsh", "-c", "cd /projects/testprj; yarn run build"}, resolvedCmd)
 }
@@ -180,8 +182,8 @@ func TestShouldBeLaunchedNonShellCommandWithoutCwd(t *testing.T) {
 		Cmd:  []string{"yarn", "run", "build"},
 	}
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, &mocks.InfoExecCreator{})
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"zsh", "-c", "yarn run build"}, resolvedCmd)
 }
@@ -193,9 +195,13 @@ func TestShouldUseDefaultShellToLaunchCommandWithoutCwdWhenShellIsNotDefined(t *
 		Type: "process",
 		Cmd:  []string{"yarn", "run", "build"},
 	}
+	infoExecCreatorMock := &mocks.InfoExecCreator{}
+	infoExecMock := &mocks.InfoExec{}
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecMock.On("Start").Return(nil)
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "yarn run build"}, resolvedCmd)
 }
@@ -208,9 +214,35 @@ func TestShouldUseDefaultShellToLaunchCommandWithCwdWhenShellIsNotDefined(t *tes
 		Cmd:  []string{"yarn", "run", "build"},
 		Cwd:  "/projects/testprj",
 	}
+	infoExecCreatorMock := &mocks.InfoExecCreator{}
+	infoExecMock := &mocks.InfoExec{}
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecMock.On("Start").Return(nil)
 
-	cmdResolver := NewCmdResolver(shellDetectorMock)
-	resolvedCmd := cmdResolver.ResolveCmd(exec, containerInfo)
+	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)
+	resolvedCmd, _ := cmdResolver.ResolveCmd(exec, containerInfo)
 
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; yarn run build"}, resolvedCmd)
+}
+
+func TestThrowAnErrorWhenEvenDefaultShellDoesNotWork(t *testing.T) {
+	shellDetectorMock := &mocks.ContainerShellDetector{}
+	shellDetectorMock.On("DetectShell", containerInfo).Return("/sbin/nologin", nil)
+	exec := model.MachineExec{
+		Type: "process",
+		Cmd:  []string{"yarn", "run", "build"},
+		Cwd:  "/projects/testprj",
+	}
+
+	err := errors.New("Some error")
+
+	infoExecCreatorMock := &mocks.InfoExecCreator{}
+	infoExecMock := &mocks.InfoExec{}
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecMock.On("Start").Return(err)
+
+	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)
+	_, actualErr := cmdResolver.ResolveCmd(exec, containerInfo)
+
+	assert.Equal(t, err, actualErr)
 }

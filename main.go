@@ -22,18 +22,24 @@ import (
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 )
 
-var url string
+var (
+	url, staticPath string
+)
 
 func init() {
-	flag.StringVar(&url, "url", ":4444", "Host:Port address. ")
+	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
+	flag.StringVar(&staticPath, "static", "", "/home/user/frontend - absolute path to folder with static resources.")
 }
 
 func main() {
 	flag.Parse()
 
 	r := gin.Default()
+
+	serveStaticResources(staticPath, r)
 
 	// connect to exec api end point(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
@@ -69,5 +75,11 @@ func main() {
 
 	if err := r.Run(url); err != nil {
 		log.Fatal("Unable to start server. Cause: ", err.Error())
+	}
+}
+
+func serveStaticResources(fsPath string, r *gin.Engine) {
+	if fsPath != "" {
+		r.StaticFS("/static", http.Dir(fsPath))
 	}
 }

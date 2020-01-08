@@ -13,6 +13,7 @@
 package shell
 
 import (
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec-info"
 )
 
@@ -26,7 +27,7 @@ const (
 type ContainerShellDetector interface {
 	// Detect preferable shell inside container for current user id.
 	// Create new info exec get information about preferable default shell.
-	DetectShell(containerInfo map[string]string) (shell string, err error)
+	DetectShell(containerInfo *model.ContainerInfo) (shell string, err error)
 }
 
 // Component to detect shell inside container with help creation information execs.
@@ -45,7 +46,7 @@ func NewShellDetector(execInfoCreator exec_info.InfoExecCreator, parser ExecInfo
 }
 
 // Detect default shell inside container by container info.
-func (detector *ShellDetector) DetectShell(containerInfo map[string]string) (shell string, err error) {
+func (detector *ShellDetector) DetectShell(containerInfo *model.ContainerInfo) (shell string, err error) {
 	getUserIdCommand := []string{"id", "-u"}
 	userIdContent, err := detector.spawnExecInfo(getUserIdCommand, containerInfo)
 	if err != nil {
@@ -66,7 +67,7 @@ func (detector *ShellDetector) DetectShell(containerInfo map[string]string) (she
 	return detector.ParseShellFromEtcPassWd(etcPassWdContent, userId)
 }
 
-func (detector ShellDetector) spawnExecInfo(command []string, containerInfo map[string]string) (execOutPut string, err error) {
+func (detector ShellDetector) spawnExecInfo(command []string, containerInfo *model.ContainerInfo) (execOutPut string, err error) {
 	execInfo := detector.CreateInfoExec(command, containerInfo)
 
 	if err := execInfo.Start(); err != nil {
