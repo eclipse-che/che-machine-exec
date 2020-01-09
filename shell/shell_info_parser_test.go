@@ -47,7 +47,7 @@ func TestShouldFailParseUIDWithEmptyContent(t *testing.T) {
 	assert.Equal(t, "", uid)
 }
 
-func TestShouldShellFromEtcPassWd(t *testing.T) {
+func TestShouldParseShellFromEtcPassWd(t *testing.T) {
 	etcPasswdContent := "user:x:1000:1000:user,,,:/home/user:/bin/bash\n" +
 		"nvidia-persistenced:x:121:127:NVIDIA Persistence Daemon,,,:/nonexistent:/sbin/nologin\n" +
 		"libvirt-qemu:x:64055:128:Libvirt Qemu,,,:/var/lib/libvirt:/usr/sbin/nologin\n" +
@@ -61,7 +61,7 @@ func TestShouldShellFromEtcPassWd(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestShouldShellFromEtcPassWd2(t *testing.T) {
+func TestShouldParseShellFromEtcPassWd2(t *testing.T) {
 	etcPasswdContent := "nvidia-persistenced:x:121:127:NVIDIA Persistence Daemon,,,:/nonexistent:/sbin/nologin\n" +
 		"libvirt-qemu:x:64055:128:Libvirt Qemu,,,:/var/lib/libvirt:/usr/sbin/nologin\n" +
 		"user:x:1000:1000:user,,,:/home/user:/bin/bash\n" +
@@ -75,7 +75,7 @@ func TestShouldShellFromEtcPassWd2(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestShouldShellFromEtcPassWd3(t *testing.T) {
+func TestShouldParseShellFromEtcPassWd3(t *testing.T) {
 	etcPasswdContent := "nvidia-persistenced:x:121:127:NVIDIA Persistence Daemon,,,:/nonexistent:/sbin/nologin\n" +
 		"libvirt-qemu:x:64055:128:Libvirt Qemu,,,:/var/lib/libvirt:/usr/sbin/nologin\n" +
 		"root:x:0:0:root:/root:/bin/bash" +
@@ -87,6 +87,20 @@ func TestShouldShellFromEtcPassWd3(t *testing.T) {
 
 	assert.Equal(t, "/bin/bash", shell)
 	assert.Nil(t, err)
+}
+
+func TestShouldFailParseShellBecauseEmptyValue(t *testing.T) {
+	etcPasswdContent := "nvidia-persistenced:x:121:127:NVIDIA Persistence Daemon,,,:/nonexistent:/sbin/nologin\n" +
+		"libvirt-qemu:x:64055:128:Libvirt Qemu,,,:/var/lib/libvirt:/usr/sbin/nologin\n" +
+		"root:x:0:0:root:/root:/bin/bash" +
+		"user:x:1000:1000:user,,,:/home/user:\n"
+	uid := "1000"
+
+	shellExecInfoParser := &execInfoParser{}
+	shell, err := shellExecInfoParser.ParseShellFromEtcPassWd(etcPasswdContent, uid)
+
+	assert.Equal(t, "", shell)
+	assert.NotNil(t, err)
 }
 
 func TestShouldFailParseShellFromEtcPasswdBecauseUIDIsNotExists(t *testing.T) {
