@@ -42,8 +42,8 @@ TMP=$(mktemp -d); pushd "$TMP" > /dev/null || exit 1
 echo "Check out ${REPO} to ${TMP}/${REPO##*/}"
 git clone "${REPO}" -q
 cd "${REPO##*/}" || exit 1
-git fetch origin ${BASEBRANCH}:${BASEBRANCH}
-git checkout ${BASEBRANCH}
+git fetch origin "${BASEBRANCH}":"${BASEBRANCH}"
+git checkout "${BASEBRANCH}"
 
 # create new branch off ${BASEBRANCH} (or check out latest commits if branch already exists), then push to origin
 if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
@@ -73,8 +73,8 @@ if [[ $TRIGGER_RELEASE -eq 1 ]]; then
 fi
 
 # now update ${BASEBRANCH} to the new snapshot version
-git fetch origin ${BASEBRANCH}:${BASEBRANCH}
-git checkout ${BASEBRANCH}
+git fetch origin "${BASEBRANCH}":"${BASEBRANCH}"
+git checkout "${BASEBRANCH}"
 
 # change VERSION file + commit change into ${BASEBRANCH} branch
 if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
@@ -90,9 +90,9 @@ echo "${NEXTVERSION}" > VERSION
 BRANCH=${BASEBRANCH}
 COMMIT_MSG="[release] Bump to ${NEXTVERSION} in ${BRANCH}"
 git commit -s -m "${COMMIT_MSG}" VERSION
-git pull origin ${BRANCH}
+git pull origin "${BRANCH}"
 
-PUSH_TRY="$(git push origin ${BRANCH})"
+PUSH_TRY="$(git push origin "${BRANCH}")"
 # shellcheck disable=SC2181
 if [[ $? -gt 0 ]] || [[ $PUSH_TRY == *"protected branch hook declined"* ]]; then
 PR_BRANCH=pr-master-to-${NEXTVERSION}
@@ -110,4 +110,4 @@ fi
 # cleanup tmp dir
 cd /tmp && rm -fr "$TMP"
 
-popd > /dev/null
+popd > /dev/null || exit
