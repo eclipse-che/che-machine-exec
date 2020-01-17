@@ -10,15 +10,15 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package kubernetes_infra
+package exec
 
 import (
+	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/mocks"
 	"github.com/eclipse/che-machine-exec/shell"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"errors"
 )
 
 var (

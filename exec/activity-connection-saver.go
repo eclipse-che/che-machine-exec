@@ -10,7 +10,7 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package kubernetes_infra
+package exec
 
 import (
 	"github.com/eclipse/che-machine-exec/api/model"

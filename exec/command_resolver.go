@@ -10,7 +10,7 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package kubernetes_infra
+package exec
 
 import (
 	"fmt"
@@ -32,8 +32,8 @@ type CmdResolver struct {
 // NewCmdResolver creates new instance CmdResolver.
 func NewCmdResolver(shellDetector shell.ContainerShellDetector, infoExecCreator exec_info.InfoExecCreator) *CmdResolver {
 	return &CmdResolver{
-		ContainerShellDetector:    shellDetector,
-		InfoExecCreator: infoExecCreator,
+		ContainerShellDetector: shellDetector,
+		InfoExecCreator:        infoExecCreator,
 	}
 }
 

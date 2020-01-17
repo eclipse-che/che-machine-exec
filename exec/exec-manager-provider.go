@@ -16,8 +16,6 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/client"
 	"github.com/eclipse/che-machine-exec/exec-info"
-	"github.com/eclipse/che-machine-exec/exec/docker-infra"
-	"github.com/eclipse/che-machine-exec/exec/kubernetes-infra"
 	"github.com/eclipse/che-machine-exec/filter"
 	"github.com/eclipse/che-machine-exec/shell"
 	"github.com/gorilla/websocket"
@@ -46,45 +44,30 @@ type ExecManager interface {
 	Resize(id int, cols uint, rows uint) error
 }
 
-// Create and return new ExecManager for current infrastructure.
+// CreateExecManager creates and returns new instance ExecManager.
 // Fail with panic if it is impossible.
-func CreateExecManager() ExecManager {
-
-	infoParser := shell.NewExecInfoParser()
-
-	switch {
-	case isKubernetesInfra():
-		log.Println("Use kubernetes implementation")
-
-		nameSpace := kubernetes_infra.GetNameSpace()
+func CreateExecManager() (exeManager ExecManager) {
+	if isValidKubernetesInfra() {
+		infoParser := shell.NewExecInfoParser()
+		nameSpace := GetNameSpace()
 		clientProvider := client.NewKubernetesClientProvider()
 		k8sClient := clientProvider.GetKubernetesClient()
 		config := clientProvider.GetKubernetesConfig()
 
 		kubernetesInfoExecCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sClient.CoreV1(), config)
 		shellDetector := shell.NewShellDetector(kubernetesInfoExecCreator, infoParser)
-		cmdResolver := kubernetes_infra.NewCmdResolver(shellDetector, kubernetesInfoExecCreator)
+		cmdResolver := NewCmdResolver(shellDetector, kubernetesInfoExecCreator)
 		containerFilter := filter.NewKubernetesContainerFilter(nameSpace, k8sClient.CoreV1())
 
-		return kubernetes_infra.New(nameSpace, k8sClient.CoreV1(), config, containerFilter, *cmdResolver)
-	case isDockerInfra():
-		log.Println("Use docker implementation")
-
-		dockerClient := client.NewDockerClientProvider().GetDockerClient()
-
-		dockerExecInfoCreator := exec_info.NewDockerInfoExecCreator(dockerClient)
-		shellDetector := shell.NewShellDetector(dockerExecInfoCreator, infoParser)
-		containerFilter := filter.NewDockerContainerFilter(dockerClient)
-
-		return docker_infra.New(dockerClient, containerFilter, shellDetector)
-	default:
-		log.Println("Error: Unable to create manager for current infrastructure.")
+		return Newk8sExecManager(nameSpace, k8sClient.CoreV1(), config, containerFilter, *cmdResolver)
 	}
+
+	log.Panic("Error: Unable to create manager. Unable to get service account info.")
 
 	return nil
 }
 
-// Get exec manager for current infrastructure
+// GetExecManager returns instance exec manager
 func GetExecManager() ExecManager {
 	if execManager == nil {
 		execManager = CreateExecManager()
@@ -92,18 +75,9 @@ func GetExecManager() ExecManager {
 	return execManager
 }
 
-func isKubernetesInfra() bool {
+func isValidKubernetesInfra() bool {
 	stat, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount")
 	if err == nil && stat.IsDir() {
-		return true
-	}
-
-	return false
-}
-
-func isDockerInfra() bool {
-	stat, err := os.Stat("/var/run/docker.sock")
-	if err == nil && !stat.Mode().IsRegular() && !stat.IsDir() {
 		return true
 	}
 

@@ -10,7 +10,7 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-package kubernetes_infra
+package exec
 
 import (
 	"errors"
@@ -59,7 +59,7 @@ var (
 /**
  * Create new instance of the kubernetes exec manager.
  */
-func New(
+func Newk8sExecManager(
 	namespace string,
 	api corev1.CoreV1Interface,
 	config *rest.Config,

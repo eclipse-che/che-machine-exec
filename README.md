@@ -17,29 +17,6 @@ Build docker image with che-machine-exec manually:
 docker build --no-cache -t eclipse/che-machine-exec .
 ```
 
-## Run docker container
-
-Run docker container with che-machine-exec manually:
-
-```bash
-docker run --rm -p 4444:4444 -v /var/run/docker.sock:/var/run/docker.sock eclipse/che-machine-exec
-```
-
-## How to use machine-exec image with Eclipse CHE workspace on the docker infrastructure
-
-To configure Eclipse CHE on the docker infrastructure we are using che.env configuration file.
-che.env file located in the CHE `data` folder. Edit and save che.env file: apply docker.sock path (by default it's `/var/run/docker.sock`) to the workspace volume property `CHE_WORKSPACE_VOLUME`:
-
-Example:
- ```bash
-CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
-```
- > Notice: all configuration changes become avaliable after restart Eclipse CHE.
-
-## Test che-machine-exec with help UI on the docker infrastructure
-
-Run Eclipse CHE. You can create new Eclipse CHE workspace with integrated Theia IDE from stack 'Theia IDE on docker'. Then you can [test che-machine-exec with help eclipse-che-theia-terminal](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
-
 ## Test che-machine-exec on the local Openshift
 
 To test che-machine-exec you need deploy Eclipse CHE to the openshift locally. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy)
