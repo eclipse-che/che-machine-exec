@@ -2,81 +2,12 @@
 
 
 [[projects]]
-  digest = "1:0d9fbf9830904c8c43b860c49664754c18913eb2a7e1c868edb212a838e2cdbd"
-  name = "github.com/Microsoft/go-winio"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "fff283ad5116362ca252298cfc9b95828956d85d"
-  version = "v0.3.8"
-
-[[projects]]
-  digest = "1:8011d6367a04c40f1a9f50274e5e22b1cd5c05104d87cd8cf21d5a56c0cc3bd8"
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ba1b36c82c5e05c4f912a88eab0dcd91a171688f"
-  version = "v0.11.5"
-
-[[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
-
-[[projects]]
-  digest = "1:6b5297ed2caa15361468ddbb4add02a8498b2c1082c3ac0a7eb0dde01f13428a"
-  name = "github.com/docker/distribution"
-  packages = [
-    "digest",
-    "reference",
-  ]
-  pruneopts = "UT"
-  revision = "28602af35aceda2f8d571bad7ca37a54cf0250bc"
-
-[[projects]]
-  digest = "1:58287951ff22d1417122576c8c7ea36d9fea5bdf359c2691b440a4615c0086c3"
-  name = "github.com/docker/docker"
-  packages = [
-    "api/types",
-    "api/types/blkiodev",
-    "api/types/container",
-    "api/types/events",
-    "api/types/filters",
-    "api/types/mount",
-    "api/types/network",
-    "api/types/reference",
-    "api/types/registry",
-    "api/types/strslice",
-    "api/types/swarm",
-    "api/types/time",
-    "api/types/versions",
-    "api/types/volume",
-    "client",
-    "pkg/tlsconfig",
-  ]
-  pruneopts = "UT"
-  revision = "f5ec1e2936dcbe7b5001c2b817188b095c700c27"
-  version = "v17.03.2-ce"
-
-[[projects]]
-  digest = "1:07bb488a98c1191b663ca88f48f2a8e6576495fba83d270eeb3bf627e0f8001d"
-  name = "github.com/docker/go-connections"
-  packages = [
-    "nat",
-    "sockets",
-    "tlsconfig",
-  ]
-  pruneopts = "UT"
-  revision = "ecb4cb2dd420ada7df7f2593d6c25441f65f69f2"
-
-[[projects]]
-  digest = "1:aaf8d8f8ffb92e0c4985a8796655071cb9a1870c585ad50d968f78931b871a98"
-  name = "github.com/docker/go-units"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "8a7beacffa3009a9ac66bad506b18ffdd110cf97"
 
 [[projects]]
   digest = "1:58be7025fd84632dfbb8a398f931b5bdbbecc0390e4385df4ae56775487a0f87"
@@ -212,14 +143,6 @@
   revision = "05fbef0ca5da472bbf96c9322b84a53edc03c9fd"
 
 [[projects]]
-  digest = "1:38ee335aedf4626620f3cf8f605661e71abdcce7b40b38921962beb3980f0a20"
-  name = "github.com/opencontainers/runc"
-  packages = ["libcontainer/user"]
-  pruneopts = "UT"
-  revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
-  version = "v0.1.1"
-
-[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -276,16 +199,14 @@
   revision = "81e90905daefcd6fd217b62423c0908922eadb30"
 
 [[projects]]
-  digest = "1:d827f3086d4657d1c76a169c6bdf16e7e1bfc43f999c50b3e2a4a5113992f114"
+  digest = "1:7f8cf4434657e2b21067f70930402b43144b6ff94022171be5cfcb5924c7f27c"
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp",
     "http2",
     "http2/hpack",
     "idna",
     "lex/httplex",
-    "proxy",
   ]
   pruneopts = "UT"
   revision = "1c05540f6879653db88113bc4a2b70aec4bd491f"
@@ -488,11 +409,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/docker/docker/api/types",
-    "github.com/docker/docker/api/types/container",
-    "github.com/docker/docker/api/types/filters",
-    "github.com/docker/docker/api/types/network",
-    "github.com/docker/docker/client",
     "github.com/eclipse/che-go-jsonrpc",
     "github.com/eclipse/che-go-jsonrpc/event",
     "github.com/eclipse/che-go-jsonrpc/jsonrpcws",
@@ -501,7 +417,6 @@
     "github.com/pkg/errors",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
-    "golang.org/x/net/context",
     "k8s.io/api/core/v1",
     "k8s.io/api/policy/v1beta1",
     "k8s.io/apimachinery/pkg/apis/meta/v1",

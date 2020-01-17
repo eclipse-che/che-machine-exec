@@ -29,10 +29,6 @@
   unused-packages = true
 
 [[constraint]]
-  name = "github.com/docker/docker"
-  version = "=v17.03.2-ce"
-
-[[constraint]]
   name = "github.com/eclipse/che-go-jsonrpc"
   version = "=0.1.0"
 
@@ -44,35 +40,11 @@
   name = "github.com/gin-contrib/sse"
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
 
-[[constraint]]
-  name = "golang.org/x/net"
-  branch = "1c05540f6879653db88113bc4a2b70aec4bd491f"
-
 # Transitive dependencies.
-
-[[override]]
- name = "github.com/Microsoft/go-winio"
- version = "=v0.3.8"
 
 [[override]]
  name = "github.com/gorilla/websocket"
  revision = "361d4c0ffd78338ebe0a9e6320cdbe115d7dc026"
-
-[[override]]
- name = "github.com/docker/distribution"
- revision = "28602af35aceda2f8d571bad7ca37a54cf0250bc"
-
-[[override]]
- name = "github.com/docker/go-connections"
- revision = "ecb4cb2dd420ada7df7f2593d6c25441f65f69f2"
-
-[[override]]
- name = "github.com/docker/go-units"
- revision = "8a7beacffa3009a9ac66bad506b18ffdd110cf97"
-
-[[override]]
- name = "github.com/Sirupsen/logrus"
- version = "=v0.11.5"
 
 [[override]]
  name = "github.com/pkg/errors"
@@ -146,12 +118,12 @@
   revision = "81e90905daefcd6fd217b62423c0908922eadb30"
 
 [[override]]
-  name = "golang.org/x/net"
-  revision = "1c05540f6879653db88113bc4a2b70aec4bd491f"
-
-[[override]]
   name = "golang.org/x/sys"
   revision = "95c6576299259db960f6c5b9b69ea52422860fce"
+
+[[override]]
+  name = "golang.org/x/net"
+  revision = "1c05540f6879653db88113bc4a2b70aec4bd491f"
 
 [[override]]
   name = "golang.org/x/text"
@@ -192,7 +164,3 @@
 [[override]]
   name = "github.com/golang/protobuf"
   version = "=v1.2.0"
-
-[[override]]
-  name = "github.com/opencontainers/runc"
-  version = "=v0.1.1"
