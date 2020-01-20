@@ -30,6 +30,6 @@ FROM scratch
 COPY --from=builder /rootfs /
 
 USER unprivilegeduser
-ENTRYPOINT ["/go/bin/che-machine-exec"]
+ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
 
 # append Brew metadata here
