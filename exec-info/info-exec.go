@@ -15,7 +15,7 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 )
 
-// Exec to spawn some simple not bash based command
+// InfoExec - exec to spawn some simple not shell based command
 // which returns output with some useful information.
 type InfoExec interface {
 	// Spawn info exec inside container. Return error in
@@ -25,7 +25,7 @@ type InfoExec interface {
 	GetOutput() (output string)
 }
 
-// Creator for information exec.
+// InfoExecCreator - factory for InfoExec creation.
 type InfoExecCreator interface {
 	// Create new info exec. Return error in case fail.
 	CreateInfoExec(command []string, containerInfo *model.ContainerInfo) (infoExec InfoExec)
