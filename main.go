@@ -40,9 +40,9 @@ func main() {
 	r := gin.Default()
 
 	if staticPath != "" {
-		r.StaticFS(staticPath, http.Dir(staticPath))
+		r.StaticFS("static", http.Dir(staticPath))
 		r.GET("/", func(c *gin.Context) {
-			c.Redirect(http.StatusMovedPermanently, staticPath)
+			c.Redirect(http.StatusMovedPermanently, "static")
 		})
 	}
 
