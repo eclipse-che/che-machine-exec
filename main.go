@@ -39,7 +39,12 @@ func main() {
 
 	r := gin.Default()
 
-	serveStaticResources(staticPath, r)
+	if staticPath != "" {
+		r.StaticFS("/static", http.Dir(staticPath))
+		r.GET("/", func(c *gin.Context) {
+			c.Redirect(http.StatusMovedPermanently, "/static")
+		})
+	}
 
 	// connect to exec api end point(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
@@ -75,11 +80,5 @@ func main() {
 
 	if err := r.Run(url); err != nil {
 		log.Fatal("Unable to start server. Cause: ", err.Error())
-	}
-}
-
-func serveStaticResources(fsPath string, r *gin.Engine) {
-	if fsPath != "" {
-		r.StaticFS("/static", http.Dir(fsPath))
 	}
 }
