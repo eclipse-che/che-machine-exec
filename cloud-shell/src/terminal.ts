@@ -66,6 +66,10 @@ export class CloudShellTerminal {
         this.xterm.write(text);
     }
 
+    sendLine(text: string) {
+        this.xterm.writeln(text);
+    }
+
     dispose() {
         this.xterm.dispose();
     }
