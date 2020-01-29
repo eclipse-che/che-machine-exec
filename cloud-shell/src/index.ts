@@ -24,7 +24,7 @@ const attachUrl = hostUrl + '/attach';
 const terminal: CloudShellTerminal = new CloudShellTerminal();
 
 terminal.open(terminalElem);
-terminal.sendText('Welcome to the Cloud Shell.\n');
+terminal.sendLine('Welcome to the Cloud Shell.');
 
 console.log(connectUrl);
 const rpcConnecton = new JsonRpcConnection(connectUrl);
