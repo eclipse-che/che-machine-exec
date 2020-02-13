@@ -49,14 +49,14 @@ func NewKubernetesContainerFilter(namespace string, podGetterApi corev1.PodsGett
 func (filter *KubernetesContainerFilter) GetContainerList() (containersInfo []*model.ContainerInfo, err error) {
 	pods, err := filter.getWorkspacePods()
 	if err != nil {
-		return containersInfo, err
+		return nil, err
 	}
 
 	for _, pod := range pods.Items {
 		for _, container := range pod.Spec.Containers {
 			for _, env := range container.Env {
 				if env.Name == MachineNameEnvVar {
-					containersInfo = append(containersInfo, &model.ContainerInfo{ContainerName: env.Value, PodName: pod.Name})
+					containersInfo = append(containersInfo, &model.ContainerInfo{ContainerName: container.Name, PodName: pod.Name})
 				}
 			}
 		}
