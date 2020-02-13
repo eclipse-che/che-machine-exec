@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
+	flag.StringVar(&url, "url", "127.0.0.1:4444", "Host:Port address.")
 	flag.StringVar(&staticPath, "static", "", "/home/user/frontend - absolute path to folder with static resources.")
 }
 
