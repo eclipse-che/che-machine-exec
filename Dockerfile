@@ -11,38 +11,47 @@
 #
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
+FROM golang:1.10.3-alpine as go_builder
 
-FROM golang:1.10.3-alpine as builder
+ENV USER=machine-exec
+ENV UID=12345
+ENV GID=23456
+
+# Add user that will be able to start machine-exec-binary but nothing more
+# the result will be propagated then into scratch image
+# See https://stackoverflow.com/a/55757473/12429735RUN
+RUN addgroup --gid "$GID" "$USER" \
+      && adduser \
+      --disabled-password \
+      --gecos "" \
+      --home "$(pwd)" \
+      --ingroup "$USER" \
+      --no-create-home \
+      --uid "$UID" \
+      "$USER"
+# initialize CA certificates to propagate them into scratch image
+RUN apk update && apk add --no-cache git && update-ca-certificates
+
+# compile machine exec binary file
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
-RUN apk add --no-cache ca-certificates
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-RUN adduser -D -g '' unprivilegeduser && \
-    mkdir -p /rootfs/tmp /rootfs/etc /rootfs/etc/ssl/certs /rootfs/go/bin && \
-    # In the `scratch` you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
-    # That's why prepare absent `/tmp` folder for scratch image 
-    chmod 1777 /rootfs/tmp && \
-    cp -rf /etc/passwd /rootfs/etc && \
-    cp -rf /etc/ssl/certs/ca-certificates.crt /rootfs/etc/ssl/certs && \
-    cp -rf /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /rootfs/go/bin
-
-FROM node:10.16-alpine as frontend-builder
-
-ARG SRC=/cloud-shell-src
-ARG DIST=/cloud-shell
-
-COPY cloud-shell ${SRC}
-WORKDIR ${SRC}
-RUN yarn && yarn run build && \
-    mkdir ${DIST} && \
-    cp -rf index.html dist node_modules ${DIST}
+FROM node:10.16-alpine as cloud_shell_builder
+COPY cloud-shell cloud-shell-src
+WORKDIR cloud-shell-src
+RUN yarn && \
+    yarn run build && \
+    mkdir /app && \
+    cp -rf index.html dist node_modules /app
 
 FROM scratch
+COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=go_builder /etc/passwd /etc/passwd
+COPY --from=go_builder /etc/group /etc/group
+USER machine-exec
 
-COPY --from=builder /rootfs /
-COPY --from=frontend-builder ${DIST} ${DIST}
-
-USER unprivilegeduser
+COPY --from=go_builder /go/bin/che-machine-exec /go/bin/che-machine-exec
+COPY --from=cloud_shell_builder /app /cloud-shell
 
 ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
