@@ -40,6 +40,10 @@
   name = "github.com/gin-contrib/sse"
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
 
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "v1.4.2"
+
 # Transitive dependencies.
 
 [[override]]
