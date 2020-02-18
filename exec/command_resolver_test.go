@@ -197,7 +197,7 @@ func TestShouldUseDefaultShellToLaunchCommandWithoutCwdWhenShellIsNotDefined(t *
 	}
 	infoExecCreatorMock := &mocks.InfoExecCreator{}
 	infoExecMock := &mocks.InfoExec{}
-	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell, "-c", "exit 0"}, containerInfo).Return(infoExecMock)
 	infoExecMock.On("Start").Return(nil)
 
 	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)
@@ -216,7 +216,7 @@ func TestShouldUseDefaultShellToLaunchCommandWithCwdWhenShellIsNotDefined(t *tes
 	}
 	infoExecCreatorMock := &mocks.InfoExecCreator{}
 	infoExecMock := &mocks.InfoExec{}
-	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell, "-c", "exit 0"}, containerInfo).Return(infoExecMock)
 	infoExecMock.On("Start").Return(nil)
 
 	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)
@@ -238,7 +238,7 @@ func TestThrowAnErrorWhenEvenDefaultShellDoesNotWork(t *testing.T) {
 
 	infoExecCreatorMock := &mocks.InfoExecCreator{}
 	infoExecMock := &mocks.InfoExec{}
-	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell}, containerInfo).Return(infoExecMock)
+	infoExecCreatorMock.On("CreateInfoExec", []string{shell.DefaultShell, "-c", "exit 0"}, containerInfo).Return(infoExecMock)
 	infoExecMock.On("Start").Return(err)
 
 	cmdResolver := NewCmdResolver(shellDetectorMock, infoExecCreatorMock)

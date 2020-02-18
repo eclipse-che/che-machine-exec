@@ -88,7 +88,7 @@ func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, container
 	}
 
 	logrus.Debugf("Testing if sh is available in %s/%s", containerInfo.PodName, containerInfo.ContainerName)
-	infoExec := cmdRslv.CreateInfoExec([]string{shell.DefaultShell}, containerInfo)
+	infoExec := cmdRslv.CreateInfoExec([]string{shell.DefaultShell, "-c", "exit 0"}, containerInfo)
 	if err := infoExec.Start(); err != nil {
 		logrus.Debugf("Sh is not available in %s/%s. Error: %s", containerInfo.PodName, containerInfo.ContainerName, err.Error())
 		return "", err
