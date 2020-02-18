@@ -15,6 +15,7 @@ package exec
 import (
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"sync"
@@ -86,6 +87,8 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 		if err = manager.doCreate(machineExec, containerInfo); err != nil {
 			return -1, err
 		}
+		logrus.Printf("%s is successfully initialized in user specified container %s/%s", machineExec.Cmd,
+			containerInfo.PodName, containerInfo.ContainerName)
 		return machineExec.ID, nil
 	} else {
 		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
@@ -100,6 +103,8 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 				//proceed to next one
 				continue
 			}
+			logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
+				containerInfo.PodName, containerInfo.ContainerName)
 			return machineExec.ID, nil
 		}
 

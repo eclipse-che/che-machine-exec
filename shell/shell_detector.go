@@ -15,6 +15,7 @@ package shell
 import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec-info"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -50,6 +51,8 @@ func (detector *ShellDetector) DetectShell(containerInfo *model.ContainerInfo) (
 	getUserIdCommand := []string{"id", "-u"}
 	userIdContent, err := detector.spawnExecInfo(getUserIdCommand, containerInfo)
 	if err != nil {
+		logrus.Debugf("Failed to evaluate the current user id in container %s/%s. Error: %s",
+			containerInfo.PodName, containerInfo.ContainerName, err.Error())
 		return "", err
 	}
 
@@ -61,6 +64,8 @@ func (detector *ShellDetector) DetectShell(containerInfo *model.ContainerInfo) (
 	getEtcPassWdCommand := []string{"cat", "/etc/passwd"}
 	etcPassWdContent, err := detector.spawnExecInfo(getEtcPassWdCommand, containerInfo)
 	if err != nil {
+		logrus.Debugf("Failed to read /etc/passwd content in container %s/%s. Error: %s",
+			containerInfo.PodName, containerInfo.ContainerName, err.Error())
 		return "", err
 	}
 

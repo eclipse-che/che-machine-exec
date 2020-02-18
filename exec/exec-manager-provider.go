@@ -19,7 +19,7 @@ import (
 	"github.com/eclipse/che-machine-exec/filter"
 	"github.com/eclipse/che-machine-exec/shell"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -62,7 +62,7 @@ func CreateExecManager() (exeManager ExecManager) {
 		return Newk8sExecManager(nameSpace, k8sClient.CoreV1(), config, containerFilter, *cmdResolver)
 	}
 
-	log.Panic("Error: Unable to create manager. Unable to get service account info.")
+	logrus.Panic("Error: Unable to create manager. Unable to get service account info.")
 
 	return nil
 }

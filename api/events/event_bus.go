@@ -15,7 +15,7 @@ package events
 import (
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/event"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 // Event bus to send events with information about execs to the clients.
@@ -32,7 +32,7 @@ type ExecEventConsumer struct {
 func (execConsumer *ExecEventConsumer) Accept(event event.E) {
 	if !execConsumer.Tunnel.IsClosed() {
 		if err := execConsumer.Tunnel.Notify(event.Type(), event); err != nil {
-			log.Println("Unable to send event to the tunnel: ", execConsumer.Tunnel.ID(), "Cause: ", err.Error())
+			logrus.Errorln("Unable to send event to the tunnel: ", execConsumer.Tunnel.ID(), "Cause: ", err.Error())
 		}
 	}
 }
