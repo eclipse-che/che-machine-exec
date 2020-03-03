@@ -16,7 +16,7 @@ import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
@@ -37,12 +37,12 @@ func Attach(w http.ResponseWriter, r *http.Request, idParam string) error {
 
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Unable to upgrade connection to ws-conn " + err.Error())
+		logrus.Errorln("Unable to upgrade connection to ws-conn " + err.Error())
 		return err
 	}
 
 	if err = exec.GetExecManager().Attach(id, wsConn); err != nil {
-		log.Println("Attach to exec", strconv.Itoa(id), " failed. Cause:  ", err.Error())
+		logrus.Errorln("Attach to exec", strconv.Itoa(id), " failed. Cause:  ", err.Error())
 		return err
 	}
 

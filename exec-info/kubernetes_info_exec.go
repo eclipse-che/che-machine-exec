@@ -15,11 +15,13 @@ package exec_info
 import (
 	"bytes"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"time"
 )
 
 const (
@@ -32,9 +34,8 @@ const (
 )
 
 // Exec to get some information from container.
-// Command for such exec should be
-// "endless" and simple(For example: "whoami", "arch", "env").
-// It should not be shell based command.
+// Command for such exec should be simple(For example: "whoami", "arch", "env")
+// and completable otherwise it will be timeout in 3 seconds.
 // This exec is always not "tty" and doesn't provide sending input to the command.
 type KubernetesInfoExec struct {
 	// command with arguments
@@ -100,17 +101,36 @@ func (exec *KubernetesInfoExec) Start() (err error) {
 		return err
 	}
 
-	err = executor.Stream(remotecommand.StreamOptions{
-		Stdout: exec.stdOut,
-		Stderr: exec.stdErr,
-		Tty:    false,
-	})
+	streamEndC := make(chan error, 1)
+	go func() {
+		streamEndC <- executor.Stream(remotecommand.StreamOptions{
+			Stdout: exec.stdOut,
+			Stderr: exec.stdErr,
+		})
+	}()
+
+	select {
+	case err = <-streamEndC:
+		break
+	case <-time.After(3 * time.Second):
+		if len(exec.stdErr.Bytes()) != 0 {
+			errOutput := string(exec.stdErr.Bytes())
+			logrus.Debugf("Test command is timed out. Stderr: %s", errOutput)
+			return errors.New(errOutput)
+		}
+		//sh is successfully initialized but process hangs
+		return nil
+	}
+
 	if err != nil {
+		logrus.Debugf("Failed to establish connection for test command. Cause: %s", err.Error())
 		return err
 	}
 
 	if len(exec.stdErr.Bytes()) != 0 {
-		return errors.New(string(exec.stdErr.Bytes()))
+		errOutput := string(exec.stdErr.Bytes())
+		logrus.Debugf("Test command is finished with errors. Stderr: %s", errOutput)
+		return errors.New(errOutput)
 	}
 
 	return nil

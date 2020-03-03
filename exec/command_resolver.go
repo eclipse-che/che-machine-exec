@@ -14,6 +14,7 @@ package exec
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 
@@ -54,6 +55,8 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo *mo
 	}
 
 	if shell == "" {
+		logrus.Debugf("Cmd is missing. Trying to resolve default shell for container %s/%s",
+			containerInfo.PodName, containerInfo.ContainerName)
 		if shell, err = cmdRslv.setUpExecShellPath(exec, containerInfo); err != nil {
 			return nil, err
 		}
@@ -80,11 +83,14 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo *mo
 
 func (cmdRslv *CmdResolver) setUpExecShellPath(exec model.MachineExec, containerInfo *model.ContainerInfo) (shellPath string, err error) {
 	if containerShell, err := cmdRslv.DetectShell(containerInfo); err == nil && cmdRslv.shellIsDefined(containerShell) {
+		logrus.Debugf("Default shell %s for %s/%s is detected in /etc/passwd", containerShell, containerInfo.PodName, containerInfo.ContainerName)
 		return containerShell, nil
 	}
 
-	infoExec := cmdRslv.CreateInfoExec([]string{shell.DefaultShell}, containerInfo)
+	logrus.Debugf("Testing if sh is available in %s/%s", containerInfo.PodName, containerInfo.ContainerName)
+	infoExec := cmdRslv.CreateInfoExec([]string{shell.DefaultShell, "-c", "exit 0"}, containerInfo)
 	if err := infoExec.Start(); err != nil {
+		logrus.Debugf("Sh is not available in %s/%s. Error: %s", containerInfo.PodName, containerInfo.ContainerName, err.Error())
 		return "", err
 	}
 

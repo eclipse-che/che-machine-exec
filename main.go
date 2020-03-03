@@ -21,13 +21,31 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"os"
 )
 
 var (
 	url, staticPath string
 )
+
+func setLogLevel() {
+	logLevel, isFound := os.LookupEnv("LOG_LEVEL")
+	if isFound && len(logLevel) > 0 {
+		parsedLevel, err := logrus.ParseLevel(logLevel)
+		if err == nil {
+			logrus.SetLevel(parsedLevel)
+			logrus.Infof("Configured '%s' log level is applied", logLevel)
+		} else {
+			logrus.Errorf("Failed to parse log level `%s`. Possible values: panic, fatal, error, warn, info, debug. Default 'info' is applied", logLevel)
+			logrus.SetLevel(logrus.InfoLevel)
+		}
+	} else {
+		logrus.Infof("Default 'info' log level is applied")
+		logrus.SetLevel(logrus.InfoLevel)
+	}
+}
 
 func init() {
 	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
@@ -35,6 +53,7 @@ func init() {
 }
 
 func main() {
+	setLogLevel()
 	flag.Parse()
 
 	r := gin.Default()
@@ -79,6 +98,6 @@ func main() {
 	jsonrpc.PrintRoutes(appOpRoutes)
 
 	if err := r.Run(url); err != nil {
-		log.Fatal("Unable to start server. Cause: ", err.Error())
+		logrus.Fatal("Unable to start server. Cause: ", err.Error())
 	}
 }

@@ -15,7 +15,7 @@ package ws_conn
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -95,7 +95,7 @@ func (handler *ConnectionHandlerImpl) readDataFromConnections(inputChan chan []b
 	for {
 		msgType, wsBytes, err := wsConn.ReadMessage()
 		if err != nil {
-			log.Printf("failed to read ws-conn message. Cause: %v", err)
+			logrus.Errorf("failed to read ws-conn message. Cause: %v", err)
 			return
 		}
 
@@ -116,7 +116,7 @@ func (*ConnectionHandlerImpl) sendPingMessage(wsConn *websocket.Conn) {
 		err := wsConn.WriteMessage(websocket.PingMessage, []byte{})
 		if err != nil {
 			if !IsNormalWSError(err) {
-				log.Printf("Error occurs on sending ping message to ws-conn. %v", err)
+				logrus.Errorf("Error occurs on sending ping message to ws-conn. %v", err)
 			}
 			return
 		}

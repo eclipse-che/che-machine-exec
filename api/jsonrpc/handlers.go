@@ -13,10 +13,11 @@
 package jsonrpc
 
 import (
+	"errors"
 	"github.com/eclipse/che-machine-exec/api/events"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/sirupsen/logrus"
 
-	"log"
 	"strconv"
 
 	"github.com/eclipse/che-go-jsonrpc"
@@ -51,8 +52,15 @@ func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTran
 	healthWatcher.CleanUpOnExitOrError()
 
 	if err != nil {
-		log.Println("Unable to create machine exec. Cause: ", err.Error())
+		logrus.Errorf("Unable to initialize terminal. Cause: %s", err.Error())
 		t.SendError(jsonrpc.NewArgsError(err))
+		return
+	}
+
+	if id == -1 {
+		logrus.Errorln("A container where it's possible to initialize terminal is not found")
+		t.SendError(jsonrpc.NewArgsError(errors.New("A container where it's possible to initialize terminal is not found")))
+		return
 	}
 
 	t.Send(id)

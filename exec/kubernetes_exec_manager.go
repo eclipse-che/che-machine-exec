@@ -14,7 +14,10 @@ package exec
 
 import (
 	"errors"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -81,9 +84,12 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 		if err != nil {
 			return -1, err
 		}
-		if err = manager.doCreate(machineExec, containerInfo); err == nil {
-			return machineExec.ID, nil
+		if err = manager.doCreate(machineExec, containerInfo); err != nil {
+			return -1, err
 		}
+		logrus.Printf("%s is successfully initialized in user specified container %s/%s", machineExec.Cmd,
+			containerInfo.PodName, containerInfo.ContainerName)
+		return machineExec.ID, nil
 	} else {
 		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
 		containersInfo, err := manager.GetContainerList()
@@ -92,13 +98,22 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 		}
 		for _, containerInfo := range containersInfo {
 			err = manager.doCreate(machineExec, containerInfo)
-			if err == nil {
-				return machineExec.ID, nil
+			if err != nil {
+				//attempt to initialize terminal in this container failed
+				//proceed to next one
+				continue
 			}
+			logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
+				containerInfo.PodName, containerInfo.ContainerName)
+			return machineExec.ID, nil
 		}
-	}
 
-	return -1, err
+		var containers []string
+		for _, c := range containersInfo {
+			containers = append(containers, c.PodName+"\\"+c.ContainerName)
+		}
+		return -1, errors.New(fmt.Sprintf("Failed to initialize terminal in any of {%s}.", strings.Join(containers, ", ")))
+	}
 }
 
 func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo) error {

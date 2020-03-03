@@ -13,8 +13,8 @@
 package exec
 
 import (
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 )
 
 const (
@@ -26,7 +26,7 @@ var namespace string
 func readNameSpace() string {
 	nsBytes, err := ioutil.ReadFile(NameSpaceFile)
 	if err != nil {
-		log.Fatal("Failed to get NameSpace", err)
+		logrus.Fatal("Failed to get NameSpace", err)
 	}
 	return string(nsBytes)
 }
