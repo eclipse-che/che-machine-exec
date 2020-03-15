@@ -118,7 +118,7 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 		return err
 	}
 
-	req := k8sAPI.GetClient().RESTClient().
+	req := k8sAPI.GetClient().CoreV1().RESTClient().
 		Post().
 		Namespace(manager.nameSpace).
 		Resource(exec_info.Pods).
