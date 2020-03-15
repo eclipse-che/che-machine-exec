@@ -85,30 +85,29 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 		logrus.Printf("%s is successfully initialized in user specified container %s/%s", machineExec.Cmd,
 			containerInfo.PodName, containerInfo.ContainerName)
 		return machineExec.ID, nil
-	} else {
-		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
-		containersInfo, err := containerFilter.GetContainerList()
-		if err != nil {
-			return -1, err
-		}
-		for _, containerInfo := range containersInfo {
-			err = manager.doCreate(machineExec, containerInfo, k8sAPI)
-			if err != nil {
-				//attempt to initialize terminal in this container failed
-				//proceed to next one
-				continue
-			}
-			logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
-				containerInfo.PodName, containerInfo.ContainerName)
-			return machineExec.ID, nil
-		}
-
-		var containers []string
-		for _, c := range containersInfo {
-			containers = append(containers, c.PodName+"\\"+c.ContainerName)
-		}
-		return -1, errors.New(fmt.Sprintf("Failed to initialize terminal in any of {%s}.", strings.Join(containers, ", ")))
 	}
+	// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
+	containersInfo, err := containerFilter.GetContainerList()
+	if err != nil {
+		return -1, err
+	}
+	for _, containerInfo := range containersInfo {
+		err = manager.doCreate(machineExec, containerInfo, k8sAPI)
+		if err != nil {
+			//attempt to initialize terminal in this container failed
+			//proceed to next one
+			continue
+		}
+		logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
+			containerInfo.PodName, containerInfo.ContainerName)
+		return machineExec.ID, nil
+	}
+
+	var containers []string
+	for _, c := range containersInfo {
+		containers = append(containers, c.PodName+"\\"+c.ContainerName)
+	}
+	return -1, fmt.Errorf("failed to initialize terminal in any of {%s}", strings.Join(containers, ", "))
 }
 
 func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo, k8sAPI *client.K8sAPI) error {
