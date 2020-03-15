@@ -22,6 +22,7 @@ import (
 	"sync/atomic"
 
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/client"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
 	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
@@ -30,61 +31,55 @@ import (
 	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-type MachineExecs struct {
+type machineExecs struct {
 	mutex   *sync.Mutex
 	execMap map[int]*model.MachineExec
 }
 
-// Manager to manipulate kubernetes container execs.
+// KubernetesExecManager manipulates kubernetes container execs.
 type KubernetesExecManager struct {
-	CmdResolver
-	filter.ContainerFilter
-
-	api    corev1.CoreV1Interface
-	config *rest.Config
+	k8sAPIProvider client.K8sAPIProvider
 
 	nameSpace string
 }
 
 var (
-	machineExecs = MachineExecs{
+	execs = machineExecs{
 		mutex:   &sync.Mutex{},
 		execMap: make(map[int]*model.MachineExec),
 	}
 	prevExecID uint64 = 0
 )
 
-/**
- * Create new instance of the kubernetes exec manager.
- */
+// Newk8sExecManager create new instance of the kubernetes exec manager.
 func Newk8sExecManager(
 	namespace string,
-	api corev1.CoreV1Interface,
-	config *rest.Config,
-	filter filter.ContainerFilter,
-	cmdResolver CmdResolver,
+	clientProvider client.K8sAPIProvider,
 ) *KubernetesExecManager {
 	return &KubernetesExecManager{
-		api:             api,
-		nameSpace:       namespace,
-		ContainerFilter: filter,
-		config:          config,
-		CmdResolver:     cmdResolver,
+		nameSpace:      namespace,
+		k8sAPIProvider: clientProvider,
 	}
 }
 
-func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (execId int, err error) {
+// Create new exec request object
+func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+	k8sAPI, err := manager.getK8sAPI(machineExec.UserToken)
+	if err != nil {
+		return -1, err
+	}
+
+	containerFilter := filter.NewKubernetesContainerFilter(manager.nameSpace, k8sAPI.GetClient().CoreV1())
+
 	if machineExec.Identifier.MachineName != "" {
-		containerInfo, err := manager.FindContainerInfo(&machineExec.Identifier)
+		containerInfo, err := containerFilter.FindContainerInfo(&machineExec.Identifier)
 		if err != nil {
 			return -1, err
 		}
-		if err = manager.doCreate(machineExec, containerInfo); err != nil {
+		if err = manager.doCreate(machineExec, containerInfo, k8sAPI); err != nil {
 			return -1, err
 		}
 		logrus.Printf("%s is successfully initialized in user specified container %s/%s", machineExec.Cmd,
@@ -92,12 +87,12 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 		return machineExec.ID, nil
 	} else {
 		// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
-		containersInfo, err := manager.GetContainerList()
+		containersInfo, err := containerFilter.GetContainerList()
 		if err != nil {
 			return -1, err
 		}
 		for _, containerInfo := range containersInfo {
-			err = manager.doCreate(machineExec, containerInfo)
+			err = manager.doCreate(machineExec, containerInfo, k8sAPI)
 			if err != nil {
 				//attempt to initialize terminal in this container failed
 				//proceed to next one
@@ -116,13 +111,14 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (ex
 	}
 }
 
-func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo) error {
-	resolvedCmd, err := manager.ResolveCmd(*machineExec, containerInfo)
+func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo, k8sAPI *client.K8sAPI) error {
+	cmdResolver := NewCmdResolver(k8sAPI, manager.nameSpace)
+	resolvedCmd, err := cmdResolver.ResolveCmd(*machineExec, containerInfo)
 	if err != nil {
 		return err
 	}
 
-	req := manager.api.RESTClient().
+	req := k8sAPI.GetClient().RESTClient().
 		Post().
 		Namespace(manager.nameSpace).
 		Resource(exec_info.Pods).
@@ -138,14 +134,15 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 			TTY:       machineExec.Tty,
 		}, scheme.ParameterCodec)
 
-	executor, err := remotecommand.NewSPDYExecutor(manager.config, exec_info.Post, req.URL())
+	logrus.Debugf("Do create %+v ", k8sAPI.GetConfig())
+	executor, err := remotecommand.NewSPDYExecutor(k8sAPI.GetConfig(), exec_info.Post, req.URL())
 	if err != nil {
 		return err
 	}
 	machineExec.Cmd = resolvedCmd
 
-	defer machineExecs.mutex.Unlock()
-	machineExecs.mutex.Lock()
+	defer execs.mutex.Unlock()
+	execs.mutex.Lock()
 
 	machineExec.Executor = executor
 	machineExec.ID = int(atomic.AddUint64(&prevExecID, 1))
@@ -155,32 +152,35 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 	machineExec.ErrorChan = make(chan error)
 	machineExec.ConnectionHandler = ws.NewConnHandler()
 
-	machineExecs.execMap[machineExec.ID] = machineExec
+	execs.execMap[machineExec.ID] = machineExec
 
 	return nil
 }
 
-// Clean up information about exec
-func (*KubernetesExecManager) Remove(execId int) {
-	defer machineExecs.mutex.Unlock()
+// Remove information about exec
+func (*KubernetesExecManager) Remove(execID int) {
+	defer execs.mutex.Unlock()
 
-	machineExecs.mutex.Lock()
-	delete(machineExecs.execMap, execId)
+	execs.mutex.Lock()
+	delete(execs.execMap, execID)
 }
 
+// Check if exec with id exists
 func (*KubernetesExecManager) Check(id int) (int, error) {
-	machineExec := getById(id)
+	machineExec := getByID(id)
 	if machineExec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
 	return machineExec.ID, nil
 }
 
+// Attach websoket connnection to the exec by id.
 func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := getById(id)
+	machineExec := getByID(id)
 	if machineExec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
+	logrus.Debugf("Attach to exec %s", id)
 
 	machineExec.ReadConnection(conn, machineExec.MsgChan)
 
@@ -212,8 +212,9 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	return err
 }
 
+// Resize exec output frame.
 func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
-	machineExec := getById(id)
+	machineExec := getByID(id)
 	if machineExec == nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
@@ -222,9 +223,24 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-func getById(id int) *model.MachineExec {
-	defer machineExecs.mutex.Unlock()
+// getK8sAPI returns k8s api.
+func (manager *KubernetesExecManager) getK8sAPI(userToken string) (k8s8API *client.K8sAPI, err error) {
+	if client.UseUserToken {
+		logrus.Info("Create k8s api object with user token")
+		k8s8API, err = manager.k8sAPIProvider.Getk8sAPIWithUserToken(userToken)
+	} else {
+		logrus.Info("Create k8s api object without user token")
+		k8s8API, err = manager.k8sAPIProvider.Getk8sAPI()
+		logrus.Debugf("Config %+v and client %+v", k8s8API.GetConfig(), k8s8API.GetClient())
+		logrus.Debugf("Token %s", k8s8API.GetConfig().BearerToken)
+	}
+	return
+}
 
-	machineExecs.mutex.Lock()
-	return machineExecs.execMap[id]
+// getByID return exec by id.
+func getByID(id int) *model.MachineExec {
+	defer execs.mutex.Unlock()
+
+	execs.mutex.Lock()
+	return execs.execMap[id]
 }

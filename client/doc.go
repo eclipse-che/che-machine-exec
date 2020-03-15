@@ -13,4 +13,4 @@
 package client
 
 // This package contains providers to third-party clients.
-// These clients provide access to the infrastructure api.
+// These clients provide access to the kubernetes api.

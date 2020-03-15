@@ -13,13 +13,13 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
-	"github.com/eclipse/che-machine-exec/api/events"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
-	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
+	"github.com/eclipse/che-machine-exec/client"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -27,7 +27,8 @@ import (
 )
 
 var (
-	url, staticPath string
+	url, staticPath     string
+	useUserTokenDefault = false
 )
 
 func setLogLevel() {
@@ -50,6 +51,7 @@ func setLogLevel() {
 func init() {
 	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
 	flag.StringVar(&staticPath, "static", "", "/home/user/frontend - absolute path to folder with static resources.")
+	flag.BoolVar(&client.UseUserToken, "use-user-token", useUserTokenDefault, "Use user token to make requests to the kubernetes api.")
 }
 
 func main() {
@@ -66,17 +68,30 @@ func main() {
 	}
 
 	// connect to exec api end point(websocket with json-rpc)
-	r.GET("/connect", func(c *gin.Context) {
+	r.GET("/connect", func(c *gin.Context) { // separated handler
+		var userToken string
+		if client.UseUserToken {
+			userToken = c.Request.Header.Get("X-Forwarded-Access-Token")
+			if len(userToken) == 0 {
+				c.AbortWithError(500, errors.New("unable to find user token header"))
+				return
+			}
+		}
+
+		// logrus.Infof("Cookies: %+v", c.Request.Cookies())
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
 		if err != nil {
-			c.JSON(c.Writer.Status(), err.Error())
+			c.JSON(c.Writer.Status(), err.Error()) // todo error code
 			return
 		}
 
-		tunnel := jsonrpc.NewManagedTunnel(conn)
+		tunnel := &jsonRpcApi.TunnelWithUserToken{Tunnel: jsonrpc.NewManagedTunnel(conn)}
+		if len(userToken) > 0 {
+			tunnel.UserToken = userToken
+		}
 
-		execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
-		events.EventBus.SubAny(execConsumer, model.OnExecError, model.OnExecExit)
+		// execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
+		// events.EventBus.SubAny(execConsumer, model.OnExecError, model.OnExecExit)
 
 		tunnel.SayHello()
 	})

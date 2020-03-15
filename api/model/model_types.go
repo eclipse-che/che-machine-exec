@@ -64,6 +64,8 @@ type MachineExec struct {
 
 	// Todo Refactoring: Create separated code layer and move it.
 	Buffer *line_buffer.LineRingBuffer
+
+	UserToken string
 }
 
 type ExecExitEvent struct {

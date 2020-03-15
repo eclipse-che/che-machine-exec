@@ -14,11 +14,13 @@ package exec
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/client"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/shell"
 )
@@ -31,7 +33,9 @@ type CmdResolver struct {
 }
 
 // NewCmdResolver creates new instance CmdResolver.
-func NewCmdResolver(shellDetector shell.ContainerShellDetector, infoExecCreator exec_info.InfoExecCreator) *CmdResolver {
+func NewCmdResolver(k8sAPI *client.K8sAPI, nameSpace string) *CmdResolver {
+	shellDetector := shell.NewShellDetector(k8sAPI, nameSpace)
+	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
 	return &CmdResolver{
 		ContainerShellDetector: shellDetector,
 		InfoExecCreator:        infoExecCreator,

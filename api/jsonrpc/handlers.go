@@ -22,6 +22,7 @@ import (
 
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-machine-exec/exec"
+	// "github.com/eclipse/che-machine-exec/client"
 )
 
 type IdParam struct {
@@ -43,8 +44,12 @@ var (
 	execManager = exec.GetExecManager()
 )
 
-func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
+func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
+	// if client.UseUserToken {
+	// tunnelWithToken, ok := (TunnelWithUserToken)tunnel
+	// 	machineExec.UserToken = ""
+	// }
 
 	id, err := execManager.Create(machineExec)
 

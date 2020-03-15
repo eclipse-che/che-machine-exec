@@ -17,6 +17,12 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 )
 
+type TunnelWithUserToken struct {
+	UserToken string
+
+	*jsonrpc.Tunnel
+}
+
 // Constants that represent RPC methods identifiers.
 const (
 	// methods to manage exec life cycle
@@ -24,6 +30,10 @@ const (
 	CheckMethod  = "check"
 	ResizeMethod = "resize"
 )
+
+// type ExecRouteGroup struct {
+// 	jsonrpc.Route
+// }
 
 // RPCRoutes defines json-rpc exec api. This api uses to manage exec's life cycle.
 var RPCRoutes = jsonrpc.RoutesGroup{
