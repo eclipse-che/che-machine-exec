@@ -15,20 +15,22 @@ package main
 import (
 	"errors"
 	"flag"
+	"net/http"
+	"os"
+
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
+	"github.com/eclipse/che-machine-exec/api/events"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che-machine-exec/client"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"os"
 )
 
 var (
-	url, staticPath     string
-	useUserTokenDefault = false
+	url, staticPath string
 )
 
 func setLogLevel() {
@@ -51,7 +53,6 @@ func setLogLevel() {
 func init() {
 	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
 	flag.StringVar(&staticPath, "static", "", "/home/user/frontend - absolute path to folder with static resources.")
-	flag.BoolVar(&client.UseUserToken, "use-user-token", useUserTokenDefault, "Use user token to make requests to the kubernetes api.")
 }
 
 func main() {
@@ -73,7 +74,9 @@ func main() {
 		if client.UseUserToken {
 			userToken = c.Request.Header.Get("X-Forwarded-Access-Token")
 			if len(userToken) == 0 {
-				c.AbortWithError(500, errors.New("unable to find user token header"))
+				err := errors.New("unable to find user token header")
+				logrus.Debug(err)
+				c.JSON(c.Writer.Status(), err.Error())
 				return
 			}
 		}
@@ -85,13 +88,14 @@ func main() {
 			return
 		}
 
-		tunnel := &jsonRpcApi.TunnelWithUserToken{Tunnel: jsonrpc.NewManagedTunnel(conn)}
+		logrus.Debug("Create json-rpc channel for new websocket connnection")
+		tunnel := jsonrpc.NewManagedTunnel(conn)
 		if len(userToken) > 0 {
-			tunnel.UserToken = userToken
+			tunnel.Attributes[client.UserTokenAttr] = userToken
 		}
 
-		// execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
-		// events.EventBus.SubAny(execConsumer, model.OnExecError, model.OnExecExit)
+		execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
+		events.EventBus.SubAny(execConsumer, model.OnExecError, model.OnExecExit)
 
 		tunnel.SayHello()
 	})

@@ -14,11 +14,12 @@ package filter
 
 import (
 	"errors"
+	"os"
+
 	"github.com/eclipse/che-machine-exec/api/model"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"os"
 )
 
 const (
@@ -88,7 +89,7 @@ func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error)
 		return nil, errors.New("unable to get current workspace id")
 	}
 
-	filterOptions := metav1.ListOptions{LabelSelector: WsIdLabel + "=" + workspaceID}
+	filterOptions := metav1.ListOptions{LabelSelector: WsIdLabel + "=" + workspaceID, FieldSelector: "status.phase=Running"}
 	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(filterOptions)
 	if err != nil {
 		return nil, err

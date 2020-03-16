@@ -14,15 +14,39 @@ package client
 
 import (
 	"errors"
+	"strconv"
 
+	"os"
+
+	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 var (
-	// UseUserToken flag to use user token
-	UseUserToken bool // TODO grab this value from env!!!!
+	// UseUserToken - flag to enable/disable using user token to have access to k8s api.
+	UseUserToken bool
 )
+
+const (
+	// UserTokenAttr attribute name.
+	UserTokenAttr = "userToken"
+	// UseUserTokenEnvName env variable boolean flag to enable/disable using user token to have access to k8s api.
+	UseUserTokenEnvName = "USE_USER_TOKEN"
+)
+
+func init() {
+	useUserTokenEnvValue, isFound := os.LookupEnv(UseUserTokenEnvName)
+	logrus.Debugf("Use user token env value: %s", useUserTokenEnvValue)
+
+	if isFound && len(useUserTokenEnvValue) > 0 {
+		if value, err := strconv.ParseBool(useUserTokenEnvValue); err != nil {
+			logrus.Panicf("Invalid value '%s' for env varible key '%s'. Supported values: 'true', 'false'.", useUserTokenEnvValue, UseUserTokenEnvName)
+		} else {
+			UseUserToken = value
+		}
+	}
+}
 
 // K8sAPI object to access k8s api
 type K8sAPI struct {

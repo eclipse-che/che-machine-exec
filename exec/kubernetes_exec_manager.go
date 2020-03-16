@@ -69,8 +69,10 @@ func Newk8sExecManager(
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
 	k8sAPI, err := manager.getK8sAPI(machineExec.UserToken)
 	if err != nil {
+		logrus.Debugf("Unable to get k8sAPI %s", err.Error())
 		return -1, err
 	}
+	logrus.Debug("Succesfully Got k8sApi object.")
 
 	containerFilter := filter.NewKubernetesContainerFilter(manager.nameSpace, k8sAPI.GetClient().CoreV1())
 
@@ -222,7 +224,7 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-// getK8sAPI returns k8s api.
+// getK8sAPI return k8s api.
 func (manager *KubernetesExecManager) getK8sAPI(userToken string) (k8s8API *client.K8sAPI, err error) {
 	if client.UseUserToken {
 		logrus.Info("Create k8s api object with user token")

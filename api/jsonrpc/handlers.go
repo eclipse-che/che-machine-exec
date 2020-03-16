@@ -22,7 +22,7 @@ import (
 
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-machine-exec/exec"
-	// "github.com/eclipse/che-machine-exec/client"
+	"github.com/eclipse/che-machine-exec/client"
 )
 
 type IdParam struct {
@@ -46,10 +46,15 @@ var (
 
 func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
-	// if client.UseUserToken {
-	// tunnelWithToken, ok := (TunnelWithUserToken)tunnel
-	// 	machineExec.UserToken = ""
-	// }
+	if client.UseUserToken {
+		if userToken, ok := tunnel.Attributes[client.UserTokenAttr]; ok && len(userToken) > 0 {
+			machineExec.UserToken = userToken
+		} else {
+			err := errors.New("user token should not be an empty")
+			logrus.Errorf(err.Error())
+			t.SendError(jsonrpc.NewArgsError(err))
+		}
+	}
 
 	id, err := execManager.Create(machineExec)
 
