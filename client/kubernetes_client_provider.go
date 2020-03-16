@@ -15,9 +15,7 @@ package client
 import (
 	"errors"
 	"strconv"
-
 	"os"
-
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -31,7 +29,7 @@ var (
 const (
 	// UserTokenAttr attribute name.
 	UserTokenAttr = "userToken"
-	// UseUserTokenEnvName env variable boolean flag to enable/disable using user token to have access to k8s api.
+	// UseUserTokenEnvName env variable, boolean flag to enable/disable using user token to have access to k8s api.
 	UseUserTokenEnvName = "USE_USER_TOKEN"
 )
 
@@ -48,7 +46,7 @@ func init() {
 	}
 }
 
-// K8sAPI object to access k8s api
+// K8sAPI object to access k8s api.
 type K8sAPI struct {
 	config *rest.Config
 	client *kubernetes.Clientset
@@ -59,12 +57,12 @@ func NewK8sAPI(config *rest.Config, client *kubernetes.Clientset) *K8sAPI {
 	return &K8sAPI{config: config, client: client}
 }
 
-// GetClient returns k8s client
+// GetClient returns k8s client.
 func (api *K8sAPI) GetClient() *kubernetes.Clientset {
 	return api.client
 }
 
-// GetConfig returns k8s config
+// GetConfig returns k8s config.
 func (api *K8sAPI) GetConfig() *rest.Config {
 	return api.config
 }
