@@ -39,7 +39,7 @@ type machineExecs struct {
 	execMap map[int]*model.MachineExec
 }
 
-// KubernetesExecManager manipulates kubernetes container execs.
+// KubernetesExecManager manipulate kubernetes container execs.
 type KubernetesExecManager struct {
 	k8sAPIProvider client.K8sAPIProvider
 
@@ -135,7 +135,6 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 			TTY:       machineExec.Tty,
 		}, scheme.ParameterCodec)
 
-	logrus.Debugf("Do create %+v ", k8sAPI.GetConfig())
 	executor, err := remotecommand.NewSPDYExecutor(k8sAPI.GetConfig(), exec_info.Post, req.URL())
 	if err != nil {
 		return err
@@ -224,7 +223,7 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-// getK8sAPI return k8s api.
+// getK8sAPI return k8s api object.
 func (manager *KubernetesExecManager) getK8sAPI(userToken string) (k8s8API *client.K8sAPI, err error) {
 	if client.UseUserToken {
 		logrus.Info("Create k8s api object with user token")
@@ -232,8 +231,6 @@ func (manager *KubernetesExecManager) getK8sAPI(userToken string) (k8s8API *clie
 	} else {
 		logrus.Info("Create k8s api object without user token")
 		k8s8API, err = manager.k8sAPIProvider.Getk8sAPI()
-		logrus.Debugf("Config %+v and client %+v", k8s8API.GetConfig(), k8s8API.GetClient())
-		logrus.Debugf("Token %s", k8s8API.GetConfig().BearerToken)
 	}
 	return
 }

@@ -69,7 +69,7 @@ func main() {
 	}
 
 	// connect to exec api end point(websocket with json-rpc)
-	r.GET("/connect", func(c *gin.Context) { // separated handler
+	r.GET("/connect", func(c *gin.Context) {
 		var userToken string
 		if client.UseUserToken {
 			userToken = c.Request.Header.Get("X-Forwarded-Access-Token")
@@ -81,10 +81,9 @@ func main() {
 			}
 		}
 
-		// logrus.Infof("Cookies: %+v", c.Request.Cookies())
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
 		if err != nil {
-			c.JSON(c.Writer.Status(), err.Error()) // todo error code
+			c.JSON(c.Writer.Status(), err.Error())
 			return
 		}
 

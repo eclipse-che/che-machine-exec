@@ -21,8 +21,8 @@ import (
 	"strconv"
 
 	"github.com/eclipse/che-go-jsonrpc"
-	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/eclipse/che-machine-exec/client"
+	"github.com/eclipse/che-machine-exec/exec"
 )
 
 type IdParam struct {
