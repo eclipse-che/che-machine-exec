@@ -30,7 +30,7 @@
 
 [[constraint]]
   name = "github.com/eclipse/che-go-jsonrpc"
-  version = "=0.1.0"
+  revision = "931966b891fed8143c920e51e6d4d87b8490b9e8"
 
 [[constraint]]
   name = "github.com/gin-gonic/gin"
