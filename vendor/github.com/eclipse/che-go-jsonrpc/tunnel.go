@@ -92,6 +92,9 @@ type Tunnel struct {
 
 	// Keeps current state of the tunnel.
 	state int32
+
+	// Attributes to store useful meta information
+	Attributes map[string]string
 }
 
 // NewTunnel creates a new tunnel.
@@ -111,6 +114,7 @@ func NewTunnel(conn NativeConn, dispatcher ReqDispatcher) *Tunnel {
 		reqDispatcher: dispatcher,
 		q:             q,
 		state:         stateCreated,
+		Attributes:    make(map[string]string),
 	}
 	tunnel.closer = &closer{tunnel: tunnel, outClosed: make(chan bool, 1)}
 	return tunnel
