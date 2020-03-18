@@ -67,7 +67,7 @@ func Newk8sExecManager(
 
 // Create new exec request object
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
-	k8sAPI, err := manager.getK8sAPI(machineExec.BearerToken)
+	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
 	if err != nil {
 		logrus.Debugf("Unable to get k8sAPI %s", err.Error())
 		return -1, err
@@ -221,18 +221,6 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 
 	machineExec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
-}
-
-// getK8sAPI return k8s api object.
-func (manager *KubernetesExecManager) getK8sAPI(token string) (k8s8API *client.K8sAPI, err error) {
-	if client.UseBearerToken {
-		logrus.Info("Create k8s api object with bearer token")
-		k8s8API, err = manager.k8sAPIProvider.GetK8sAPIWithBearerToken(token)
-	} else {
-		logrus.Info("Create k8s api object without bearer token")
-		k8s8API, err = manager.k8sAPIProvider.GetK8sAPI()
-	}
-	return
 }
 
 // getByID return exec by id.

@@ -14,11 +14,13 @@ package client
 
 import (
 	"errors"
+	"os"
+	"strconv"
+
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"os"
-	"strconv"
 )
 
 var (
@@ -77,8 +79,8 @@ func NewK8sAPIProvider() *K8sAPIProvider {
 	return &K8sAPIProvider{}
 }
 
-// GetK8sAPI returns k8sApi.
-func (clientProvider *K8sAPIProvider) GetK8sAPI() (*K8sAPI, error) {
+// getK8sAPIWithCA returns k8sApi using service account permissions.
+func (clientProvider *K8sAPIProvider) getK8sAPIWithCA() (*K8sAPI, error) {
 	var err error
 	if clientProvider.k8sAPI == nil {
 		config, err := rest.InClusterConfig()
@@ -96,8 +98,8 @@ func (clientProvider *K8sAPIProvider) GetK8sAPI() (*K8sAPI, error) {
 	return clientProvider.k8sAPI, err
 }
 
-// GetK8sAPIWithBearerToken returns k8sApi with bearer token.
-func (clientProvider *K8sAPIProvider) GetK8sAPIWithBearerToken(token string) (*K8sAPI, error) {
+// getK8sAPIWithBearerToken returns k8sApi with bearer token.
+func (clientProvider *K8sAPIProvider) getK8sAPIWithBearerToken(token string) (*K8sAPI, error) {
 	if len(token) == 0 {
 		return nil, errors.New("Failed to create k8sAPI. Token should not be an empty")
 	}
@@ -115,4 +117,14 @@ func (clientProvider *K8sAPIProvider) GetK8sAPIWithBearerToken(token string) (*K
 	}
 
 	return NewK8sAPI(config, client), nil
+}
+
+// GetK8sAPI return k8s api object.
+func (clientProvider *K8sAPIProvider) GetK8sAPI(machineExec *model.MachineExec) (*K8sAPI, error) {
+	if UseBearerToken {
+		logrus.Debug("Create k8s api object with bearer token")
+		return clientProvider.getK8sAPIWithBearerToken(machineExec.BearerToken)
+	}
+	logrus.Debug("Create k8s api object without bearer token")
+	return clientProvider.getK8sAPIWithCA()
 }
