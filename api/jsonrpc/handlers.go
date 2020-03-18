@@ -46,13 +46,14 @@ var (
 
 func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
-	if client.UseUserToken {
-		if userToken, ok := tunnel.Attributes[client.UserTokenAttr]; ok && len(userToken) > 0 {
-			machineExec.UserToken = userToken
+	if client.UseBearerToken {
+		if token, ok := tunnel.Attributes[client.BearerTokenAttr]; ok && len(token) > 0 {
+			machineExec.BearerToken = token
 		} else {
-			err := errors.New("user token should not be an empty")
+			err := errors.New("Bearer token should not be an empty")
 			logrus.Errorf(err.Error())
 			t.SendError(jsonrpc.NewArgsError(err))
+			return
 		}
 	}
 

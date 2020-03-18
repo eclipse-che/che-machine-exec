@@ -67,12 +67,12 @@ func Newk8sExecManager(
 
 // Create new exec request object
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
-	k8sAPI, err := manager.getK8sAPI(machineExec.UserToken)
+	k8sAPI, err := manager.getK8sAPI(machineExec.BearerToken)
 	if err != nil {
 		logrus.Debugf("Unable to get k8sAPI %s", err.Error())
 		return -1, err
 	}
-	logrus.Debug("Succesfully Got k8sApi object.")
+	logrus.Debug("Successfully Got k8sApi object.")
 
 	containerFilter := filter.NewKubernetesContainerFilter(manager.nameSpace, k8sAPI.GetClient().CoreV1())
 
@@ -224,13 +224,13 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 }
 
 // getK8sAPI return k8s api object.
-func (manager *KubernetesExecManager) getK8sAPI(userToken string) (k8s8API *client.K8sAPI, err error) {
-	if client.UseUserToken {
-		logrus.Info("Create k8s api object with user token")
-		k8s8API, err = manager.k8sAPIProvider.Getk8sAPIWithUserToken(userToken)
+func (manager *KubernetesExecManager) getK8sAPI(token string) (k8s8API *client.K8sAPI, err error) {
+	if client.UseBearerToken {
+		logrus.Info("Create k8s api object with bearer token")
+		k8s8API, err = manager.k8sAPIProvider.GetK8sAPIWithBearerToken(token)
 	} else {
-		logrus.Info("Create k8s api object without user token")
-		k8s8API, err = manager.k8sAPIProvider.Getk8sAPI()
+		logrus.Info("Create k8s api object without bearer token")
+		k8s8API, err = manager.k8sAPIProvider.GetK8sAPI()
 	}
 	return
 }

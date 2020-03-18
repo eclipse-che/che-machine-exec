@@ -14,34 +14,34 @@ package client
 
 import (
 	"errors"
-	"strconv"
-	"os"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"os"
+	"strconv"
 )
 
 var (
-	// UseUserToken - flag to enable/disable using user token to have access to k8s api.
-	UseUserToken bool
+	// UseBearerToken - flag to enable/disable using bearer token to have access to k8s api.
+	UseBearerToken bool
 )
 
 const (
-	// UserTokenAttr attribute name.
-	UserTokenAttr = "userToken"
-	// UseUserTokenEnvName env variable, boolean flag to enable/disable using user token to have access to k8s api.
-	UseUserTokenEnvName = "USE_USER_TOKEN"
+	// BearerTokenAttr attribute name.
+	BearerTokenAttr = "bearerToken"
+	// UseBearerTokenEnvName env variable, boolean flag to enable/disable using bearer token to have access to k8s api.
+	UseBearerTokenEnvName = "USE_BEARER_TOKEN"
 )
 
 func init() {
-	useUserTokenEnvValue, isFound := os.LookupEnv(UseUserTokenEnvName)
-	logrus.Debugf("Use user token env value: %s", useUserTokenEnvValue)
+	tokenEnvValue, isFound := os.LookupEnv(BearerTokenAttr)
+	logrus.Debugf("Use bearer token env value: %s", tokenEnvValue)
 
-	if isFound && len(useUserTokenEnvValue) > 0 {
-		if value, err := strconv.ParseBool(useUserTokenEnvValue); err != nil {
-			logrus.Panicf("Invalid value '%s' for env varible key '%s'. Supported values: 'true', 'false'.", useUserTokenEnvValue, UseUserTokenEnvName)
+	if isFound && len(tokenEnvValue) > 0 {
+		if value, err := strconv.ParseBool(tokenEnvValue); err != nil {
+			logrus.Panicf("Invalid value '%s' for env varible key '%s'. Supported values: 'true', 'false'.", tokenEnvValue, BearerTokenAttr)
 		} else {
-			UseUserToken = value
+			UseBearerToken = value
 		}
 	}
 }
@@ -77,8 +77,8 @@ func NewK8sAPIProvider() *K8sAPIProvider {
 	return &K8sAPIProvider{}
 }
 
-// Getk8sAPI returns k8sApi.
-func (clientProvider *K8sAPIProvider) Getk8sAPI() (*K8sAPI, error) {
+// GetK8sAPI returns k8sApi.
+func (clientProvider *K8sAPIProvider) GetK8sAPI() (*K8sAPI, error) {
 	var err error
 	if clientProvider.k8sAPI == nil {
 		config, err := rest.InClusterConfig()
@@ -96,10 +96,10 @@ func (clientProvider *K8sAPIProvider) Getk8sAPI() (*K8sAPI, error) {
 	return clientProvider.k8sAPI, err
 }
 
-// Getk8sAPIWithUserToken returns k8sApi with user token.
-func (clientProvider *K8sAPIProvider) Getk8sAPIWithUserToken(userBearerToken string) (*K8sAPI, error) {
-	if len(userBearerToken) == 0 {
-		return nil, errors.New("Failed to create k8sAPI. User token should not be an empty")
+// GetK8sAPIWithBearerToken returns k8sApi with bearer token.
+func (clientProvider *K8sAPIProvider) GetK8sAPIWithBearerToken(token string) (*K8sAPI, error) {
+	if len(token) == 0 {
+		return nil, errors.New("Failed to create k8sAPI. Token should not be an empty")
 	}
 
 	config, err := rest.InClusterConfig()
@@ -107,7 +107,7 @@ func (clientProvider *K8sAPIProvider) Getk8sAPIWithUserToken(userBearerToken str
 		return nil, err
 	}
 
-	config.BearerToken = userBearerToken
+	config.BearerToken = token
 
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {

@@ -70,10 +70,10 @@ func main() {
 
 	// connect to exec api end point(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
-		var userToken string
-		if client.UseUserToken {
-			userToken = c.Request.Header.Get("X-Forwarded-Access-Token")
-			if len(userToken) == 0 {
+		var token string
+		if client.UseBearerToken {
+			token = c.Request.Header.Get("X-Forwarded-Access-Token")
+			if len(token) == 0 {
 				err := errors.New("unable to find user token header")
 				logrus.Debug(err)
 				c.JSON(c.Writer.Status(), err.Error())
@@ -89,8 +89,8 @@ func main() {
 
 		logrus.Debug("Create json-rpc channel for new websocket connnection")
 		tunnel := jsonrpc.NewManagedTunnel(conn)
-		if len(userToken) > 0 {
-			tunnel.Attributes[client.UserTokenAttr] = userToken
+		if len(token) > 0 {
+			tunnel.Attributes[client.BearerTokenAttr] = token
 		}
 
 		execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
