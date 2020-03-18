@@ -29,34 +29,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	url, staticPath string
-)
 
-func setLogLevel() {
-	logLevel, isFound := os.LookupEnv("LOG_LEVEL")
-	if isFound && len(logLevel) > 0 {
-		parsedLevel, err := logrus.ParseLevel(logLevel)
-		if err == nil {
-			logrus.SetLevel(parsedLevel)
-			logrus.Infof("Configured '%s' log level is applied", logLevel)
-		} else {
-			logrus.Errorf("Failed to parse log level `%s`. Possible values: panic, fatal, error, warn, info, debug. Default 'info' is applied", logLevel)
-			logrus.SetLevel(logrus.InfoLevel)
-		}
-	} else {
-		logrus.Infof("Default 'info' log level is applied")
-		logrus.SetLevel(logrus.InfoLevel)
-	}
-}
-
-func init() {
-	flag.StringVar(&url, "url", ":4444", "Host:Port address.")
-	flag.StringVar(&staticPath, "static", "", "/home/user/frontend - absolute path to folder with static resources.")
-}
 
 func main() {
-	setLogLevel()
+	// setLogLevel()
 	flag.Parse()
 
 	r := gin.Default()

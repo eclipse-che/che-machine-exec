@@ -18,7 +18,7 @@ function resolveDependencies() {
 }
 
 function compile() {
-    resolveDependencies;
+    # resolveDependencies;
 
     echo "===> Compile che-machine-exec binary from source code. <===";
 
@@ -29,7 +29,7 @@ function compile() {
         exit 0;
     fi
 
-    echo "============ Compilation succesfully completed. ============";
+    echo "============ Compilation successfully completed. ============";
 }
 
 compile;
