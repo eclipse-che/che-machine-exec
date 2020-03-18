@@ -14,15 +14,21 @@ package jsonrpc
 
 import (
 	"errors"
+
 	"github.com/eclipse/che-machine-exec/api/events"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/sirupsen/logrus"
 
 	"strconv"
 
 	"github.com/eclipse/che-go-jsonrpc"
-	"github.com/eclipse/che-machine-exec/client"
 	"github.com/eclipse/che-machine-exec/exec"
+)
+
+const (
+	// BearerTokenAttr attribute name.
+	BearerTokenAttr = "bearerToken"
 )
 
 type IdParam struct {
@@ -46,8 +52,8 @@ var (
 
 func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
-	if client.UseBearerToken {
-		if token, ok := tunnel.Attributes[client.BearerTokenAttr]; ok && len(token) > 0 {
+	if cfg.UseBearerToken {
+		if token, ok := tunnel.Attributes[BearerTokenAttr]; ok && len(token) > 0 {
 			machineExec.BearerToken = token
 		} else {
 			err := errors.New("Bearer token should not be an empty")

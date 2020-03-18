@@ -180,7 +180,7 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	if machineExec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
-	logrus.Debugf("Attach to exec %s", id)
+	logrus.Debugf("Attach to exec %b", id)
 
 	machineExec.ReadConnection(conn, machineExec.MsgChan)
 

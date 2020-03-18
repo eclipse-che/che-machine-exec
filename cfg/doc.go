@@ -1,3 +1,5 @@
+package cfg
+
 //
 // Copyright (c) 2012-2020 Red Hat, Inc.
 // This program and the accompanying materials are made
@@ -10,4 +12,4 @@
 //   Red Hat, Inc. - initial API and implementation
 //
 
-// Package with application configuration 
+// Package with application configuration

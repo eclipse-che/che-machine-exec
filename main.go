@@ -14,31 +14,28 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"net/http"
-	"os"
 
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-machine-exec/api/events"
+	execRpc "github.com/eclipse/che-machine-exec/api/jsonrpc"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
-	"github.com/eclipse/che-machine-exec/client"
+	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-
-
 func main() {
-	// setLogLevel()
-	flag.Parse()
+	cfg.Parse()
+	cfg.Print()
 
 	r := gin.Default()
 
-	if staticPath != "" {
-		r.StaticFS("/static", http.Dir(staticPath))
+	if cfg.StaticPath != "" {
+		r.StaticFS("/static", http.Dir(cfg.StaticPath))
 		r.GET("/", func(c *gin.Context) {
 			c.Redirect(http.StatusMovedPermanently, "/static")
 		})
@@ -47,7 +44,7 @@ func main() {
 	// connect to exec api end point(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
 		var token string
-		if client.UseBearerToken {
+		if cfg.UseBearerToken {
 			token = c.Request.Header.Get("X-Forwarded-Access-Token")
 			if len(token) == 0 {
 				err := errors.New("unable to find user token header")
@@ -66,7 +63,7 @@ func main() {
 		logrus.Debug("Create json-rpc channel for new websocket connnection")
 		tunnel := jsonrpc.NewManagedTunnel(conn)
 		if len(token) > 0 {
-			tunnel.Attributes[client.BearerTokenAttr] = token
+			tunnel.Attributes[execRpc.BearerTokenAttr] = token
 		}
 
 		execConsumer := &events.ExecEventConsumer{Tunnel: tunnel}
@@ -91,7 +88,7 @@ func main() {
 	jsonrpc.RegRoutesGroups(appOpRoutes)
 	jsonrpc.PrintRoutes(appOpRoutes)
 
-	if err := r.Run(url); err != nil {
+	if err := r.Run(cfg.URL); err != nil {
 		logrus.Fatal("Unable to start server. Cause: ", err.Error())
 	}
 }

@@ -14,39 +14,13 @@ package client
 
 import (
 	"errors"
-	"os"
-	"strconv"
 
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
-
-var (
-	// UseBearerToken - flag to enable/disable using bearer token to have access to k8s api.
-	UseBearerToken bool
-)
-
-const (
-	// BearerTokenAttr attribute name.
-	BearerTokenAttr = "bearerToken"
-	// UseBearerTokenEnvName env variable, boolean flag to enable/disable using bearer token to have access to k8s api.
-	UseBearerTokenEnvName = "USE_BEARER_TOKEN"
-)
-
-func init() {
-	tokenEnvValue, isFound := os.LookupEnv(BearerTokenAttr)
-	logrus.Debugf("Use bearer token env value: %s", tokenEnvValue)
-
-	if isFound && len(tokenEnvValue) > 0 {
-		if value, err := strconv.ParseBool(tokenEnvValue); err != nil {
-			logrus.Panicf("Invalid value '%s' for env varible key '%s'. Supported values: 'true', 'false'.", tokenEnvValue, BearerTokenAttr)
-		} else {
-			UseBearerToken = value
-		}
-	}
-}
 
 // K8sAPI object to access k8s api.
 type K8sAPI struct {
@@ -121,7 +95,7 @@ func (clientProvider *K8sAPIProvider) getK8sAPIWithBearerToken(token string) (*K
 
 // GetK8sAPI return k8s api object.
 func (clientProvider *K8sAPIProvider) GetK8sAPI(machineExec *model.MachineExec) (*K8sAPI, error) {
-	if UseBearerToken {
+	if cfg.UseBearerToken {
 		logrus.Debug("Create k8s api object with Service Account")
 		return clientProvider.getK8sAPIWithBearerToken(machineExec.BearerToken)
 	}
