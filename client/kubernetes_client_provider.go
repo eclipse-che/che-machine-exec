@@ -95,9 +95,9 @@ func (clientProvider *K8sAPIProvider) getK8sAPIWithBearerToken(token string) (*K
 // GetK8sAPI return k8s api object.
 func (clientProvider *K8sAPIProvider) GetK8sAPI(machineExec *model.MachineExec) (*K8sAPI, error) {
 	if cfg.UseBearerToken {
-		logrus.Debug("Create k8s api object without bearer token")
+		logrus.Debug("Create k8s api object with bearer token")
 		return clientProvider.getK8sAPIWithBearerToken(machineExec.BearerToken)
 	}
 	logrus.Debug("Create k8s api object with Service Account")
-	return clientProvider.getK8sAPIWithCA()
+	return clientProvider.getK8sAPIWithSA()
 }

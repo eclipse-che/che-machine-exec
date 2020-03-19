@@ -55,7 +55,7 @@ var (
 )
 
 // Newk8sExecManager create new instance of the kubernetes exec manager.
-func Newk8sExecManager(
+func NewK8sExecManager(
 	namespace string,
 	clientProvider client.K8sAPIProvider,
 ) *KubernetesExecManager {

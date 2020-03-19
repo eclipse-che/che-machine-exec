@@ -45,7 +45,7 @@ type ExecManager interface {
 // Fail with panic if it is impossible.
 func CreateExecManager() (exeManager ExecManager) {
 	if isValidKubernetesInfra() {
-		nameSpace := GetNameSpace()
+		namespace := GetNameSpace()
 		k8sAPIProvider := client.NewK8sAPIProvider()
 		return NewK8sExecManager(namespace, *k8sAPIProvider)
 	}

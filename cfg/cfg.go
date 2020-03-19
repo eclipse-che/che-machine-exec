@@ -54,7 +54,7 @@ func init() {
 			logrus.Errorf("Invalid value '%s' for env variable key '%s'. Value should be boolean", useTokenEnvValue, useTokenEnv)
 		}
 	}
-	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to have access to the kubernetes api")
+	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to avoid users impersonation while accessing to k8s API.")
 
 	setLogLevel()
 }
