@@ -25,7 +25,7 @@ var (
 	URL string
 	// StaticPath path to serve static resources
 	StaticPath string
-	// UseBearerToken - flag to enable/disable using bearer token to have access to k8s api.
+	// UseBearerToken - flag to enable/disable using bearer token to avoid users impersonation while accessing to k8s API.
 	UseBearerToken bool
 )
 
