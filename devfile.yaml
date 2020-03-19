@@ -116,7 +116,7 @@ commands:
           ./che-machine-exec --url 0.0.0.0:3130 --static /projects/src/github.com/eclipse/che-machine-exec/cloud-shell
         component: dev
 
-  - name: Debug current file
+  - name: Debug exec server
     actions:
       - type: vscode-launch
         referenceContent: |
