@@ -14,6 +14,7 @@ package shell
 
 import (
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/client"
 	"github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/sirupsen/logrus"
 )
@@ -38,8 +39,10 @@ type ShellDetector struct {
 	ExecInfoParser
 }
 
-// Create new shell detector inside container.
-func NewShellDetector(execInfoCreator exec_info.InfoExecCreator, parser ExecInfoParser) *ShellDetector {
+// NewShellDetector create new shell detector inside container.
+func NewShellDetector(k8sAPI *client.K8sAPI, namespace string) *ShellDetector {
+	execInfoCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().CoreV1(), k8sAPI.GetConfig())
+	parser := NewExecInfoParser()
 	return &ShellDetector{
 		InfoExecCreator: execInfoCreator,
 		ExecInfoParser:  parser,

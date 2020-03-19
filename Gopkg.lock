@@ -20,7 +20,7 @@
   revision = "449fdfce4d962303d702fec724ef0ad181c92528"
 
 [[projects]]
-  digest = "1:f5bb63f36061adf9e239e1300343020bfbb6a4d54173cd75206f124406c16b9e"
+  digest = "1:ce52c6dc15e636890ac6454d6234090f04fed4677e786cb46ef1d701b986c4f3"
   name = "github.com/eclipse/che-go-jsonrpc"
   packages = [
     ".",
@@ -28,8 +28,7 @@
     "jsonrpcws",
   ]
   pruneopts = "UT"
-  revision = "8449a748a2cdfa68f54d2d72e2b02f539f1cd2c5"
-  version = "0.1.0"
+  revision = "931966b891fed8143c920e51e6d4d87b8490b9e8"
 
 [[projects]]
   digest = "1:c45cef8e0074ea2f8176a051df38553ba997a3616f1ec2d35222b1cf9864881e"

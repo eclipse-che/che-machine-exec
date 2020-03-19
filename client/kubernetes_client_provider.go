@@ -13,51 +13,91 @@
 package client
 
 import (
+	"errors"
+
+	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/cfg"
+	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
-// Provider for creation new kubernetes api client.
-type KubernetesClientProvider struct {
+// K8sAPI object to access k8s api.
+type K8sAPI struct {
 	config *rest.Config
 	client *kubernetes.Clientset
 }
 
-// Create new kubernetes api client provider.
-func NewKubernetesClientProvider() *KubernetesClientProvider {
-	config := createConfig()
-	return &KubernetesClientProvider{
-		config: config,
-		client: createClient(config),
-	}
+// NewK8sAPI constructor for creation new k8s api access object.
+func NewK8sAPI(config *rest.Config, client *kubernetes.Clientset) *K8sAPI {
+	return &K8sAPI{config: config, client: client}
 }
 
-// Create configuration to work with kubernetes api inside pod.
-func createConfig() *rest.Config {
+// GetClient returns k8s client.
+func (api *K8sAPI) GetClient() *kubernetes.Clientset {
+	return api.client
+}
+
+// GetConfig returns k8s config.
+func (api *K8sAPI) GetConfig() *rest.Config {
+	return api.config
+}
+
+// K8sAPIProvider for creation new K8sAPI.
+type K8sAPIProvider struct {
+	k8sAPI *K8sAPI
+}
+
+// NewK8sAPIProvider creates new K8sAPI provider.
+func NewK8sAPIProvider() *K8sAPIProvider {
+	return &K8sAPIProvider{}
+}
+
+// getK8sAPIWithSA returns k8sApi using service account permissions.
+func (clientProvider *K8sAPIProvider) getK8sAPIWithSA() (*K8sAPI, error) {
+	if clientProvider.k8sAPI == nil {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		client, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, err
+		}
+
+		clientProvider.k8sAPI = NewK8sAPI(config, client)
+	}
+
+	return clientProvider.k8sAPI, nil
+}
+
+// getK8sAPIWithBearerToken returns k8sApi with bearer token.
+func (clientProvider *K8sAPIProvider) getK8sAPIWithBearerToken(token string) (*K8sAPI, error) {
+	if len(token) == 0 {
+		return nil, errors.New("Failed to create k8sAPI. Token must not be empty")
+	}
+
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
-	return config
-}
 
-// Create client set to use kubernetes api inside pod.
-func createClient(config *rest.Config) *kubernetes.Clientset {
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
+	config.BearerToken = token
+
+	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
-	return clientset
+	return NewK8sAPI(config, client), nil
 }
 
-// Get kubernetes configuration inside cluster pod.
-func (clientProvider *KubernetesClientProvider) GetKubernetesConfig() *rest.Config {
-	return clientProvider.config
-}
-
-// Get kubernetes client set inside cluster pod.
-func (clientProvider *KubernetesClientProvider) GetKubernetesClient() *kubernetes.Clientset {
-	return clientProvider.client
+// GetK8sAPI return k8s api object.
+func (clientProvider *K8sAPIProvider) GetK8sAPI(machineExec *model.MachineExec) (*K8sAPI, error) {
+	if cfg.UseBearerToken {
+		logrus.Debug("Create k8s api object with bearer token")
+		return clientProvider.getK8sAPIWithBearerToken(machineExec.BearerToken)
+	}
+	logrus.Debug("Create k8s api object with Service Account")
+	return clientProvider.getK8sAPIWithSA()
 }

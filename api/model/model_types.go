@@ -64,6 +64,10 @@ type MachineExec struct {
 
 	// Todo Refactoring: Create separated code layer and move it.
 	Buffer *line_buffer.LineRingBuffer
+
+	// BearerToken to have access to the kubernetes api.
+	// For empty value will be created in-cluster config with service account access.
+	BearerToken string
 }
 
 type ExecExitEvent struct {

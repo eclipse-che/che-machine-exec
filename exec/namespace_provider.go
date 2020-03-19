@@ -18,23 +18,23 @@ import (
 )
 
 const (
-	NameSpaceFile = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+	namespaceFile = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 )
 
 var namespace string
 
-func readNameSpace() string {
-	nsBytes, err := ioutil.ReadFile(NameSpaceFile)
+func readNamespace() string {
+	nsBytes, err := ioutil.ReadFile(namespaceFile)
 	if err != nil {
-		logrus.Fatal("Failed to get NameSpace", err)
+		logrus.Fatal("Failed to get Namespace", err)
 	}
 	return string(nsBytes)
 }
 
 // Get namespace for current Eclipse CHE workspace
-func GetNameSpace() string {
+func GetNamespace() string {
 	if namespace == "" {
-		namespace = readNameSpace()
+		namespace = readNamespace()
 	}
 	return namespace
 }

@@ -29,7 +29,7 @@ function compile() {
         exit 0;
     fi
 
-    echo "============ Compilation succesfully completed. ============";
+    echo "============ Compilation successfully completed. ============";
 }
 
 compile;

@@ -15,9 +15,6 @@ package exec
 import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/client"
-	"github.com/eclipse/che-machine-exec/exec-info"
-	"github.com/eclipse/che-machine-exec/filter"
-	"github.com/eclipse/che-machine-exec/shell"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -48,18 +45,9 @@ type ExecManager interface {
 // Fail with panic if it is impossible.
 func CreateExecManager() (exeManager ExecManager) {
 	if isValidKubernetesInfra() {
-		infoParser := shell.NewExecInfoParser()
-		nameSpace := GetNameSpace()
-		clientProvider := client.NewKubernetesClientProvider()
-		k8sClient := clientProvider.GetKubernetesClient()
-		config := clientProvider.GetKubernetesConfig()
-
-		kubernetesInfoExecCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sClient.CoreV1(), config)
-		shellDetector := shell.NewShellDetector(kubernetesInfoExecCreator, infoParser)
-		cmdResolver := NewCmdResolver(shellDetector, kubernetesInfoExecCreator)
-		containerFilter := filter.NewKubernetesContainerFilter(nameSpace, k8sClient.CoreV1())
-
-		return Newk8sExecManager(nameSpace, k8sClient.CoreV1(), config, containerFilter, *cmdResolver)
+		namespace := GetNamespace()
+		k8sAPIProvider := client.NewK8sAPIProvider()
+		return NewK8sExecManager(namespace, *k8sAPIProvider)
 	}
 
 	logrus.Panic("Error: Unable to create manager. Unable to get service account info.")

@@ -45,7 +45,7 @@ func TestShouldDetectDefaultShellWithHelpInfoExecs(t *testing.T) {
 	etcPasswdExecInfo.On("GetOutput").Return(etcPasswdContent)
 	execInfoParser.On("ParseShellFromEtcPassWd", etcPasswdContent, parsedUID).Return(shell, nil)
 
-	shellDetector := NewShellDetector(execInfoCreator, execInfoParser)
+	shellDetector := &ShellDetector{InfoExecCreator: execInfoCreator, ExecInfoParser: execInfoParser}
 	shell, err := shellDetector.DetectShell(containerInfo)
 	fmt.Println(shell, err)
 
@@ -65,7 +65,7 @@ func TestShowRethrowErrorFromUserIDInfoExecOnStart(t *testing.T) {
 
 	uidExecInfo.On("Start").Return(testErr)
 
-	shellDetector := NewShellDetector(execInfoCreator, execInfoParser)
+	shellDetector := &ShellDetector{InfoExecCreator: execInfoCreator, ExecInfoParser: execInfoParser}
 	shell, err := shellDetector.DetectShell(containerInfo)
 
 	assert.NotNil(t, err)
@@ -87,7 +87,7 @@ func TestShouldRethrowErrorOnParseUID(t *testing.T) {
 	uidExecInfo.On("GetOutput").Return(uidContent)
 	execInfoParser.On("ParseUID", uidContent).Return("", testErr)
 
-	shellDetector := NewShellDetector(execInfoCreator, execInfoParser)
+	shellDetector := &ShellDetector{InfoExecCreator: execInfoCreator, ExecInfoParser: execInfoParser}
 	shell, err := shellDetector.DetectShell(containerInfo)
 
 	assert.NotNil(t, err)
@@ -112,7 +112,7 @@ func TestShowRethrowErrorFromEtcPasswdContentInfoExecOnStart(t *testing.T) {
 	execInfoParser.On("ParseUID", uidContent).Return(parsedUID, nil)
 	etcPasswdExecInfo.On("Start").Return(testErr)
 
-	shellDetector := NewShellDetector(execInfoCreator, execInfoParser)
+	shellDetector := &ShellDetector{InfoExecCreator: execInfoCreator, ExecInfoParser: execInfoParser}
 	shell, err := shellDetector.DetectShell(containerInfo)
 
 	assert.NotNil(t, err)
@@ -139,7 +139,7 @@ func TestShouldRethrowErrorOnParseEtcPasswdShellByUID(t *testing.T) {
 	etcPasswdExecInfo.On("GetOutput").Return(etcPasswdContent)
 	execInfoParser.On("ParseShellFromEtcPassWd", etcPasswdContent, parsedUID).Return("", testErr)
 
-	shellDetector := NewShellDetector(execInfoCreator, execInfoParser)
+	shellDetector := &ShellDetector{InfoExecCreator: execInfoCreator, ExecInfoParser: execInfoParser}
 	shell, err := shellDetector.DetectShell(containerInfo)
 
 	assert.NotNil(t, err)
