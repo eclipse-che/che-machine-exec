@@ -47,7 +47,7 @@ func CreateExecManager() (exeManager ExecManager) {
 	if isValidKubernetesInfra() {
 		nameSpace := GetNameSpace()
 		k8sAPIProvider := client.NewK8sAPIProvider()
-		return Newk8sExecManager(nameSpace, *k8sAPIProvider)
+		return NewK8sExecManager(namespace, *k8sAPIProvider)
 	}
 
 	logrus.Panic("Error: Unable to create manager. Unable to get service account info.")
