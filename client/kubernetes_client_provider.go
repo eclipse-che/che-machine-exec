@@ -99,6 +99,6 @@ func (clientProvider *K8sAPIProvider) GetK8sAPI(machineExec *model.MachineExec) 
 		logrus.Debug("Create k8s api object with Service Account")
 		return clientProvider.getK8sAPIWithBearerToken(machineExec.BearerToken)
 	}
-	logrus.Debug("Create k8s api object without bearer token")
+	logrus.Debug("Create k8s api object with Service Account")
 	return clientProvider.getK8sAPIWithCA()
 }
