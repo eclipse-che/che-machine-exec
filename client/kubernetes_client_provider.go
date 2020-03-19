@@ -54,7 +54,7 @@ func NewK8sAPIProvider() *K8sAPIProvider {
 }
 
 // getK8sAPIWithCA returns k8sApi using service account permissions.
-func (clientProvider *K8sAPIProvider) getK8sAPIWithCA() (*K8sAPI, error) {
+func (clientProvider *K8sAPIProvider) getK8sAPIWithSA() (*K8sAPI, error) {
 	var err error
 	if clientProvider.k8sAPI == nil {
 		config, err := rest.InClusterConfig()
