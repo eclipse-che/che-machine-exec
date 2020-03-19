@@ -35,7 +35,7 @@ type CmdResolver struct {
 // NewCmdResolver creates new instance CmdResolver.
 func NewCmdResolver(k8sAPI *client.K8sAPI, namespace string) *CmdResolver {
 	shellDetector := shell.NewShellDetector(k8sAPI, namespace)
-	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
+	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
 	return &CmdResolver{
 		ContainerShellDetector: shellDetector,
 		InfoExecCreator:        infoExecCreator,
