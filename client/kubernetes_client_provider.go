@@ -75,7 +75,7 @@ func (clientProvider *K8sAPIProvider) getK8sAPIWithSA() (*K8sAPI, error) {
 // getK8sAPIWithBearerToken returns k8sApi with bearer token.
 func (clientProvider *K8sAPIProvider) getK8sAPIWithBearerToken(token string) (*K8sAPI, error) {
 	if len(token) == 0 {
-		return nil, errors.New("Failed to create k8sAPI. Token should not be an empty")
+		return nil, errors.New("Failed to create k8sAPI. Token must not be empty")
 	}
 
 	config, err := rest.InClusterConfig()
