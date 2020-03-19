@@ -40,8 +40,8 @@ type ShellDetector struct {
 }
 
 // NewShellDetector create new shell detector inside container.
-func NewShellDetector(k8sAPI *client.K8sAPI, nameSpace string) *ShellDetector {
-	execInfoCreator := exec_info.NewKubernetesInfoExecCreator(nameSpace, k8sAPI.GetClient().CoreV1(), k8sAPI.GetConfig())
+func NewShellDetector(k8sAPI *client.K8sAPI, namespace string) *ShellDetector {
+	execInfoCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().CoreV1(), k8sAPI.GetConfig())
 	parser := NewExecInfoParser()
 	return &ShellDetector{
 		InfoExecCreator: execInfoCreator,

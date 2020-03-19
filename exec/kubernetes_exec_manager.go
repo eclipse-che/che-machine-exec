@@ -43,7 +43,7 @@ type machineExecs struct {
 type KubernetesExecManager struct {
 	k8sAPIProvider client.K8sAPIProvider
 
-	nameSpace string
+	namespace string
 }
 
 var (
@@ -60,7 +60,7 @@ func NewK8sExecManager(
 	clientProvider client.K8sAPIProvider,
 ) *KubernetesExecManager {
 	return &KubernetesExecManager{
-		nameSpace:      namespace,
+		namespace:      namespace,
 		k8sAPIProvider: clientProvider,
 	}
 }
@@ -74,7 +74,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	}
 	logrus.Debug("Successfully Got k8sApi object.")
 
-	containerFilter := filter.NewKubernetesContainerFilter(manager.nameSpace, k8sAPI.GetClient().CoreV1())
+	containerFilter := filter.NewKubernetesContainerFilter(manager.namespace, k8sAPI.GetClient().CoreV1())
 
 	if machineExec.Identifier.MachineName != "" {
 		containerInfo, err := containerFilter.FindContainerInfo(&machineExec.Identifier)
@@ -113,7 +113,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 }
 
 func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo, k8sAPI *client.K8sAPI) error {
-	cmdResolver := NewCmdResolver(k8sAPI, manager.nameSpace)
+	cmdResolver := NewCmdResolver(k8sAPI, manager.namespace)
 	resolvedCmd, err := cmdResolver.ResolveCmd(*machineExec, containerInfo)
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, c
 
 	req := k8sAPI.GetClient().CoreV1().RESTClient().
 		Post().
-		Namespace(manager.nameSpace).
+		Namespace(manager.namespace).
 		Resource(exec_info.Pods).
 		Name(containerInfo.PodName).
 		SubResource(exec_info.Exec).
