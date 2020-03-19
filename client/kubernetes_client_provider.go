@@ -68,7 +68,7 @@ func (clientProvider *K8sAPIProvider) getK8sAPIWithSA() (*K8sAPI, error) {
 		clientProvider.k8sAPI = NewK8sAPI(config, client)
 	}
 
-	return clientProvider.k8sAPI, err
+	return clientProvider.k8sAPI, nil
 }
 
 // getK8sAPIWithBearerToken returns k8sApi with bearer token.
