@@ -2,33 +2,39 @@ apiVersion: 1.0.0
 metadata:
   name: che-machine-exec
 projects:
-- name: che-machine-exec
-  clonePath: src/github.com/eclipse/che-machine-exec
-  source:
-    type: git
-    location: https://github.com/eclipse/che-machine-exec.git
+  - name: che-machine-exec
+    clonePath: src/github.com/eclipse/che-machine-exec
+    source:
+      type: git
+      location: https://github.com/eclipse/che-machine-exec.git
 components:
-  - alias: exec-plugin
-    type: chePlugin
-    id: eclipse/che-machine-exec-plugin/0.0.1
   - alias: ms-vscode.go
+    id: ms-vscode/go/latest
     type: chePlugin
-    id: ms-vscode/go/0.11.0
+    memoryLimit: 1G
+    # Remove env "GO111MODULE" after migration to the go modules!
+    env:
+      - value: 'off'
+        name: GO111MODULE
+
   - alias: typescript-plugin
     type: chePlugin
     id: che-incubator/typescript/1.30.2
-  - alias: theia-dev
+    memoryLimit: 512M
+
+  - alias: theia-dev-or-cloud-shell
     type: dockerimage
     image: 'quay.io/eclipse/che-theia-dev:next'
     mountSources: true
     endpoints:
-      - name: theia-dev
+      - name: theia-dev-or-cloud-shell
         port: 3130
         attributes:
           protocol: http
           secure: 'false'
           public: 'true'
-    memoryLimit: 3Gi
+    memoryLimit: 512M
+
   - alias: dev
     type: dockerimage
     image: eclipse/che-machine-exec-dev:next
@@ -49,6 +55,7 @@ components:
       # replicate the GOCACHE from the plugin, even though the cache is not shared
       # between the two
         value: /tmp/.cache
+
 commands:
   - name: compile
     actions:
@@ -56,30 +63,35 @@ commands:
         component: dev
         command: ./compile.sh
         workdir: /projects/src/github.com/eclipse/che-machine-exec
+
   - name: test
     actions:
       - type: exec
         component: dev
         command: go test ./...
         workdir: /projects/src/github.com/eclipse/che-machine-exec
+
   - name: format
     actions:
       - type: exec
         component: dev
         command: go fmt ./... && printf "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
+
   - name: update dependencies
     actions:
       - type: exec
         component: dev
         command: dep ensure && printf "\033[32mDone.\033[0m"
         workdir: /projects/src/github.com/eclipse/che-machine-exec
+
   - name: start exec server
     actions:
       - type: exec
         component: dev
         command: ./che-machine-exec --url 0.0.0.0:5555
         workdir: /projects/src/github.com/eclipse/che-machine-exec
+
   - name: stop exec server
     actions:
       - type: exec
@@ -88,3 +100,45 @@ commands:
           pid=$(pidof che-machine-exec) && kill ${pid} &&
           printf "\033[32mDone.\033[0m" ||
           printf "\033[32mNothing to stop... Done.\033[0m"
+
+  - name: build cloud shell
+    actions:
+      - type: exec
+        command: yarn && yarn run build
+        component: theia-dev-or-cloud-shell
+        workdir: /projects/src/github.com/eclipse/che-machine-exec/cloud-shell
+
+  - name: start cloud shell
+    actions:
+      - workdir: /projects/src/github.com/eclipse/che-machine-exec
+        type: exec
+        command: >-
+          ./che-machine-exec --url 0.0.0.0:3130 --static /projects/src/github.com/eclipse/che-machine-exec/cloud-shell
+        component: dev
+
+  - name: Debug current file
+    actions:
+      - type: vscode-launch
+        referenceContent: |
+          {
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "useApiV1": false,
+                "dlvLoadConfig": {
+                  "followPointers": true,
+                  "maxVariableRecurse": 1,
+                  "maxStringLen": 3000,
+                  "maxArrayValues": 100,
+                  "maxStructFields": -1
+                },
+                "name": "Remote debug che-machine-exec",
+                "type": "go",
+                "request": "launch",
+                "mode": "auto",
+                "program": "${workspaceFolder}/src/github.com/eclipse/che-machine-exec/main.go",
+                "cwd": "${workspaceFolder}",
+                "args": [ "--url", "0.0.0.0:3130", "--static", "/projects/che-machine-exec/cloud-shell" ]
+              }
+            ]
+          }
