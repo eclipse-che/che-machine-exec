@@ -51,7 +51,7 @@ func init() {
 		if v, err := strconv.ParseBool(useTokenEnvValue); err == nil {
 			defaultUseTokenValue = v
 		} else {
-			logrus.Errorf("Invalid value '%s' for env varible key '%s'. Value should be boolean", useTokenEnvValue, useTokenEnv)
+			logrus.Errorf("Invalid value '%s' for env variable key '%s'. Value should be boolean", useTokenEnvValue, useTokenEnv)
 		}
 	}
 	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to have access to the kubernetes api")
