@@ -15,11 +15,12 @@ package exec
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/client"
@@ -93,11 +94,13 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	if err != nil {
 		return -1, err
 	}
+	var errors map[string]error
 	for _, containerInfo := range containersInfo {
 		err = manager.doCreate(machineExec, containerInfo, k8sAPI)
 		if err != nil {
 			//attempt to initialize terminal in this container failed
 			//proceed to next one
+			errors[containerInfo.ContainerName] = err
 			continue
 		}
 		logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
@@ -109,7 +112,11 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	for _, c := range containersInfo {
 		containers = append(containers, c.PodName+"\\"+c.ContainerName)
 	}
-	return -1, fmt.Errorf("failed to initialize terminal in any of {%s}", strings.Join(containers, ", "))
+	var buf strings.Builder
+	for container, err := range errors {
+		buf.WriteString(fmt.Sprintf("- %s: %s\n", container, err.Error()))
+	}
+	return -1, fmt.Errorf("failed to initialize terminal in any of {%s} -- errors: \n%s", strings.Join(containers, ", "), buf.String())
 }
 
 func (manager *KubernetesExecManager) doCreate(machineExec *model.MachineExec, containerInfo *model.ContainerInfo, k8sAPI *client.K8sAPI) error {
