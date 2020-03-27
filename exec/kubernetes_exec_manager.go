@@ -94,13 +94,13 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	if err != nil {
 		return -1, err
 	}
-	var errors map[string]error
+	errs := make(map[string]error)
 	for _, containerInfo := range containersInfo {
 		err = manager.doCreate(machineExec, containerInfo, k8sAPI)
 		if err != nil {
 			//attempt to initialize terminal in this container failed
 			//proceed to next one
-			errors[containerInfo.ContainerName] = err
+			errs[containerInfo.ContainerName] = err
 			continue
 		}
 		logrus.Printf("%s is successfully initialized in auto discovered container %s/%s", machineExec.Cmd,
@@ -113,7 +113,7 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 		containers = append(containers, c.PodName+"\\"+c.ContainerName)
 	}
 	var buf strings.Builder
-	for container, err := range errors {
+	for container, err := range errs {
 		buf.WriteString(fmt.Sprintf("- %s: %s\n", container, err.Error()))
 	}
 	return -1, fmt.Errorf("failed to initialize terminal in any of {%s} -- errors: \n%s", strings.Join(containers, ", "), buf.String())
