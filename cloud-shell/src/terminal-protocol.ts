@@ -8,6 +8,9 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+export const EXIT_METHOD: string = 'onExecExit';
+export const ERROR_METHOD: string = 'onExecError';
+
 export interface MachineIdentifier {
     machineName: string,
     workspaceId: string
@@ -20,6 +23,16 @@ export interface MachineExec {
     cols: number,
     rows: number,
     id?: number
+}
+
+export interface ExecExitEvent {
+    id: number;
+    code: number;
+}
+
+export interface ExecErrorEvent {
+    id: number;
+    stack: string;
 }
 
 export interface IdParam {
