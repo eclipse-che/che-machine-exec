@@ -11,7 +11,9 @@
 import { CloudShellTerminal, TerminalHandler } from "./terminal";
 import { JsonRpcConnection } from "./json-rpc-connection";
 import { GenericNotificationHandler } from "vscode-jsonrpc";
-import { MachineExec } from "./terminal-protocol";
+import { MachineExec, EXIT_METHOD, ERROR_METHOD, ExecExitEvent, ExecErrorEvent } from "./terminal-protocol";
+import { NotificationType } from 'vscode-ws-jsonrpc';
+import { ANSIControlSequences as CS } from './const';
 
 const terminalElem = document.getElementById('terminal-container');
 
@@ -33,7 +35,7 @@ rpcConnecton.create().then(connection => {
         const exec: MachineExec = {
             tty: true,
             cols: terminal.cols,
-            rows: terminal.rows,
+            rows: terminal.rows
         };
 
         connection.sendRequest<{}>('create', exec).then((value: {}) => {
@@ -66,6 +68,15 @@ rpcConnecton.create().then(connection => {
                 console.log('Attach connection closed: ', event.code);
             }
         });
+    });
+    const exitNotification = new NotificationType<ExecExitEvent, void>(EXIT_METHOD);
+    connection.onNotification(exitNotification, (event: ExecExitEvent) => {
+        terminal.sendLine(CS.GREEN_COLOR + "Process completed." + CS.RESET_COLOR)
+    });
+
+    const errorNotification = new NotificationType<ExecErrorEvent, void>(ERROR_METHOD);
+    connection.onNotification(errorNotification, (event: ExecErrorEvent) => {
+        terminal.sendLine(CS.RED_COLOR + 'Failed to create terminal. Error: ' + event.stack + CS.RESET_COLOR)
     });
 }).catch(err => {
     console.log('Fatal. Unable to connect to container.', err);
