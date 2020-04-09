@@ -28,7 +28,6 @@ const terminal: CloudShellTerminal = new CloudShellTerminal();
 terminal.open(terminalElem);
 terminal.sendLine('Welcome to the Cloud Shell.');
 
-console.log(connectUrl);
 const rpcConnecton = new JsonRpcConnection(connectUrl);
 rpcConnecton.create().then(connection => {
     connection.onNotification('connected', (handler: GenericNotificationHandler) => {
@@ -67,6 +66,9 @@ rpcConnecton.create().then(connection => {
             attachConnection.onclose = (event: CloseEvent) => {
                 console.log('Attach connection closed: ', event.code);
             }
+        }, 
+        (onRejected: any) => {
+            terminal.sendLine(CS.RED_COLOR + 'Unable to connect to json-rpc channel. Cause: ' + onRejected + CS.RESET_COLOR)
         });
     });
     const exitNotification = new NotificationType<ExecExitEvent, void>(EXIT_METHOD);
@@ -79,5 +81,5 @@ rpcConnecton.create().then(connection => {
         terminal.sendLine(CS.RED_COLOR + 'Failed to create terminal. Error: ' + event.stack + CS.RESET_COLOR)
     });
 }).catch(err => {
-    console.log('Fatal. Unable to connect to container.', err);
-})
+    terminal.sendLine(CS.RED_COLOR + 'Connection closed. Error: ' + err + CS.RESET_COLOR)
+});
