@@ -94,6 +94,11 @@ func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (in
 	if err != nil {
 		return -1, err
 	}
+
+	if len(containersInfo) == 0 {
+		return -1, errors.New("no containers found to exec")
+	}
+
 	errs := make(map[string]error)
 	for _, containerInfo := range containersInfo {
 		err = manager.doCreate(machineExec, containerInfo, k8sAPI)
