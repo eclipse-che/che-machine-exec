@@ -13,7 +13,6 @@
 package main
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/eclipse/che-go-jsonrpc"
@@ -44,14 +43,10 @@ func main() {
 	// connect to exec api end point(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
 		var token string
+
 		if cfg.UseBearerToken {
 			token = c.Request.Header.Get("X-Forwarded-Access-Token")
-			if len(token) == 0 {
-				err := errors.New("unable to find user token header")
-				logrus.Debug(err)
-				c.JSON(c.Writer.Status(), err.Error())
-				return
-			}
+
 		}
 
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
