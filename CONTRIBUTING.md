@@ -18,14 +18,6 @@ Open link to the workspace. After workspace start Eclipse CHE editor
 clones che-machine-exec source code to the folder `/projects/src/github.com/eclipse/che-machine-exec`.
 This source code available inside development linux containers with names `dev` and `theia-dev`.
 
-#### 'dev' container target
-
-che-machine-exec is written on the programming language golang, that's why development container `dev` contains
-pre-installed golang binaries to be able to compile, test and launch che-machine-exec binary.
-Also `dev` container contains pre-installed `dep` tool to manage golang dependencies.
-
-> See more: [Dockerfile](dockerfiles/dev/Dockerfile) for `dev` container image .
-
 #### 'theia-dev' container target
 
 To test che-machine-exec with ui-part you can use [che-theia](https://github.com/eclipse/che-theia.git).
