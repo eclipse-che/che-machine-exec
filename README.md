@@ -18,7 +18,7 @@ Build docker image with che-machine-exec manually:
 docker build --no-cache -t eclipse/che-machine-exec .
 ```
 
-## Test che-machine-exec on Openshift
+## Test che-machine-exec on OpenShift
 
 First, [build Eclipse Che Assembly](#build-eclipse-che-assembly).
 
