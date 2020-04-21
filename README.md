@@ -30,13 +30,13 @@ $ docker build --no-cache -t eclipse/che-machine-exec .
 1. [Build Eclipse Che Assembly](#building-eclipse-che-assembly).
 
 2. Install Minishift using the following instractions:
-   - [Preparing to Install Minishift](https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html)
-   - [Setting Up the Virtualization Environment](https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html)
+    - [Preparing to Install Minishift](https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html)
+    - [Setting Up the Virtualization Environment](https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html)
 
 3. Install the `oc` tool:
-  - [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
-  - Extract and apply this binary path to the `PATH` system environment variable.
-  - The `oc` tool is now availiable from the terminal:
+    - [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
+    - Extract and apply this binary path to the `PATH` system environment variable.
+    - The `oc` tool is now availiable from the terminal:
  ```
  $ oc version
  oc v3.11.213
