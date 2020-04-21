@@ -34,9 +34,9 @@ $ docker build --no-cache -t eclipse/che-machine-exec .
    - [Setting Up the Virtualization Environment](https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html)
 
 3. Install the `oc` tool:
-  1. [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
-  2. Extract and apply this binary path to the `PATH` system environment variable.
-  3. The `oc` tool is now availiable from the terminal:
+  - [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
+  - Extract and apply this binary path to the `PATH` system environment variable.
+  - The `oc` tool is now availiable from the terminal:
  ```
  $ oc version
  oc v3.11.213
@@ -87,39 +87,41 @@ This command activates an OpenShift context to use the Minishift instance:
 2. Install a minikube virtual machine on your computer. See the [minikube README](https://github.com/kubernetes/minikube/blob/master/README.md).
 
 3. Deploy Eclipse Che using Helm:
++
    1. [Install Helm](https://github.com/kubernetes/helm/blob/master/docs/install.md).
++ 
    2. Start minikube:
 ```
 $ minikube start --cpus 2 --memory 8192 --extra-config=apiserver.authorization-mode=RBAC
 ```
-
++
    3. Go to the `helm/che` directory:
 ```
 $ cd ~/projects/che/deploy/kubernetes/helm/che
 ```
-
++
    4. Add the **cluster-admin** role for the `kube-system:default` account:
 ```
-$ kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+$ kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin \
+  --serviceaccount=kube-system:default
 ```
-
++
    5. Set the default Kubernetes context:
 ```
 $ kubectl config use-context minikube
 ```
-
-   6. Install tiller on the cluster:
-      1. Create a [tiller serviceAccount]:
++
+   6. To install tiller on the cluster, first create a tiller serviceAccount:
 ```
 $ kubectl create serviceaccount tiller --namespace kube-system
 ```
-
-      2. Bind it to the **cluster-admin** role:
++
+   7. Then bind it to the **cluster-admin** role:
 ```
 $ kubectl apply -f ./tiller-rbac.yaml
 ```
-
-   7. Install tiller itself:
++
+   8. Install tiller itself:
 ```
 $ helm init --service-account tiller
 ```
