@@ -20,7 +20,6 @@ $ docker build --no-cache -t eclipse/che-machine-exec .
 
 2. Deploy Eclipse Che on OpenShift ([example templates](https://github.com/eclipse/che/blob/master/deploy/openshift/)).
    The output contains a link to the deployed Eclipse Che project. Use it to log in to Eclipse Che.
-> Note: For `ocp.sh`, the `--setup-ocp-oauth` is available. However, in this case, use "Openshift v3" authentication on the login page.
 
 3. Register a new user on the login page. After login, you are redirected to the Eclipse Che user dashboard.
 
@@ -35,13 +34,13 @@ $ docker build --no-cache -t eclipse/che-machine-exec .
    - [Setting Up the Virtualization Environment](https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html)
 
 3. Install the `oc` tool:
-  1. [Download the `oc` binary for your platform](https://github.com/openshift/origin/releases).
+  1. [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
   2. Extract and apply this binary path to the `PATH` system environment variable.
   3. The `oc` tool is now availiable from the terminal:
  ```
  $ oc version
- oc v3.9.0+191fece
- kubernetes v1.9.1+a0ce1bc657
+ oc v3.11.213
+ kubernetes v1.11.0+d4cacc0
  features: Basic-Auth GSSAPI Kerberos SPNEGO
  ```
 
