@@ -2,204 +2,194 @@
 [![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/)
 [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/)
 
-# CHE machine exec
+# Che machine exec
 
-Go-lang server side to creation machine-execs for Eclipse CHE workspaces.
-Uses to spawn terminal or command processes.
+A Golang server that creates machine-execs for Eclipse Che workspaces. It is used to spawn terminals or command processes. Che machine exec uses the JSON-RPC protocol to communicate with the client.
 
-CHE machine exec uses json-rpc protocol to communication with client.
+## Building a container image
 
-## Build docker image
+To build a container image with che-machine-exec manually:
 
-Build docker image with che-machine-exec manually:
-
-```bash
-docker build --no-cache -t eclipse/che-machine-exec .
+```
+$ docker build --no-cache -t eclipse/che-machine-exec .
 ```
 
-## Test che-machine-exec on the local Openshift
+## Testing che-machine-exec on OpenShift
 
-To test che-machine-exec you need deploy Eclipse CHE to the openshift locally. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy)
+1. [Build Eclipse Che Assembly](#building-eclipse-che-assembly).
 
-To deploy Eclipse CHE to the local running openshift you can use [ocp.sh sript](https://github.com/eclipse/che/blob/master/deploy/openshift/ocp.sh).
+2. Deploy Eclipse Che on OpenShift ([example templates](https://github.com/eclipse/che/blob/master/deploy/openshift/)).
+   The output contains a link to the deployed Eclipse Che project. Use it to log in to Eclipse Che.
 
-Move to the ocp.sh script:
+3. Register a new user on the login page. After login, you are redirected to the Eclipse Che user dashboard.
 
-```bash
-cd ~/projects/che/deploy/openshift/
-```
+4. Create an Eclipse Che 7.x workspace using the default Che-Theia IDE. Then [test che-machine-exec using che-theia-terminal-extension](#testing-che-machine-exec-using-che-theia-terminal) and [test che-machine-exec using che-theia-task-plugin](#testing-che-machine-exec-using-che-theia-task-plugin).
 
- Run ocp.sh with arguments:
+## Testing che-machine-exec on OpenShift using Minishift
 
-```bash
-./ocp.sh --run-ocp --deploy-che --no-pull --debug --deploy-che-plugin-registry --multiuser
-```
-In the output you will get link to the deployed Eclipse CHE project. Use it to login to Eclipse CHE.
-> Notice: for ocp.sh you could use argument `--setup-ocp-oauth`, but in this case you should use "Openshift v3" auth on the login page.
+1. [Build Eclipse Che Assembly](#building-eclipse-che-assembly).
 
-Register new user on the login page. After login you will be redirected to
-the Eclipse CHE user dashboard.
+2. Install Minishift using the following instractions:
+    - [Preparing to Install Minishift](https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html)
+    - [Setting Up the Virtualization Environment](https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html)
 
-Create new workspace from openshift stack 'Java Theia on OpenShift' or 'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
-
-## Test on the Minishift
-To test che-machine-exec you need deploy Eclipse CHE to the Minishift. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
-
-Install minishift with help this instractions:
- - https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html
- - https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html
-
-Install oc tool: [download oc binary for your platform](https://github.com/openshift/origin/releases), extract and apply this binary path to the system environment variables PATH. After that oc become availiable from terminal:
-
-```bash
-$ oc version
-oc v3.9.0+191fece
-kubernetes v1.9.1+a0ce1bc657
-features: Basic-Auth GSSAPI Kerberos SPNEGO
-```
-
-Start Minishift:
-```bash
-$ minishift start --memory=8GB
--- Starting local OpenShift cluster using 'kvm' hypervisor...
-...
-   OpenShift server started.
-   The server is accessible via web console at:
-       https://192.168.99.128:8443
-
-   You are logged in as:
-       User:     developer
-       Password: developer
-
-   To login as administrator:
-       oc login -u system:admin
-```
-
-From this command output you need:
- - Minishift master url. In this case it's `https://192.168.42.159:8443`. Let's call it 'CHE_INFRA_KUBERNETES_MASTER__URL'. We can store this variable in the terminal session to use it for next commands:
-
- ```bash
- export CHE_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
+3. Install the `oc` tool:
+    - [Download the `oc` binary for your platform](https://mirror.openshift.com/pub/openshift-v3/clients).
+    - Extract and apply this binary path to the `PATH` system environment variable.
+    - The `oc` tool is now availiable from the terminal:
  ```
-> Note: in case if you delete minishift virtual machine(`minishift delete`) and create it again, this url will be changed.
+ $ oc version
+ oc v3.11.213
+ kubernetes v1.11.0+d4cacc0
+ features: Basic-Auth GSSAPI Kerberos SPNEGO
+ ```
 
-Register new user on the CHE_INFRA_KUBERNETES_MASTER__URL page.
+4. Start Minishift:
+ ```
+ $ minishift start --memory=8GB
+ -- Starting local OpenShift cluster using 'kvm' hypervisor...
+ ...
+  OpenShift server started.
+  The server is accessible via web console at:
+      https://192.168.99.128:8443
 
-Login to minishift with help oc, use new user login and password for it:
+  You are logged in as:
+      User:     developer
+      Password: developer
 
-```bash
+  To login as administrator:
+      oc login -u system:admin
+```
+
+5. Store the Minishift master URL from the output of `minishift start` (`https://192.168.42.159:8443`) in the `CHE_INFRA_KUBERNETES_MASTER__URL` variable:
+```
+$ export CHE_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
+```
+> Note: When you delete the Minishift virtual machine (`minishift delete`) and create it again, this URL changes.
+
+6. Register a new user on the `CHE_INFRA_KUBERNETES_MASTER__URL` page.
+
+7. Log in to Minishift using `oc`. Use the new username and password for it:
+```
 $ oc login --server=${CHE_INFRA_KUBERNETES_MASTER__URL}
 ```
-This command activates openshift context to use minishift instance:
+This command activates an OpenShift context to use the Minishift instance:
 
-To deploy Eclipse CHE you can use [deploy_che.sh script](https://github.com/eclipse/che/blob/master/deploy/openshift/deploy_che.sh).
+8. Deploy Eclipse Che on OpenShift ([example templates](https://github.com/eclipse/che/blob/master/deploy/openshift/)).
+   The output contains a link to the deployed Eclipse Che project. Use it to log in to Eclipse Che.
 
-Move to deploy_che.sh script:
+9. Create an Eclipse Che 7.x workspace using the default Che-Theia IDE. Then [test che-machine-exec using che-theia-terminal-extension](#testing-che-machine-exec-using-che-theia-terminal) and [test che-machine-exec using che-theia-task-plugin](#testing-che-machine-exec-using-che-theia-task-plugin).
+
+## Testing on Kubernetes using minikube
+
+1. [Build Eclipse Che Assembly](#build-eclipse-che-assembly).
+
+2. Install a minikube virtual machine on your computer. See the [minikube README](https://github.com/kubernetes/minikube/blob/master/README.md).
+
+3. Deploy Eclipse Che using Helm:
++
+   1. [Install Helm](https://github.com/kubernetes/helm/blob/master/docs/install.md).
++ 
+   2. Start minikube:
 ```
-cd ~/projects/che/deploy/openshift
+$ minikube start --cpus 2 --memory 8192 --extra-config=apiserver.authorization-mode=RBAC
 ```
-
-Run deploy_che.sh script with arguments:
-
-```bash
-export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && ./deploy_che.sh --no-pull --debug --multiuser
++
+   3. Go to the `helm/che` directory:
 ```
-
-Create new workspace from openshift stack 'Java Theia on OpenShift' or
-'CHE 7' stack. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
-
-## Test on the Kubernetes (MiniKube)
-
-To test che-machine-exec you need deploy Eclipse CHE to the Minikube cluster. [Prepare Eclipse CHE to deploy](#prepare-eclipse-che-to-deploy).
-
-Install minikube virtual machine on your computer: https://github.com/kubernetes/minikube/blob/master/README.md
-
-You can deploy Eclipse CHE with help helm. So, [install Helm](https://github.com/kubernetes/helm/blob/master/docs/install.md)
-
-Start new minikube:
-```bash
-minikube start --cpus 2 --memory 8192 --extra-config=apiserver.authorization-mode=RBAC
-```
-
-Go to helm/che directory:
-```bash
 $ cd ~/projects/che/deploy/kubernetes/helm/che
 ```
-
-- Add cluster-admin role for `kube-system:default` account
-```bash
-kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
++
+   4. Add the **cluster-admin** role for the `kube-system:default` account:
 ```
-- Set your default Kubernetes context:
-```bash
-kubectl config use-context minikube
+$ kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin \
+  --serviceaccount=kube-system:default
 ```
-- Install tiller on your cluster:
-  - Create a [tiller serviceAccount]:
-    ```bash
-    kubectl create serviceaccount tiller --namespace kube-system
-    ```
-   - Bind it to the almighty cluster-admin role:
-      ```bash
-      kubectl apply -f ./tiller-rbac.yaml
-      ```
-  - Install tiller itself:
-    ```bash
-    helm init --service-account tiller
-    ```
-- Start NGINX-based ingress controller:
-  ```bash
-  minikube addons enable ingress
-  ```
++
+   5. Set the default Kubernetes context:
+```
+$ kubectl config use-context minikube
+```
++
+   6. To install tiller on the cluster, first create a tiller serviceAccount:
+```
+$ kubectl create serviceaccount tiller --namespace kube-system
+```
++
+   7. Then bind it to the **cluster-admin** role:
+```
+$ kubectl apply -f ./tiller-rbac.yaml
+```
++
+   8. Install tiller itself:
+```
+$ helm init --service-account tiller
+```
 
-There are two configurations to deploy Eclipse CHE on the Kubernetes:
- - first one: for each new workspace Eclipse CHE creates separated namespace:
-    ```bash
-      helm upgrade --install che --namespace che ./
-    ```
- - second one: Eclipse CHE creates workspace in the same namespace:
-    ```bash
-    helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che ./
-    ```
+4. Start NGINX-based Ingress controller:
+```
+$ minikube addons enable ingress
+```
 
-> Info: To delploy multi-user CHE you can use parameter: `-f ./values/multi-user.yaml`. Also you can set ingress domain with help parameter: `--set global.ingressDomain=<domain>`
+5. Deploy Eclipse Che on the Kubernetes cluster using one of the following two configurations:
+   * Eclipse Che creates separated namespace for each new workspace:
+```
+$ helm upgrade --install che --namespace che ./
+```
 
-> Notice: You can track deploy CHE with help Minikube dashboard:
-  ```bash
-  minikube dashboard
-  ```
+   * Eclipse Che creates all workspaces in the same namespace:
+```
+$ helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che ./
+```
+> Note:
+> * To deploy multi-user Che, use the `-f ./values/multi-user.yaml` parameter.
+> * To set an Ingress domain, use the `--set global.ingressDomain=<domain>` parameter.
+> * To deploy Che using the minikube dashboard:
+```
+$ minikube dashboard
+```
 
-Create new workspace from stack 'CHE 7'. Run workspace. When workspace will be running you will see Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
+6. Create an Eclipse Che 7.x workspace using the default Che-Theia IDE. Then [test che-machine-exec using che-theia-terminal-extension](#testing-che-machine-exec-using-che-theia-terminal) and [test che-machine-exec using che-theia-task-plugin](#testing-che-machine-exec-using-che-theia-task-plugin).
 
-## Prepare Eclipse CHE to deploy
+## Building Eclipse Che assembly
 
-> Requiements: installed java 8 or higher and maven 3.3.0 or higher
+> Requiements:
+> * Java 8 or higher
+> * Maven 3.5 or higher
 
-First of all clone Eclipse CHE:
-
+1. Clone Eclipse Che:
 ```
 $ git clone https://github.com/eclipse/che.git ~/projects/che
 ```
 
-For test purpose it's not nessure build all Eclipse CHE, build 'assembly-main' maven module is pretty enough:
-
+2. To save time, build only the `assembly-main` module, not the whole Eclipse Che project.
 ```
 $ cd ~/projects/che/assembly/assembly-main
 $ mvn clean install -DskipTests
 ```
 
-## Test che-machine-exec with help eclipse-che-theia-terminal
-Eclipse CHE workspace created from Theia stack contains included che-theia-terminal-extension. With help this extension you can test che-machine-exec.
+## Testing che-machine-exec using che-theia-terminal
 
-Create new terminal with help main menu of the Theia: `Terminal` => `Open Terminal in specific container`. After that IDE will propose you select machine to creation terminal. Select one of the machines by click. After that Theia should create new terminal on the bottom panel.
-Or you could use command palette: `Ctrl + Shift + P` and type `terminal`. Then you could select with help keys `Arrow Up` or `Arrow Down` command for terminal creation and launch it by click on `Enter`.
+Eclipse Che 7.x workspaces that use the Che-Theia IDE include the che-theia-terminal extension. You can use this to test che-machine-exec.
 
-## Test che-machine-exec with help che-theia-task-plugin
+In a Che 7 workspace:
 
-Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin you can test che-machine-exec.
-Create new Theia task for your project: in the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
+1. Go to **Terminal** -> **Open Terminal in specific container**.
+2. Select a container to create a new terminal on the bottom panel.
 
-```bash
+Alternatively, use the command palette:
+
+1. Press `Ctrl + Shift + P` and type `terminal`.
+2. Select a container with arrow keys.
+
+## Testing che-machine-exec using che-theia-task-plugin
+
+Eclipse Che 7.x workspaces that use the Che-Theia IDE include che-theia-task-plugin. You can use this to test che-machine-exec.
+
+1. Create a new Che-Theia task for your project:
+   1. In the project root, create a `.theia` folder.
+   2. Create a `tasks.json` file in the `.theia` folder with the following content:
+```json
 {
     "tasks": [
         {
@@ -210,12 +200,16 @@ Create new Theia task for your project: in the project root create folder `.thei
     ]
 }
 ```
-Run this task with help menu tasks: `Terminal` => `Run Task...`
-After that Theia should display widget with output content: 'echo hello'
+
+2. Run this task by going to **Terminal** -> **Run Task...**
+3. After that Che-Theia shows a widget with the following output:
+```
+echo hello
+```
 
 ## CI
 The following [CentOS CI jobs](https://ci.centos.org/) are associated with the repository:
 
-- [![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/) - builds CentOS images on each commit to the [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
+- [![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/) - builds CentOS images on each commit to [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
 - [![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/) - builds CentOS images and pushes them to [quay.io](https://quay.io/organization/eclipse) on a daily basis from the [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch.
 - [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/) -  builds images from the [`release`](https://github.com/eclipse/che-machine-exec/tree/release) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
