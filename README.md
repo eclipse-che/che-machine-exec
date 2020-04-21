@@ -75,16 +75,9 @@ $ oc login --server=${CHE_INFRA_KUBERNETES_MASTER__URL}
 ```
 This command activates an OpenShift context to use the Minishift instance:
 
-8. Deploy Eclipse Che using the [deploy_che.sh script](https://github.com/eclipse/che/blob/master/deploy/openshift/deploy_che.sh):
-   1. Move to deploy_che.sh script:
-```
-$ cd ~/projects/che/deploy/openshift
-```
-   2. Run deploy_che.sh script with arguments:
-```
-$ export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && \
-./deploy_che.sh --no-pull --debug --multiuser
-```
+8. Deploy Eclipse Che on OpenShift ([example templates](https://github.com/eclipse/che/blob/master/deploy/openshift/)).
+   The output contains a link to the deployed Eclipse Che project. Use it to log in to Eclipse Che.
+
 9. Create an Eclipse Che 7.x workspace using the default Che-Theia IDE. Then [test che-machine-exec using che-theia-terminal-extension](#testing-che-machine-exec-using-che-theia-terminal) and [test che-machine-exec using che-theia-task-plugin](#testing-che-machine-exec-using-che-theia-task-plugin).
 
 ## Testing on Kubernetes using minikube
