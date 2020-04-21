@@ -67,19 +67,19 @@ $ minishift start --memory=8GB
 ```
 
 From this command output you need:
- - Minishift master url. In this case it's `https://192.168.42.159:8443`. Let's call it 'Che_INFRA_KUBERNETES_MASTER__URL'. We can store this variable in the terminal session to use it for next commands:
+ - Minishift master url. In this case it's `https://192.168.42.159:8443`, or `CHE_INFRA_KUBERNETES_MASTER__URL`. We can store this variable in the terminal session to use it for next commands:
 
  ```bash
- export Che_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
+ export CHE_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
  ```
 > Note: in case if you delete minishift virtual machine(`minishift delete`) and create it again, this url will be changed.
 
-Register new user on the Che_INFRA_KUBERNETES_MASTER__URL page.
+Register new user on the `CHE_INFRA_KUBERNETES_MASTER__URL` page.
 
 Login to minishift with help oc, use new user login and password for it:
 
 ```bash
-$ oc login --server=${Che_INFRA_KUBERNETES_MASTER__URL}
+$ oc login --server=${CHE_INFRA_KUBERNETES_MASTER__URL}
 ```
 This command activates OpenShift context to use minishift instance:
 
@@ -93,7 +93,7 @@ cd ~/projects/che/deploy/openshift
 Run deploy_che.sh script with arguments:
 
 ```bash
-export Che_INFRA_KUBERNETES_MASTER__URL=${Che_INFRA_KUBERNETES_MASTER__URL} && ./deploy_che.sh --no-pull --debug --multiuser
+export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && ./deploy_che.sh --no-pull --debug --multiuser
 ```
 
 Create an Eclipse Che 7.x workspace using the default Theia IDE. Then you can [test che-machine-exec with help che-theia-terminal-extension](#test-che-machine-exec-with-help-eclipse-che-theia-terminal) and [test che-machine-exec with help che-theia-task-plugin](#test-che-machine-exec-with-help-che-theia-task-plugin)
