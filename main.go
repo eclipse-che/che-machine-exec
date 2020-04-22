@@ -15,7 +15,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/eclipse/che-go-jsonrpc"
+	jsonrpc "github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-machine-exec/api/events"
 	execRpc "github.com/eclipse/che-machine-exec/api/jsonrpc"
@@ -23,6 +23,7 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che-machine-exec/cfg"
+	"github.com/eclipse/che-machine-exec/kubeconfig"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -46,7 +47,7 @@ func main() {
 
 		if cfg.UseBearerToken {
 			token = c.Request.Header.Get("X-Forwarded-Access-Token")
-
+			kubeconfig.CreateKubeConfig(token)
 		}
 
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
