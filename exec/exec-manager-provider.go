@@ -13,11 +13,12 @@
 package exec
 
 import (
+	"os"
+
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/client"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 var execManager ExecManager
@@ -39,6 +40,9 @@ type ExecManager interface {
 
 	// Resize exec by unique id.
 	Resize(id int, cols uint, rows uint) error
+
+	// Create a kubeconfig
+	CreateKubeConfig(kubeConfigParams *model.KubeConfigParams) error
 }
 
 // CreateExecManager creates and returns new instance ExecManager.
