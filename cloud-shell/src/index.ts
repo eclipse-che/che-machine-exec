@@ -18,10 +18,12 @@ import { ANSIControlSequences as CS } from './const';
 const terminalElem = document.getElementById('terminal-container');
 
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const port = window.location.port ? `:${window.location.port}` : '';
-const hostUrl = `${protocol}://${window.location.host}${port}`;
-const connectUrl = hostUrl + '/connect';
-const attachUrl = hostUrl + '/attach';
+// CloudShell webapp expects to be available from /static/
+// So, API should be available at /static/../
+const basePath = (window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/') + '../';
+const websocketBaseUrl = `${protocol}://${window.location.host}${basePath}`;
+const connectUrl = websocketBaseUrl + 'connect';
+const attachUrl = websocketBaseUrl + 'attach';
 
 const terminal: CloudShellTerminal = new CloudShellTerminal();
 
