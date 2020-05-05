@@ -3,7 +3,7 @@ module github.com/eclipse/che-machine-exec
 go 1.12
 
 replace (
-	github.com/davecgh/go-spew => github.com/davecgh/go-spew  v1.1.0
+	github.com/davecgh/go-spew => github.com/davecgh/go-spew v1.1.0
 	github.com/docker/spdystream => github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
 	github.com/eclipse/che-go-jsonrpc => github.com/eclipse/che-go-jsonrpc v0.0.0-20200317130110-931966b891fe
 	github.com/ghodss/yaml => github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680
@@ -38,4 +38,42 @@ replace (
 	k8s.io/api => k8s.io/api v0.0.0-20180713172427-0f11257a8a25
 	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20180619225948-e386b2658ed2
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20180817174322-745ca8300397
+)
+
+require (
+	github.com/docker/spdystream v0.0.0-00010101000000-000000000000 // indirect
+	github.com/eclipse/che-go-jsonrpc v0.0.0-00010101000000-000000000000
+	github.com/elazarl/goproxy v0.0.0-20200426045556-49ad98f6dac1 // indirect
+	github.com/ghodss/yaml v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gin-contrib/sse v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gin-gonic/gin v0.0.0-00010101000000-000000000000
+	github.com/gogo/protobuf v0.0.0-00010101000000-000000000000 // indirect
+	github.com/golang/glog v0.0.0-00010101000000-000000000000 // indirect
+	github.com/golang/protobuf v0.0.0-00010101000000-000000000000 // indirect
+	github.com/google/gofuzz v0.0.0-00010101000000-000000000000 // indirect
+	github.com/googleapis/gnostic v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gorilla/websocket v0.0.0-00010101000000-000000000000
+	github.com/json-iterator/go v0.0.0-00010101000000-000000000000 // indirect
+	github.com/mattn/go-isatty v0.0.0-00010101000000-000000000000 // indirect
+	github.com/modern-go/concurrent v0.0.0-00010101000000-000000000000 // indirect
+	github.com/modern-go/reflect2 v0.0.0-00010101000000-000000000000 // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/pkg/errors v0.0.0-00010101000000-000000000000
+	github.com/sirupsen/logrus v0.0.0-00010101000000-000000000000
+	github.com/spf13/pflag v0.0.0-00010101000000-000000000000 // indirect
+	github.com/stretchr/testify v1.2.2
+	github.com/ugorji/go v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/crypto v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/net v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a // indirect
+	golang.org/x/text v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/time v0.0.0-00010101000000-000000000000 // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/go-playground/validator.v8 v8.0.0-00010101000000-000000000000 // indirect
+	gopkg.in/inf.v0 v0.0.0-00010101000000-000000000000 // indirect
+	gopkg.in/yaml.v2 v2.0.0-00010101000000-000000000000 // indirect
+	k8s.io/api v0.0.0-00010101000000-000000000000
+	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
+	k8s.io/client-go v0.0.0-00010101000000-000000000000
 )
