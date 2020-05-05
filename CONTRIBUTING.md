@@ -15,7 +15,7 @@ $ chectl workspace:start --devfile=https://raw.githubusercontent.com/eclipse/che
 ```
 
 Open link to the workspace. After workspace start Eclipse CHE editor
-clones che-machine-exec source code to the folder `/projects/src/github.com/eclipse/che-machine-exec`.
+clones che-machine-exec source code to the folder `/projects/che-machine-exec`.
 This source code available inside development linux containers with names `dev` and `theia-dev`.
 
 #### 'theia-dev' container target
@@ -52,15 +52,6 @@ To launch che-machine-exec tests use task with name `test`.
 
 During development don't forget to format code.
 To format che-machine-exec code use task with name `format`.
-
-#### Update golang dependencies
-
-To manage che-machine-exec golang dependencies we are using [dep tool](https://golang.github.io/dep).
-List dependencies stored in the [Gopkg.toml](Gopkg.toml). To change dependencies you need modify this file.
-Use task with name `update dependencies` to flash Gopkg.toml changes:
-this task call dep tool to synchronize `vendor` folder and [Gopkg.lock](Gopkg.lock) with updated list dependencies.
-
-> Notice: `Gopkg.lock and vendor folder` changes should be contributed too.
 
 #### Start che-machine-exec server
 
