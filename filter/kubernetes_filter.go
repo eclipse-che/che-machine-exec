@@ -14,6 +14,7 @@ package filter
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/eclipse/che-machine-exec/api/model"
@@ -64,6 +65,23 @@ func (filter *KubernetesContainerFilter) GetContainerList() (containersInfo []*m
 	}
 
 	return containersInfo, nil
+}
+
+func (filter *KubernetesContainerFilter) GetContainer(name string) (containerInfo *model.ContainerInfo, err error) {
+	pods, err := filter.getWorkspacePods()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pod := range pods.Items {
+		for _, container := range pod.Spec.Containers {
+			if container.Name == name {
+				return &model.ContainerInfo{ContainerName: container.Name, PodName: pod.Name}, nil
+			}
+		}
+	}
+
+	return nil, errors.New(fmt.Sprintf("Workspace-related pod does not have container with name %s", name))
 }
 
 // Find container information by pod label: "wsId" and container environment variables "machineName".

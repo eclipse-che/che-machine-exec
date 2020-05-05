@@ -25,6 +25,10 @@ var execManager ExecManager
 
 // ExecManager to manage exec life cycle.
 type ExecManager interface {
+	// Resolve resolves exec info
+	// the first container with available shell will be picked up if omit
+	Resolve(container, token string) (*model.ResolvedExec, error)
+
 	// Create new Exec defined by machine exec model object.
 	Create(machineExec *model.MachineExec) (int, error)
 
