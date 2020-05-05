@@ -13,8 +13,6 @@
 package main
 
 import (
-	"net/http"
-
 	jsonrpc "github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-machine-exec/api/events"
@@ -26,6 +24,7 @@ import (
 	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 func main() {
@@ -41,13 +40,12 @@ func main() {
 		})
 	}
 
-	// connect to exec api end point(websocket with json-rpc)
+	// connect to exec api endpoint(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
 		var token string
 
 		if cfg.UseBearerToken {
 			token = c.Request.Header.Get(model.BearerTokenHeader)
-
 		}
 
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
@@ -56,7 +54,7 @@ func main() {
 			return
 		}
 
-		logrus.Debug("Create json-rpc channel for new websocket connnection")
+		logrus.Debug("Create json-rpc channel for new websocket connection")
 		tunnel := jsonrpc.NewManagedTunnel(conn)
 		if len(token) > 0 {
 			tunnel.Attributes[execRpc.BearerTokenAttr] = token
@@ -78,6 +76,10 @@ func main() {
 
 	r.POST("/exec/config", func(c *gin.Context) {
 		rest.HandleKubeConfig(c)
+	})
+
+	r.GET("/exec/resolve", func(c *gin.Context) {
+		rest.HandleResolve(c)
 	})
 
 	// create json-rpc routs group

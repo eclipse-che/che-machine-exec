@@ -13,17 +13,57 @@
 package rest
 
 import (
-	"net/http"
-
+	"encoding/json"
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 var (
 	execManager = exec.GetExecManager()
 )
+
+func HandleResolve(c *gin.Context) {
+	token := c.Request.Header.Get(model.BearerTokenHeader)
+	if token == "" {
+		c.Writer.WriteHeader(http.StatusUnauthorized)
+		_, err := c.Writer.Write([]byte("Authorization token must not be empty"))
+		if err != nil {
+			logrus.Error("Failed to write error response", err)
+		}
+	}
+
+	container := c.Param("container")
+
+	resolvedExec, err := execManager.Resolve(container, token)
+
+	if err != nil {
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		_, err := c.Writer.Write([]byte(fmt.Sprintf("Unable to resolve exec. Cause: %s", err.Error())))
+		if err != nil {
+			logrus.Error("Failed to write error response", err)
+		}
+		return
+	}
+
+	marshal, err := json.Marshal(resolvedExec)
+	if err != nil {
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		_, err := c.Writer.Write([]byte(fmt.Sprintf("Failed to marshal resolved exec. Cause: %s", err.Error())))
+		if err != nil {
+			logrus.Error("Failed to write error response", err)
+		}
+		return
+	}
+
+	_, err = c.Writer.Write(marshal)
+	if err != nil {
+		logrus.Error("Failed to write response", err)
+	}
+}
 
 func HandleKubeConfig(c *gin.Context) {
 	token := c.Request.Header.Get(model.BearerTokenHeader)

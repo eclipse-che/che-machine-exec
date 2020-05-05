@@ -38,11 +38,18 @@ type ContainerInfo struct {
 	PodName       string
 }
 
+//ResolvedExec holds info client might send to create exec
+type ResolvedExec struct {
+	PodName       string   `json:"pod"`
+	ContainerName string   `json:"container"`
+	Cmd           []string `json:"cmd"`
+}
+
 // Todo code Refactoring: MachineExec should be simple object for exec creation, without any business logic
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
-	// Supported values for now 'shell', "", "process". If type is empty "", than type will resolved like "shell".
+	// Supported values for now 'shell', "", "process". If type is empty "", then type will resolved like "shell".
 	Type string `json:"type"`
 
 	Tty  bool   `json:"tty"`
