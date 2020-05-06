@@ -72,7 +72,7 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.0.0-00010101000000-000000000000 // indirect
 	gopkg.in/inf.v0 v0.0.0-00010101000000-000000000000 // indirect
-	gopkg.in/yaml.v2 v2.0.0-00010101000000-000000000000 // indirect
+	gopkg.in/yaml.v2 v2.0.0-00010101000000-000000000000
 	k8s.io/api v0.0.0-00010101000000-000000000000
 	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
 	k8s.io/client-go v0.0.0-00010101000000-000000000000
