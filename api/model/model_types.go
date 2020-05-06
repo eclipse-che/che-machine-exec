@@ -25,6 +25,8 @@ const (
 	// method names to send events with information about exec to the clients.
 	OnExecExit  = "onExecExit"
 	OnExecError = "onExecError"
+
+	BearerTokenHeader = "X-Forwarded-Access-Token"
 )
 
 type MachineIdentifier struct {
@@ -89,4 +91,10 @@ type ExecErrorEvent struct {
 
 func (*ExecErrorEvent) Type() string {
 	return OnExecError
+}
+
+type KubeConfigParams struct {
+	ContainerName string `json:"container"`
+	Username      string //optional, Developer in kubeconfig if empty
+	BearerToken   string //evaluated from header
 }
