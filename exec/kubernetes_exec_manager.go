@@ -26,6 +26,7 @@ import (
 	"github.com/eclipse/che-machine-exec/client"
 	exec_info "github.com/eclipse/che-machine-exec/exec-info"
 	"github.com/eclipse/che-machine-exec/filter"
+	"github.com/eclipse/che-machine-exec/kubeconfig"
 	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
 	"github.com/eclipse/che-machine-exec/output/utf8stream"
 	ws "github.com/eclipse/che-machine-exec/ws-conn"
@@ -233,6 +234,39 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 
 	machineExec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
+}
+
+func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams) error {
+	machineExec := &model.MachineExec{
+		BearerToken: kubeConfigParams.BearerToken,
+	}
+	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
+	if err != nil {
+		logrus.Debugf("Unable to get k8sAPI %s", err.Error())
+		return err
+	}
+
+	containerFilter := filter.NewKubernetesContainerFilter(manager.namespace, k8sAPI.GetClient().CoreV1())
+	containersInfo, err := containerFilter.GetContainerList()
+	if err != nil {
+		return err
+	}
+
+	if len(containersInfo) == 0 {
+		return errors.New("no containers found to exec")
+	}
+
+	for _, containerInfo := range containersInfo {
+		if containerInfo.ContainerName == kubeConfigParams.ContainerName {
+			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
+			err = kubeconfig.CreateKubeConfig(infoExecCreator, GetNamespace(), kubeConfigParams, containerInfo)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("No container with name %s found", kubeConfigParams.ContainerName)
 }
 
 // getByID return exec by id.

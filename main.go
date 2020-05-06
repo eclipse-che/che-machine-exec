@@ -15,12 +15,13 @@ package main
 import (
 	"net/http"
 
-	"github.com/eclipse/che-go-jsonrpc"
+	jsonrpc "github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-machine-exec/api/events"
 	execRpc "github.com/eclipse/che-machine-exec/api/jsonrpc"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/api/rest"
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,7 @@ func main() {
 		var token string
 
 		if cfg.UseBearerToken {
-			token = c.Request.Header.Get("X-Forwarded-Access-Token")
+			token = c.Request.Header.Get(model.BearerTokenHeader)
 
 		}
 
@@ -73,6 +74,10 @@ func main() {
 		if err := websocket.Attach(c.Writer, c.Request, c.Param("id")); err != nil {
 			c.JSON(c.Writer.Status(), err.Error())
 		}
+	})
+
+	r.POST("/exec/config", func(c *gin.Context) {
+		rest.HandleKubeConfig(c)
 	})
 
 	// create json-rpc routs group
