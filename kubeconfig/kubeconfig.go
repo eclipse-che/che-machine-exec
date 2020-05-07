@@ -110,7 +110,7 @@ func createKubeConfigText(token, namespace, username string) (string, error) {
 
 	bytes, err := yaml.Marshal(&kubeconfig)
 	if err != nil {
-		logrus.Error("error: %v", err)
+		logrus.Errorf("error: %v", err)
 		return "", err
 	}
 	return string(bytes), nil
