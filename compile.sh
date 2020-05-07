@@ -8,21 +8,11 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-function resolveDependencies() {
-    echo "===> Resolve go-lang dependencies with help of dep tool <===";
-    dep ensure
-      if [ $? != 0 ]; then
-        echo "Failed to resolve dependencies";
-        exit 0;
-    fi
-}
-
 function compile() {
-    resolveDependencies;
 
     echo "===> Compile che-machine-exec binary from source code. <===";
 
-    $(CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .);
+    $(CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .);
 
     if [ $? != 0 ]; then
         echo "Failed to compile code";
