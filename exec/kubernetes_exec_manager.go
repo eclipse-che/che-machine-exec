@@ -281,7 +281,8 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
-	go saveActivity(machineExec)
+	stopActivitySaver := make(chan bool, 1)
+	go saveActivity(machineExec, stopActivitySaver)
 
 	ptyHandler := PtyHandlerImpl{machineExec: machineExec, filter: &utf8stream.Utf8StreamFilter{}}
 	machineExec.Buffer = line_buffer.New()
@@ -293,6 +294,9 @@ func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		TerminalSizeQueue: ptyHandler,
 		Tty:               machineExec.Tty,
 	})
+
+	stopActivitySaver <- true
+	machineExec.ConnectionHandler.CloseConnections()
 
 	if err != nil {
 		machineExec.ErrorChan <- err

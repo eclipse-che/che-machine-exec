@@ -24,9 +24,16 @@ const (
 // To prevent close exec connection
 // (https://blog.openshift.com/executing-commands-in-pods-using-k8s-api/ - Connection lifecycle)
 // let's send empty byte array each 30 sec.
-func saveActivity(machineExec *model.MachineExec) {
+func saveActivity(machineExec *model.MachineExec, stopActivitySaver chan bool) {
 	ticker := time.NewTicker(ActivityTimeOut * time.Second)
-	for range ticker.C {
-		machineExec.MsgChan <- make([]byte, 0)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-stopActivitySaver:
+			return
+		case <-ticker.C:
+			machineExec.MsgChan <- make([]byte, 0)
+		}
 	}
 }

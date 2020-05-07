@@ -13,14 +13,19 @@
 package ws_conn
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
 
-const PingPeriod = 30 * time.Second
+const (
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+)
 
 // Websocket connection handler is connection storage.
 // For che-machine-exec it used to manage connections with exec input/output.
@@ -30,12 +35,8 @@ type ConnectionHandler interface {
 	// Send data to the client websocket connections.
 	WriteDataToWsConnections(data []byte)
 
-	// Remove websocket connection.
-	removeConnection(wsConn *websocket.Conn)
-	// Read data from websocket connection.
-	readDataFromConnections(inputChan chan []byte, wsConn *websocket.Conn)
-	// Send ping message to the websocket connection
-	sendPingMessage(wsConn *websocket.Conn)
+	// Close all connection.
+	CloseConnections()
 }
 
 // Connection handler implementation.
@@ -59,7 +60,7 @@ func (handler *ConnectionHandlerImpl) ReadConnection(wsConn *websocket.Conn, inp
 
 	handler.wsConns = append(handler.wsConns, wsConn)
 
-	go handler.readDataFromConnections(inputChan, wsConn)
+	go handler.readDataFromConnection(inputChan, wsConn)
 	go handler.sendPingMessage(wsConn)
 }
 
@@ -80,22 +81,31 @@ func (handler *ConnectionHandlerImpl) WriteDataToWsConnections(data []byte) {
 	defer handler.wsConnsLock.Unlock()
 	handler.wsConnsLock.Lock()
 
+	workingConns := make([]*websocket.Conn, 0)
+
 	for _, wsConn := range handler.wsConns {
 		if err := wsConn.WriteMessage(websocket.TextMessage, data); err != nil {
-			fmt.Printf("failed to write to ws-conn message. Cause: %v", err)
-			handler.removeConnection(wsConn)
+			if !IsClosedByClientError(err) {
+				logrus.Errorf("failed to write to ws-conn message. Cause: %v", err)
+			}
+		} else {
+			workingConns = append(workingConns, wsConn)
 		}
 	}
+	handler.wsConns = workingConns
 }
 
 // Read data from connection.
-func (handler *ConnectionHandlerImpl) readDataFromConnections(inputChan chan []byte, wsConn *websocket.Conn) {
+func (handler *ConnectionHandlerImpl) readDataFromConnection(inputChan chan []byte, wsConn *websocket.Conn) {
 	defer handler.removeConnection(wsConn)
 
 	for {
+		wsConn.SetPongHandler(func(string) error { return wsConn.SetReadDeadline(time.Now().Add(pongWait)) })
 		msgType, wsBytes, err := wsConn.ReadMessage()
 		if err != nil {
-			logrus.Errorf("failed to read ws-conn message. Cause: %v", err)
+			if !IsClosedByClientError(err) {
+				logrus.Errorf("failed to read ws-conn message. Cause: %v", err)
+			}
 			return
 		}
 
@@ -109,16 +119,25 @@ func (handler *ConnectionHandlerImpl) readDataFromConnections(inputChan chan []b
 
 // Send ping message to the connection client.
 func (*ConnectionHandlerImpl) sendPingMessage(wsConn *websocket.Conn) {
-	ticker := time.NewTicker(PingPeriod)
+	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		err := wsConn.WriteMessage(websocket.PingMessage, []byte{})
-		if err != nil {
-			if !IsNormalWSError(err) {
-				logrus.Errorf("Error occurs on sending ping message to ws-conn. %v", err)
-			}
-			return
+		if err := wsConn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+			// stop sending ping messages if one failed
+			break
 		}
 	}
+}
+
+func (handler *ConnectionHandlerImpl) CloseConnections() {
+	defer handler.wsConnsLock.Unlock()
+	handler.wsConnsLock.Lock()
+
+	for _, wsConn := range handler.wsConns {
+		if err := wsConn.Close(); err != nil {
+			logrus.Errorf("failed to close connection. Cause: %v", err)
+		}
+	}
+	handler.wsConns = make([]*websocket.Conn, 0)
 }
