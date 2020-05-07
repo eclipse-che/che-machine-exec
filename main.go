@@ -13,6 +13,8 @@
 package main
 
 import (
+	"net/http"
+
 	jsonrpc "github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-machine-exec/api/events"
@@ -24,7 +26,6 @@ import (
 	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func main() {
@@ -78,8 +79,8 @@ func main() {
 		rest.HandleKubeConfig(c)
 	})
 
-	r.GET("/exec/resolve", func(c *gin.Context) {
-		rest.HandleResolve(c)
+	r.POST("/exec/init", func(c *gin.Context) {
+		rest.HandleInit(c)
 	})
 
 	// create json-rpc routs group

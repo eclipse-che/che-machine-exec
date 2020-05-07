@@ -314,9 +314,9 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams) error {
+func (manager *KubernetesExecManager) CreateKubeConfig(initConfigParams *model.InitConfigParams) error {
 	machineExec := &model.MachineExec{
-		BearerToken: kubeConfigParams.BearerToken,
+		BearerToken: initConfigParams.BearerToken,
 	}
 	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
 	if err != nil {
@@ -335,16 +335,20 @@ func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.K
 	}
 
 	for _, containerInfo := range containersInfo {
-		if containerInfo.ContainerName == kubeConfigParams.ContainerName {
+		if containerInfo.ContainerName == initConfigParams.ContainerName || initConfigParams.ContainerName == "" {
+			namespace := GetNamespace()
+			if initConfigParams.Namespace != "" {
+				namespace = initConfigParams.Namespace
+			}
 			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
-			err = kubeconfig.CreateKubeConfig(infoExecCreator, GetNamespace(), kubeConfigParams, containerInfo)
+			err = kubeconfig.CreateKubeConfig(infoExecCreator, namespace, &initConfigParams.KubeConfigParams, containerInfo)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
 	}
-	return fmt.Errorf("No container with name %s found", kubeConfigParams.ContainerName)
+	return fmt.Errorf("No container with name %s found", initConfigParams.ContainerName)
 }
 
 // getByID return exec by id.

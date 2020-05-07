@@ -100,8 +100,13 @@ func (*ExecErrorEvent) Type() string {
 	return OnExecError
 }
 
+type InitConfigParams struct {
+	ContainerName    string `json:"container"` //optional, Will be first available if not set
+	KubeConfigParams `json:"kubeconfig"`
+}
+
 type KubeConfigParams struct {
-	ContainerName string `json:"container"`
-	Username      string //optional, Developer in kubeconfig if empty
-	BearerToken   string //evaluated from header
+	Namespace   string `json:"namespace"`   //optional, Is not set into kubeconfig file if is not set or empty
+	Username    string `json:"username"`    //optional, Developer in kubeconfig if empty
+	BearerToken string `json:"bearertoken"` //evaluated from header
 }
