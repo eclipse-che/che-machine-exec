@@ -37,9 +37,18 @@ func HandleKubeConfig(c *gin.Context) {
 	}
 
 	var kubeConfigParams model.KubeConfigParams
-	if c.Bind(&kubeConfigParams) != nil {
+	if c.BindJSON(&kubeConfigParams) != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		_, err := c.Writer.Write([]byte("Failed to convert body args into internal structure"))
+		if err != nil {
+			logrus.Error("Failed to write error response", err)
+		}
+		return
+	}
+
+	if kubeConfigParams.ContainerName == "" {
+		c.Writer.WriteHeader(http.StatusBadRequest)
+		_, err := c.Writer.Write([]byte("Container name is required"))
 		if err != nil {
 			logrus.Error("Failed to write error response", err)
 		}
@@ -49,7 +58,6 @@ func HandleKubeConfig(c *gin.Context) {
 	if kubeConfigParams.Username == "" {
 		kubeConfigParams.Username = "Developer"
 	}
-
 	kubeConfigParams.BearerToken = token
 	err := execManager.CreateKubeConfig(&kubeConfigParams)
 
