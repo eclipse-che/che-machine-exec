@@ -38,11 +38,18 @@ type ContainerInfo struct {
 	PodName       string
 }
 
+//ResolvedExec holds info client might send to create exec
+type ResolvedExec struct {
+	PodName       string   `json:"pod"`
+	ContainerName string   `json:"container"`
+	Cmd           []string `json:"cmd"`
+}
+
 // Todo code Refactoring: MachineExec should be simple object for exec creation, without any business logic
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
-	// Supported values for now 'shell', "", "process". If type is empty "", than type will resolved like "shell".
+	// Supported values for now 'shell', "", "process". If type is empty "", then type will resolved like "shell".
 	Type string `json:"type"`
 
 	Tty  bool   `json:"tty"`
@@ -93,8 +100,13 @@ func (*ExecErrorEvent) Type() string {
 	return OnExecError
 }
 
+type InitConfigParams struct {
+	ContainerName    string `json:"container"` //optional, Will be first available if not set
+	KubeConfigParams `json:"kubeconfig"`
+}
+
 type KubeConfigParams struct {
-	ContainerName string `json:"container"`
-	Username      string //optional, Developer in kubeconfig if empty
-	BearerToken   string //evaluated from header
+	Namespace   string `json:"namespace"`   //optional, Is not set into kubeconfig file if is not set or empty
+	Username    string `json:"username"`    //optional, Developer in kubeconfig if empty
+	BearerToken string `json:"bearertoken"` //evaluated from header
 }

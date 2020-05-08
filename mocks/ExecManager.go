@@ -88,16 +88,37 @@ func (_m *ExecManager) Resize(id int, cols uint, rows uint) error {
 	return r0
 }
 
-// Create provides a mock function with given fields: kubeConfigParams
-func (_m *ExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams) error {
-	ret := _m.Called(kubeConfigParams)
+// Create provides a mock function with given fields: initConfigParams
+func (_m *ExecManager) CreateKubeConfig(initConfigParams *model.InitConfigParams) error {
+	ret := _m.Called(initConfigParams)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.KubeConfigParams) error); ok {
-		r0 = rf(kubeConfigParams)
+	if rf, ok := ret.Get(0).(func(*model.InitConfigParams) error); ok {
+		r0 = rf(initConfigParams)
 	} else {
 		r0 = ret.Error(0)
 	}
 
 	return r0
+}
+
+// Resolve provides a mock function with given fields: container, token
+func (_m *ExecManager) Resolve(container, token string) (*model.ResolvedExec, error) {
+	ret := _m.Called(container, token)
+
+	var r0 *model.ResolvedExec
+	if rf, ok := ret.Get(0).(func(string, string) *model.ResolvedExec); ok {
+		r0 = rf(container, token)
+	} else {
+		r0 = ret.Get(0).(*model.ResolvedExec)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(container, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

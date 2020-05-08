@@ -41,13 +41,12 @@ func main() {
 		})
 	}
 
-	// connect to exec api end point(websocket with json-rpc)
+	// connect to exec api endpoint(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
 		var token string
 
 		if cfg.UseBearerToken {
 			token = c.Request.Header.Get(model.BearerTokenHeader)
-
 		}
 
 		conn, err := jsonrpcws.Upgrade(c.Writer, c.Request)
@@ -56,7 +55,7 @@ func main() {
 			return
 		}
 
-		logrus.Debug("Create json-rpc channel for new websocket connnection")
+		logrus.Debug("Create json-rpc channel for new websocket connection")
 		tunnel := jsonrpc.NewManagedTunnel(conn)
 		if len(token) > 0 {
 			tunnel.Attributes[execRpc.BearerTokenAttr] = token
@@ -78,6 +77,10 @@ func main() {
 
 	r.POST("/exec/config", func(c *gin.Context) {
 		rest.HandleKubeConfig(c)
+	})
+
+	r.POST("/exec/init", func(c *gin.Context) {
+		rest.HandleInit(c)
 	})
 
 	// create json-rpc routs group

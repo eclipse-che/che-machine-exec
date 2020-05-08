@@ -67,6 +67,84 @@ func NewK8sExecManager(
 	}
 }
 
+func (manager *KubernetesExecManager) Resolve(container, token string) (*model.ResolvedExec, error) {
+	machineExec := &model.MachineExec{
+		BearerToken: token,
+	}
+	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
+	if err != nil {
+		logrus.Debugf("Unable to get k8sAPI %s", err.Error())
+		return nil, err
+	}
+	logrus.Debug("Successfully Got k8sApi object.")
+
+	if container != "" {
+		containerFilter := filter.NewKubernetesContainerFilter(manager.namespace, k8sAPI.GetClient().CoreV1())
+		containerInfo, err := containerFilter.GetContainer(container)
+		if err != nil {
+			return nil, err
+		}
+		cmdResolver := NewCmdResolver(k8sAPI, manager.namespace)
+		resolvedCmd, err := cmdResolver.ResolveCmd(*machineExec, containerInfo)
+
+		if err != nil {
+			return nil, err
+		}
+
+		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
+			containerInfo.PodName, containerInfo.ContainerName)
+		return &model.ResolvedExec{
+			PodName:       containerInfo.PodName,
+			ContainerName: containerInfo.ContainerName,
+			Cmd:           resolvedCmd,
+		}, nil
+	} else {
+		return manager.findFirstAvailable(k8sAPI, machineExec)
+	}
+}
+
+//TODO Try to refactor it in the way to be able to reuse it in manager.Create
+func (manager *KubernetesExecManager) findFirstAvailable(k8sAPI *client.K8sAPI, machineExec *model.MachineExec) (*model.ResolvedExec, error) {
+	containerFilter := filter.NewKubernetesContainerFilter(manager.namespace, k8sAPI.GetClient().CoreV1())
+	// connect to the first available container. Workaround for Cloud Shell https://github.com/eclipse/che/issues/15434
+	containersInfo, err := containerFilter.GetContainerList()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(containersInfo) == 0 {
+		return nil, errors.New("no containers found to exec")
+	}
+
+	errs := make(map[string]error)
+	for _, containerInfo := range containersInfo {
+		cmdResolver := NewCmdResolver(k8sAPI, manager.namespace)
+		resolvedCmd, err := cmdResolver.ResolveCmd(*machineExec, containerInfo)
+		if err != nil {
+			errs[containerInfo.ContainerName] = err
+			continue
+		}
+
+		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
+			containerInfo.PodName, containerInfo.ContainerName)
+		return &model.ResolvedExec{
+			PodName:       containerInfo.PodName,
+			ContainerName: containerInfo.ContainerName,
+			Cmd:           resolvedCmd,
+		}, nil
+	}
+
+	var containers []string
+	for _, c := range containersInfo {
+		containers = append(containers, c.PodName+"\\"+c.ContainerName)
+	}
+	var buf strings.Builder
+	for container, err := range errs {
+		buf.WriteString(fmt.Sprintf("- %s: %s\n", container, err.Error()))
+	}
+	return nil, fmt.Errorf("failed to resolve exec in any of {%s} -- errors: \n%s", strings.Join(containers, ", "), buf.String())
+}
+
 // Create new exec request object
 func (manager *KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
 	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
@@ -236,9 +314,9 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams) error {
+func (manager *KubernetesExecManager) CreateKubeConfig(initConfigParams *model.InitConfigParams) error {
 	machineExec := &model.MachineExec{
-		BearerToken: kubeConfigParams.BearerToken,
+		BearerToken: initConfigParams.BearerToken,
 	}
 	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
 	if err != nil {
@@ -257,16 +335,20 @@ func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.K
 	}
 
 	for _, containerInfo := range containersInfo {
-		if containerInfo.ContainerName == kubeConfigParams.ContainerName {
+		if containerInfo.ContainerName == initConfigParams.ContainerName || initConfigParams.ContainerName == "" {
+			namespace := GetNamespace()
+			if initConfigParams.Namespace != "" {
+				namespace = initConfigParams.Namespace
+			}
 			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
-			err = kubeconfig.CreateKubeConfig(infoExecCreator, GetNamespace(), kubeConfigParams, containerInfo)
+			err = kubeconfig.CreateKubeConfig(infoExecCreator, namespace, &initConfigParams.KubeConfigParams, containerInfo)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
 	}
-	return fmt.Errorf("No container with name %s found", kubeConfigParams.ContainerName)
+	return fmt.Errorf("No container with name %s found", initConfigParams.ContainerName)
 }
 
 // getByID return exec by id.
