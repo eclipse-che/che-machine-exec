@@ -118,8 +118,8 @@ func createKubeConfigText(token, namespace, username string) (string, error) {
 
 // CreateKubeConfig creates a kubeconfig located at $KUBECONFIG if set.
 // If it is not set then fall back to $HOME/.kube/config
-func CreateKubeConfig(cmdRslv execInfo.InfoExecCreator, namespace string, kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
-	config, err := createKubeConfigText(kubeConfigParams.BearerToken, namespace, kubeConfigParams.Username)
+func CreateKubeConfig(cmdRslv execInfo.InfoExecCreator, kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
+	config, err := createKubeConfigText(kubeConfigParams.BearerToken, kubeConfigParams.Namespace, kubeConfigParams.Username)
 	if err != nil {
 		return err
 	}
