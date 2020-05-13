@@ -340,12 +340,13 @@ func (manager *KubernetesExecManager) CreateKubeConfig(initConfigParams *model.I
 
 	for _, containerInfo := range containersInfo {
 		if containerInfo.ContainerName == initConfigParams.ContainerName || initConfigParams.ContainerName == "" {
-			namespace := GetNamespace()
-			if initConfigParams.Namespace != "" {
-				namespace = initConfigParams.Namespace
+			currentNamespace := GetNamespace()
+			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(currentNamespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
+
+			if initConfigParams.Namespace == "" {
+				initConfigParams.Namespace = currentNamespace
 			}
-			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(namespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
-			err = kubeconfig.CreateKubeConfig(infoExecCreator, namespace, &initConfigParams.KubeConfigParams, containerInfo)
+			err = kubeconfig.CreateKubeConfig(infoExecCreator, &initConfigParams.KubeConfigParams, containerInfo)
 			if err != nil {
 				return err
 			}
