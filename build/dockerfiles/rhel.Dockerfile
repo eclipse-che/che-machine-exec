@@ -10,9 +10,8 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
-FROM registry.redhat.io/rhel8/go-toolset:1.12.8-45 as builder
-ENV PATH=/opt/rh/go-toolset-1.11/root/usr/bin:$PATH \
-    GOPATH=/go/
+FROM registry.redhat.io/rhel8/go-toolset:1.13.4-15 as builder
+ENV GOPATH=/go/
 USER root
 WORKDIR /che-machine-exec/
 COPY . .
