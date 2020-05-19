@@ -11,7 +11,7 @@ A Golang server that creates machine-execs for Eclipse Che workspaces. It is use
 To build a container image with che-machine-exec manually:
 
 ```
-$ docker build --no-cache -t eclipse/che-machine-exec .
+$ docker build --no-cache -t eclipse/che-machine-exec -f build/dockerfiles/Dockerfile .
 ```
 
 ## Testing che-machine-exec on OpenShift
