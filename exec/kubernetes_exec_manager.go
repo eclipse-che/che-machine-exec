@@ -265,7 +265,7 @@ func (*KubernetesExecManager) Check(id int) (int, error) {
 	return machineExec.ID, nil
 }
 
-// Attach websoket connnection to the exec by id.
+// Attach websoket connection to the exec by id.
 func (*KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	machineExec := getByID(id)
 	if machineExec == nil {

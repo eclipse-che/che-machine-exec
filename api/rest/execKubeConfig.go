@@ -49,5 +49,3 @@ func HandleKubeConfig(c *gin.Context) {
 		writeResponse(c, http.StatusInternalServerError, err.Error())
 	}
 }
-
-
