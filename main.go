@@ -83,6 +83,10 @@ func main() {
 		rest.HandleInit(c)
 	})
 
+	r.POST("/activity/tick", func(c *gin.Context) {
+		rest.HandleActivityTick(c)
+	})
+
 	// create json-rpc routs group
 	appOpRoutes := []jsonrpc.RoutesGroup{
 		jsonRpcApi.RPCRoutes,
