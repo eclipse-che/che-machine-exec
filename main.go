@@ -13,6 +13,7 @@
 package main
 
 import (
+	"github.com/eclipse/che-machine-exec/activity"
 	"net/http"
 
 	jsonrpc "github.com/eclipse/che-go-jsonrpc"
@@ -27,6 +28,12 @@ import (
 func main() {
 	cfg.Parse()
 	cfg.Print()
+
+	activityManager, err := activity.New(cfg.IdleTimeout, cfg.StopRetryPeriod)
+	if err != nil {
+		logrus.Fatal("Unable to create activity manager. Cause: ", err.Error())
+		return
+	}
 
 	r := gin.Default()
 
@@ -57,7 +64,7 @@ func main() {
 	})
 
 	r.POST("/activity/tick", func(c *gin.Context) {
-		rest.HandleActivityTick(c)
+		rest.HandleActivityTick(c, activityManager)
 	})
 
 	r.GET("/healthz", func(c *gin.Context) {
@@ -71,6 +78,10 @@ func main() {
 	// register routes
 	jsonrpc.RegRoutesGroups(appOpRoutes)
 	jsonrpc.PrintRoutes(appOpRoutes)
+
+	if activityManager != nil {
+		activityManager.Start()
+	}
 
 	if err := r.Run(cfg.URL); err != nil {
 		logrus.Fatal("Unable to start server. Cause: ", err.Error())
