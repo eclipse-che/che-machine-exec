@@ -26,7 +26,10 @@ var (
 	// StaticPath path to serve static resources
 	StaticPath string
 	// UseBearerToken - flag to enable/disable using bearer token to avoid users impersonation while accessing to k8s API.
+	// if enabled - authenticated user ID must be configured
 	UseBearerToken bool
+	// AuthenticatedUserID is a user's ID who is authenticated to use API. Is ignored if useBearerToken is disabled
+	AuthenticatedUserID string
 )
 
 func init() {
@@ -54,7 +57,14 @@ func init() {
 			logrus.Errorf("Invalid value '%s' for env variable key '%s'. Value should be boolean", useTokenEnvValue, useTokenEnv)
 		}
 	}
-	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to avoid users impersonation while accessing to k8s API.")
+	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to avoid users impersonation while accessing to k8s API. When enabled - authenticated user id must be configured")
+
+	defaultAuthenticatedUserID := ""
+	authenticatedUserID, isFound := os.LookupEnv("AUTHENTICATED_USER_ID")
+	if isFound {
+		defaultAuthenticatedUserID = authenticatedUserID
+	}
+	flag.StringVar(&AuthenticatedUserID, "authenticated-user-id", defaultAuthenticatedUserID, "OpenShift user's ID that should has access to API. Is used only if useBearerToken is configured")
 
 	setLogLevel()
 }
@@ -89,4 +99,7 @@ func Print() {
 	logrus.Infof("==> Application url %s", URL)
 	logrus.Infof("==> Absolute path to folder with static resources %s", StaticPath)
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
+	if UseBearerToken {
+		logrus.Infof("==> Authenticated user ID: %s", AuthenticatedUserID)
+	}
 }

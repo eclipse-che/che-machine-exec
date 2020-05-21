@@ -15,6 +15,8 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/eclipse/che-machine-exec/auth"
+	"github.com/eclipse/che-machine-exec/common/rest"
 	"net/http"
 
 	"github.com/eclipse/che-machine-exec/api/model"
@@ -28,33 +30,37 @@ var (
 )
 
 func HandleInit(c *gin.Context) {
-	token := c.Request.Header.Get(model.BearerTokenHeader)
-	if token == "" {
-		writeResponse(c, http.StatusUnauthorized, "Authorization token must not be empty")
-		return
+	var token string
+	if auth.IsEnabled() {
+		var err error
+		token, err = auth.Authenticate(c)
+		if err != nil {
+			rest.WriteErrorResponse(c, err)
+			return
+		}
 	}
 
 	var initConfigParams model.InitConfigParams
 	if c.BindJSON(&initConfigParams) != nil {
-		writeResponse(c, http.StatusInternalServerError, "Failed to convert body args into internal structure")
+		rest.WriteResponse(c, http.StatusInternalServerError, "Failed to convert body args into internal structure")
 		return
 	}
 
 	execRequest := handleContainerResolve(c, token, initConfigParams.ContainerName)
 	if execRequest == nil {
-		writeResponse(c, http.StatusInternalServerError, "Could not retrieve exec request")
+		rest.WriteResponse(c, http.StatusInternalServerError, "Could not retrieve exec request")
 		return
 	}
 
 	err := HandleKubeConfigCreation(c, &initConfigParams, token)
 	if err != nil {
-		writeResponse(c, http.StatusInternalServerError, err.Error())
+		rest.WriteResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	marshal, err := json.Marshal(execRequest)
 	if err != nil {
-		writeResponse(c, http.StatusInternalServerError, fmt.Sprintf("Failed to marshal resolved exec. Cause: %s", err.Error()))
+		rest.WriteResponse(c, http.StatusInternalServerError, fmt.Sprintf("Failed to marshal resolved exec. Cause: %s", err.Error()))
 		return
 	}
 
@@ -68,7 +74,7 @@ func handleContainerResolve(c *gin.Context, token, container string) *model.Reso
 	resolvedExec, err := execManager.Resolve(container, token)
 
 	if err != nil {
-		writeResponse(c, http.StatusInternalServerError, fmt.Sprintf("Unable to resolve exec. Cause: %s", err.Error()))
+		rest.WriteResponse(c, http.StatusInternalServerError, fmt.Sprintf("Unable to resolve exec. Cause: %s", err.Error()))
 		return nil
 	}
 

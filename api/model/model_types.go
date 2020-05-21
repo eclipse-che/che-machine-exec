@@ -25,8 +25,6 @@ const (
 	// method names to send events with information about exec to the clients.
 	OnExecExit  = "onExecExit"
 	OnExecError = "onExecError"
-
-	BearerTokenHeader = "X-Forwarded-Access-Token"
 )
 
 type MachineIdentifier struct {

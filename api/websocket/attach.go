@@ -14,7 +14,10 @@ package websocket
 
 import (
 	"errors"
+	"github.com/eclipse/che-machine-exec/auth"
+	"github.com/eclipse/che-machine-exec/common/rest"
 	"github.com/eclipse/che-machine-exec/exec"
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -29,7 +32,21 @@ var (
 	}
 )
 
-func Attach(w http.ResponseWriter, r *http.Request, idParam string) error {
+func HandleAttach(c *gin.Context) {
+	if auth.IsEnabled() {
+		_, err := auth.Authenticate(c)
+		if err != nil {
+			rest.WriteErrorResponse(c, err)
+			return
+		}
+	}
+
+	if err := doAttach(c.Writer, c.Request, c.Param("id")); err != nil {
+		c.JSON(c.Writer.Status(), err.Error())
+	}
+}
+
+func doAttach(w http.ResponseWriter, r *http.Request, idParam string) error {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		return errors.New("failed to parse id")

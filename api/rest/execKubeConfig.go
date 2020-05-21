@@ -13,6 +13,8 @@
 package rest
 
 import (
+	"github.com/eclipse/che-machine-exec/auth"
+	"github.com/eclipse/che-machine-exec/common/rest"
 	"net/http"
 
 	"github.com/eclipse/che-machine-exec/api/model"
@@ -21,15 +23,19 @@ import (
 )
 
 func HandleKubeConfig(c *gin.Context) {
-	token := c.Request.Header.Get(model.BearerTokenHeader)
-	if token == "" {
-		writeResponse(c, http.StatusUnauthorized, "Authorization token must not be empty")
-		return
+	var token string
+	if auth.IsEnabled() {
+		var err error
+		token, err = auth.Authenticate(c)
+		if err != nil {
+			rest.WriteErrorResponse(c, err)
+			return
+		}
 	}
 
 	var initConfigParams model.InitConfigParams
 	if c.BindJSON(&initConfigParams) != nil {
-		writeResponse(c, http.StatusInternalServerError, "Failed to convert body args into internal structure")
+		rest.WriteResponse(c, http.StatusInternalServerError, "Failed to convert body args into internal structure")
 		return
 	}
 
@@ -46,6 +52,6 @@ func HandleKubeConfig(c *gin.Context) {
 
 	if err != nil {
 		logrus.Errorf("Unable to create kubeconfig. Cause: %s", err.Error())
-		writeResponse(c, http.StatusInternalServerError, err.Error())
+		rest.WriteResponse(c, http.StatusInternalServerError, err.Error())
 	}
 }

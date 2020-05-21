@@ -14,10 +14,10 @@ package jsonrpc
 
 import (
 	"errors"
+	"github.com/eclipse/che-machine-exec/auth"
 
 	"github.com/eclipse/che-machine-exec/api/events"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/cfg"
 	"github.com/sirupsen/logrus"
 
 	"strconv"
@@ -52,11 +52,11 @@ var (
 
 func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
-	if cfg.UseBearerToken {
+	if auth.IsEnabled() {
 		if token, ok := tunnel.Attributes[BearerTokenAttr]; ok && len(token) > 0 {
 			machineExec.BearerToken = token
 		} else {
-			err := errors.New("Bearer token should not be an empty")
+			err := errors.New("bearer token should not be an empty")
 			logrus.Errorf(err.Error())
 			t.SendError(jsonrpc.NewArgsError(err))
 			return
