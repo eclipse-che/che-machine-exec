@@ -12,15 +12,18 @@
 
 package rest
 
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-)
+type HttpError struct {
+	code   int
+	errMsg string
+}
 
-func writeResponse(c *gin.Context, httpStatus int, message string) {
-	c.Writer.WriteHeader(httpStatus)
-	_, err := c.Writer.Write([]byte(message))
-	if err != nil {
-		logrus.Error("Failed to write error response", err)
+func NewError(code int, message string) HttpError {
+	return HttpError{
+		code:   code,
+		errMsg: message,
 	}
+}
+
+func (e HttpError) Error() string {
+	return e.errMsg
 }
