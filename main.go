@@ -87,6 +87,10 @@ func main() {
 		rest.HandleActivityTick(c)
 	})
 
+	r.GET("/healthz", func(c *gin.Context) {
+		c.Writer.WriteHeader(http.StatusOK)
+	})
+
 	// create json-rpc routs group
 	appOpRoutes := []jsonrpc.RoutesGroup{
 		jsonRpcApi.RPCRoutes,
