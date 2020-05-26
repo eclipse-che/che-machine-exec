@@ -29,9 +29,6 @@ func HandleActivityTick(c *gin.Context, manager activity.Manager) {
 		}
 	}
 
-	// at this point, it's just stub handler that does nothing
-	// but a bit later ActivityManager will appear and register the latest activity
-	// to post pone workspace stopping by idle timeout
 	manager.Tick()
 	c.Writer.WriteHeader(http.StatusNoContent)
 	return

@@ -80,7 +80,7 @@ func main() {
 	jsonrpc.PrintRoutes(appOpRoutes)
 
 	if activityManager != nil {
-		activityManager.Start()
+		go activityManager.Start()
 	}
 
 	if err := r.Run(cfg.URL); err != nil {
