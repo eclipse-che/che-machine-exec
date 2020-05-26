@@ -74,6 +74,7 @@ func New(idleTimeout, stopRetryPeriod time.Duration) (Manager, error) {
 		workspaceName:   workspaceName,
 		idleTimeout:     idleTimeout,
 		stopRetryPeriod: stopRetryPeriod,
+		activityC:       make(chan bool),
 	}, nil
 }
 
@@ -95,16 +96,16 @@ type managerImpl struct {
 }
 
 func (m managerImpl) Tick() {
-	m.activityC <- true
+	select {
+	case m.activityC <- true:
+	default:
+		// activity is already registered and it will reset timer if workspace won't be stopped
+		logrus.Debug("activity manager is temporary busy")
+	}
 }
 
 func (m managerImpl) Start() {
-	if m.activityC != nil {
-		//it's already started
-		return
-	}
 	logrus.Infof("Activity tracker is run and workspace will be stopped in %s if there is no activity", m.idleTimeout)
-	m.activityC = make(chan bool)
 	timer := time.NewTimer(m.idleTimeout)
 
 	var shutdownChan = make(chan os.Signal, 1)
