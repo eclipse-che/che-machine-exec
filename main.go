@@ -80,7 +80,7 @@ func main() {
 	jsonrpc.PrintRoutes(appOpRoutes)
 
 	if activityManager != nil {
-		go activityManager.Start()
+		activityManager.Start()
 	}
 	if err := r.Run(cfg.URL); err != nil {
 		logrus.Fatal("Unable to start server. Cause: ", err.Error())

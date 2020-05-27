@@ -43,10 +43,11 @@ var (
 )
 
 type Manager interface {
-	//Start starts users activity and scheduling workspace stoppping if there is no activity for idle timeout
+	// Start starts tracking users activity and scheduling workspace stopping if there is no activity for idle timeout
+	// Should be called once
 	Start()
 
-	//Tick registers users activity and postpones workpace stopping by inactivity
+	// Tick registers users activity and postpones workspace stopping by inactivity
 	Tick()
 }
 
@@ -107,31 +108,32 @@ func (m managerImpl) Tick() {
 func (m managerImpl) Start() {
 	logrus.Infof("Activity tracker is run and workspace will be stopped in %s if there is no activity", m.idleTimeout)
 	timer := time.NewTimer(m.idleTimeout)
-
 	var shutdownChan = make(chan os.Signal, 1)
 	signal.Notify(shutdownChan, syscall.SIGTERM)
 
-	for {
-		select {
-		case <-timer.C:
-			if err := m.stopWorkspace(); err != nil {
-				timer.Reset(m.stopRetryPeriod)
-				logrus.Errorf("Failed to stop workspace. Will retry in %s. Cause: %s", m.stopRetryPeriod, err)
-			} else {
-				logrus.Info("Workspace is successfully stopped by inactivity. Bye")
+	go func() {
+		for {
+			select {
+			case <-timer.C:
+				if err := m.stopWorkspace(); err != nil {
+					timer.Reset(m.stopRetryPeriod)
+					logrus.Errorf("Failed to stop workspace. Will retry in %s. Cause: %s", m.stopRetryPeriod, err)
+				} else {
+					logrus.Info("Workspace is successfully stopped by inactivity. Bye")
+					return
+				}
+			case <-m.activityC:
+				logrus.Debug("Activity is reported. Resetting timer")
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(m.idleTimeout)
+			case <-shutdownChan:
+				logrus.Info("Received SIGTERM: shutting down activity manager")
 				return
 			}
-		case <-m.activityC:
-			logrus.Debug("Activity is reported. Resetting timer")
-			if !timer.Stop() {
-				<-timer.C
-			}
-			timer.Reset(m.idleTimeout)
-		case <-shutdownChan:
-			logrus.Info("Received SIGTERM: shutting down activity manager")
-			return
 		}
-	}
+	}()
 }
 
 func (m managerImpl) stopWorkspace() error {
