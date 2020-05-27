@@ -38,6 +38,9 @@ var (
 	// StopRetryPeriod is a period after which workspace should be tried to stop if the previous try failed
 	// Defaults 10 second
 	StopRetryPeriod time.Duration
+
+	// UseTLS flag to enable/disable serving TLS
+	UseTLS bool
 )
 
 func init() {
@@ -75,8 +78,9 @@ func init() {
 	flag.StringVar(&AuthenticatedUserID, "authenticated-user-id", defaultAuthenticatedUserID, "OpenShift user's ID that should has access to API. Is used only if useBearerToken is configured")
 
 	flag.DurationVar(&IdleTimeout, "idle-timeout", -1*time.Nanosecond, "IdleTimeout is a inactivity period after which workspace should be stopped. Examples: -1, 30s, 15m, 1h")
-
 	flag.DurationVar(&StopRetryPeriod, "stop-retry-period", 10*time.Second, "StopRetryPeriod is a period after which workspace should be tried to stop if the previous try failed. Examples: 30s")
+
+	flag.BoolVar(&UseTLS, "use-tls", false, "Serve content via TLS")
 
 	setLogLevel()
 }

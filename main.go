@@ -82,7 +82,14 @@ func main() {
 	if activityManager != nil {
 		activityManager.Start()
 	}
-	if err := r.Run(cfg.URL); err != nil {
-		logrus.Fatal("Unable to start server. Cause: ", err.Error())
+
+	if cfg.UseTLS {
+		if err := r.RunTLS(cfg.URL, "/var/serving-cert/tls.crt", "/var/serving-cert/tls.key"); err != nil {
+			logrus.Fatal("Unable to start server with TLS enabled. Cause: ", err.Error())
+		}
+	} else {
+		if err := r.Run(cfg.URL); err != nil {
+			logrus.Fatal("Unable to start server. Cause: ", err.Error())
+		}
 	}
 }
