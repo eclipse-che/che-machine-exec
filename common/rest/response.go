@@ -28,10 +28,8 @@ func WriteResponse(c *gin.Context, httpStatus int, message string) {
 
 func WriteErrorResponse(c *gin.Context, err error) {
 	if v, ok := err.(HttpError); ok {
-		logrus.Debug("it's http error. Sending " + string(v.code))
 		c.Writer.WriteHeader(v.code)
 	} else {
-		logrus.Debug("it isn't http error. Sending 500")
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 	}
 

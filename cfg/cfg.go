@@ -16,6 +16,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -30,6 +31,13 @@ var (
 	UseBearerToken bool
 	// AuthenticatedUserID is a user's ID who is authenticated to use API. Is ignored if useBearerToken is disabled
 	AuthenticatedUserID string
+
+	// IdleTimeout is a inactivity period after which workspace should be stopped
+	// Default -1, which mean - does not stop
+	IdleTimeout time.Duration
+	// StopRetryPeriod is a period after which workspace should be tried to stop if the previous try failed
+	// Defaults 10 second
+	StopRetryPeriod time.Duration
 )
 
 func init() {
@@ -66,6 +74,10 @@ func init() {
 	}
 	flag.StringVar(&AuthenticatedUserID, "authenticated-user-id", defaultAuthenticatedUserID, "OpenShift user's ID that should has access to API. Is used only if useBearerToken is configured")
 
+	flag.DurationVar(&IdleTimeout, "idle-timeout", -1*time.Nanosecond, "IdleTimeout is a inactivity period after which workspace should be stopped. Examples: -1, 30s, 15m, 1h")
+
+	flag.DurationVar(&StopRetryPeriod, "stop-retry-period", 10*time.Second, "StopRetryPeriod is a period after which workspace should be tried to stop if the previous try failed. Examples: 30s")
+
 	setLogLevel()
 }
 
@@ -89,6 +101,10 @@ func setLogLevel() {
 // Parse application arguments
 func Parse() {
 	flag.Parse()
+
+	if StopRetryPeriod <= 0 {
+		logrus.Fatalf("stop-retry-period must be greater than 0")
+	}
 }
 
 // Print configuration information
@@ -101,5 +117,9 @@ func Print() {
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
 	if UseBearerToken {
 		logrus.Infof("==> Authenticated user ID: %s", AuthenticatedUserID)
+	}
+	if IdleTimeout > 0 {
+		logrus.Infof("==> Idle timeout: %s", IdleTimeout)
+		logrus.Infof("==> Stop retry period: %s", StopRetryPeriod)
 	}
 }
