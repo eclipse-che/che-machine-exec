@@ -13,10 +13,11 @@
 package auth
 
 import (
-	restUtil "github.com/eclipse/che-machine-exec/common/rest"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+
+	restUtil "github.com/eclipse/che-machine-exec/common/rest"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -27,7 +28,7 @@ const (
 func extractToken(c *gin.Context) (string, error) {
 	token := c.Request.Header.Get(AccessTokenHeader)
 	if token != "" {
-		token = strings.TrimSuffix(token, "Bearer ")
+		token = strings.TrimPrefix(token, "Bearer ")
 		return token, nil
 	}
 
