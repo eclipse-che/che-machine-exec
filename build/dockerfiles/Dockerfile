@@ -11,7 +11,7 @@
 #
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
-FROM --platform=$TARGETPLATFORM golang:1.12.8-alpine as go_builder
+FROM golang:1.12.8-alpine as go_builder
 
 ENV USER=machine-exec
 ENV UID=12345
@@ -37,7 +37,7 @@ WORKDIR /che-machine-exec/
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-FROM --platform=$TARGETPLATFORM node:10.16-alpine as cloud_shell_builder
+FROM node:10.16-alpine as cloud_shell_builder
 COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
 WORKDIR cloud-shell-src
 RUN yarn && \
