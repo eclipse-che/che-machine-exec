@@ -41,6 +41,9 @@ var (
 
 	// UseTLS flag to enable/disable serving TLS
 	UseTLS bool
+
+	// PodLabelSelector optional label key to be used as selector for getting workspace pod. Label value will be workspace ID
+	PodLabelSelector string
 )
 
 func init() {
@@ -81,6 +84,13 @@ func init() {
 	flag.DurationVar(&StopRetryPeriod, "stop-retry-period", 10*time.Second, "StopRetryPeriod is a period after which workspace should be tried to stop if the previous try failed. Examples: 30s")
 
 	flag.BoolVar(&UseTLS, "use-tls", false, "Serve content via TLS")
+
+	defaultPodLabelSelector := "che.workspace_id"
+	podSelector, isFound := os.LookupEnv("POD_LABEL_SELECTOR")
+	if isFound {
+		defaultPodLabelSelector = podSelector
+	}
+	flag.StringVar(&PodLabelSelector, "pod-selector", defaultPodLabelSelector, "Label key to be used as selector to be used to find workspace pod. Label value will be workspace ID")
 
 	setLogLevel()
 }
