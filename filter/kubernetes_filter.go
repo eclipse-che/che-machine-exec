@@ -15,16 +15,15 @@ package filter
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/cfg"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 const (
-	WsIdLabel         = "che.workspace_id"
 	MachineNameEnvVar = "CHE_MACHINE_NAME"
 )
 
@@ -102,19 +101,14 @@ func (filter *KubernetesContainerFilter) FindContainerInfo(identifier *model.Mac
 }
 
 func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error) {
-	workspaceID := os.Getenv("CHE_WORKSPACE_ID")
-	if workspaceID == "" {
-		return nil, errors.New("unable to get current workspace id")
-	}
-
-	filterOptions := metav1.ListOptions{LabelSelector: WsIdLabel + "=" + workspaceID, FieldSelector: "status.phase=Running"}
+	filterOptions := metav1.ListOptions{LabelSelector: cfg.PodSelector, FieldSelector: "status.phase=Running"}
 	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(filterOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(wsPods.Items) == 0 {
-		return nil, errors.New("pods was not found for workspace: " + workspaceID)
+		return nil, errors.New("pods could not be found with selector: " + cfg.PodSelector)
 	}
 
 	return wsPods, nil
