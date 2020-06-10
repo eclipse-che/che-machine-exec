@@ -15,7 +15,6 @@ package filter
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/cfg"
@@ -108,13 +107,8 @@ func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error)
 		return nil, err
 	}
 
-	workspaceID := os.Getenv("CHE_WORKSPACE_ID")
-	if workspaceID == "" {
-		return nil, errors.New("unable to get current workspace id")
-	}
-
 	if len(wsPods.Items) == 0 {
-		return nil, errors.New("pods was not found for workspace: " + workspaceID)
+		return nil, errors.New("pods could not be found with selector: " + cfg.PodSelector)
 	}
 
 	return wsPods, nil
