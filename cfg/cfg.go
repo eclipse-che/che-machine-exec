@@ -134,6 +134,7 @@ func Print() {
 	logrus.Infof("==> Application url %s", URL)
 	logrus.Infof("==> Absolute path to folder with static resources %s", StaticPath)
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
+	logrus.Infof("==> Pod selector: %s", PodSelector)
 	if UseBearerToken {
 		logrus.Infof("==> Authenticated user ID: %s", AuthenticatedUserID)
 	}
