@@ -14,15 +14,16 @@ package filter
 
 import (
 	"errors"
+	"os"
+	"strings"
+	"testing"
+
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"strings"
-	"testing"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -145,7 +146,7 @@ func TestShouldReturnErrorIfPodListIsEmpty(t *testing.T) {
 	containerInfo, err := containerFilter.FindContainerInfo(identifier)
 
 	assert.Nil(t, containerInfo)
-	assert.True(t, strings.HasPrefix(err.Error(), "pods was not found for workspace:"))
+	assert.True(t, strings.HasPrefix(err.Error(), "pods could not be found with selector:"))
 
 	podGetter.AssertExpectations(t)
 	podInterface.AssertExpectations(t)

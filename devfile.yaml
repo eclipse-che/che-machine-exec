@@ -63,7 +63,7 @@ commands:
     actions:
       - type: exec
         component: dev
-        command: go test ./...
+        command: export CHE_WORKSPACE_ID=test_id; go test ./...
         workdir: /projects/che-machine-exec
 
   - name: format
