@@ -102,13 +102,8 @@ func (filter *KubernetesContainerFilter) FindContainerInfo(identifier *model.Mac
 }
 
 func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error) {
-	workspaceID := os.Getenv("CHE_WORKSPACE_ID")
-	if workspaceID == "" {
-		return nil, errors.New("unable to get current workspace id")
-	}
-
-	labelSelector := fmt.Sprintf("%s=%s", cfg.PodLabelSelector, workspaceID)
-	filterOptions := metav1.ListOptions{LabelSelector: labelSelector, FieldSelector: "status.phase=Running"}
+	labelSelector := fmt.Sprintf("%s=%s", cfg.PodSelector, workspaceID)
+	filterOptions := metav1.ListOptions{LabelSelector: cfg.PodSelector, FieldSelector: "status.phase=Running"}
 	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(filterOptions)
 	if err != nil {
 		return nil, err

@@ -14,6 +14,7 @@ package cfg
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -42,8 +43,9 @@ var (
 	// UseTLS flag to enable/disable serving TLS
 	UseTLS bool
 
-	// PodLabelSelector optional label key to be used as selector for getting workspace pod. Label value will be workspace ID
-	PodLabelSelector string
+	// PodSelector set of labels to be used as selector for getting workspace pod.
+	// Default value is che.workspace_id=${CHE_WORKSPACE_ID}
+	PodSelector string
 )
 
 func init() {
@@ -85,12 +87,15 @@ func init() {
 
 	flag.BoolVar(&UseTLS, "use-tls", false, "Serve content via TLS")
 
-	defaultPodLabelSelector := "che.workspace_id"
-	podSelector, isFound := os.LookupEnv("POD_LABEL_SELECTOR")
-	if isFound {
-		defaultPodLabelSelector = podSelector
+	defaultPodSelector, isFound := os.LookupEnv("POD_SELECTOR")
+	if !isFound {
+		workspaceID := os.Getenv("CHE_WORKSPACE_ID")
+		if workspaceID == "" {
+			logrus.Fatal("unable to get current workspace id. Configure custom pod selector or che workspace id")
+		}
+		defaultPodSelector = fmt.Sprintf("che.workspace_id=%s", workspaceID)
 	}
-	flag.StringVar(&PodLabelSelector, "pod-selector", defaultPodLabelSelector, "Label key to be used as selector to be used to find workspace pod. Label value will be workspace ID")
+	flag.StringVar(&PodSelector, "pod-selector", defaultPodSelector, "Selector that is used to find workspace pod. Default value is `che.workspace_id=${CHE_WORKSPACE_ID}`")
 
 	setLogLevel()
 }
