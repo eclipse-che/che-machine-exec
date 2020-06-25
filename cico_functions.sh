@@ -33,22 +33,28 @@ function load_jenkins_vars() {
   fi
 }
 
+function check_version() {
+  local query=$1
+  local target=$2
+  echo "$target" "$query" | tr ' ' '\n' | sort -V | head -n1 2> /dev/null
+}
+
 function check_buildx_support() {
   docker_version="$(docker --version | cut -d' ' -f3 | tr -cd '0-9.')"
-  if [[ "$(version "$docker_version")" < "$(version '19.03')" ]]; then
-    echo "CICO: Docker $docker_version is too old. Greater than or equal to 19.03 is required."
+  if [[ $(check_version "$docker_version" "19.03") != 19.03 ]]; then
+    echo "CICO: Docker $docker_version greater than or equal to 19.03 is required."
     exit 1
-  fi
-
-  # Kernel
-  kernel_version="$(uname -r)"
-  if [[ "$(version "$kernel_version")" < "$(version '4.8')" ]]; then
-    echo "Kernel $kernel_version too old - need >= 4.8." \
-          " Install a newer kernel."
   else
-    echo "kernel $kernel_version has binfmt_misc fix-binary (F) support."
+         # Kernel
+         kernel_version="$(uname -r)"
+         if [[ $(check_version "$kernel_version" "4.8") != "4.8" ]]; then
+                 echo "Kernel $kernel_version too old - need >= 4.8." \
+                         " Install a newer kernel."
+                 exit 1
+         else
+                 echo "kernel $kernel_version has binfmt_misc fix-binary (F) support."
+         fi
   fi
-
 }
 
 function install_deps() {
@@ -72,10 +78,6 @@ function install_deps() {
   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   
   echo 'CICO: Dependencies installed'
-}
-
-function version() {
-  printf '%02d' $(echo "$1" | tr . ' ' | sed -e 's/ 0*/ /g') 2>/dev/null
 }
 
 function set_release_tag() {
