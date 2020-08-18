@@ -29,15 +29,15 @@ import (
 )
 
 var (
-	WorkspaceAPIResource = &metav1.APIResource{
-		Name:       "workspaces",
-		Group:      "workspace.che.eclipse.org",
+	DevWorkspaceAPIResource = &metav1.APIResource{
+		Name:       "devworkspaces",
+		Group:      "workspace.devfile.io",
 		Version:    "v1alpha1",
 		Namespaced: true,
 	}
 
-	WorkspaceGroupVersion = &schema.GroupVersion{
-		Group:   "workspace.che.eclipse.org",
+	DevWorkspaceGroupVersion = &schema.GroupVersion{
+		Group:   "workspace.devfile.io",
 		Version: "v1alpha1",
 	}
 )
@@ -154,7 +154,7 @@ func (m managerImpl) stopWorkspace() error {
 		return err
 	}
 
-	_, err = c.Resource(WorkspaceAPIResource, m.namespace).Patch(m.workspaceName, types.MergePatchType, jsonPath)
+	_, err = c.Resource(DevWorkspaceAPIResource, m.namespace).Patch(m.workspaceName, types.MergePatchType, jsonPath)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func newWorkspaceClientInCluster() (dynamic.Interface, error) {
 		return nil, err
 	}
 	config.APIPath = "/apis"
-	config.GroupVersion = WorkspaceGroupVersion
+	config.GroupVersion = DevWorkspaceGroupVersion
 
 	c, err := dynamic.NewClient(config)
 	if err != nil {
