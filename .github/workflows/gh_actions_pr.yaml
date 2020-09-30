@@ -28,4 +28,4 @@ jobs:
         file: build/dockerfiles/Dockerfile
         platforms: linux/amd64,linux/ppc64le,linux/s390x
         push: false
-        tags: quay.io/eclipse/che-machine-exec:nightly
+        tags: quay.io/eclipse/che-machine-exec:pr-check
