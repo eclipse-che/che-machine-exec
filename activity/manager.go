@@ -144,6 +144,11 @@ func (m managerImpl) stopWorkspace() error {
 
 	stopWorkspacePath := &unstructured.Unstructured{
 		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"controller.devfile.io/stopped-by": "inactivity",
+				},
+			},
 			"spec": map[string]interface{}{
 				"started": false,
 			},
