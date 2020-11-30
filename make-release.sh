@@ -7,6 +7,11 @@
 TRIGGER_RELEASE=0 
 NOCOMMIT=0
 
+REGISTRY="quay.io"
+DOCKERFILE="Dockerfile"
+ORGANIZATION="eclipse"
+IMAGE="che-machine-exec"
+
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     '-t'|'--trigger-release') TRIGGER_RELEASE=1; NOCOMMIT=0; shift 0;;
@@ -28,6 +33,22 @@ if [[ ! ${VERSION} ]] || [[ ! ${REPO} ]]; then
   exit 1
 fi
 
+tag_push() {
+  local TARGET=$1
+  docker tag "${IMAGE}" "$TARGET"
+  docker push "$TARGET" | cat
+}
+
+releaseMachineExec() {
+  GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+  docker build -t ${IMAGE} -f ./build/dockerfiles/Dockerfile . | cat
+  tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${GIT_COMMIT_TAG}"
+  echo "'${GIT_COMMIT_TAG}' version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
+  
+  tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
+  echo "'${VERSION}'  version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
+}
+
 # derive branch from version
 BRANCH=${VERSION%.*}.x
 
@@ -38,16 +59,6 @@ else
   BASEBRANCH="${BRANCH}"
 fi
 
-# work in tmp dir
-TMP=$(mktemp -d); pushd "$TMP" > /dev/null || exit 1
-
-# get sources from ${BASEBRANCH} branch
-echo "Check out ${REPO} to ${TMP}/${REPO##*/}"
-git clone "${REPO}" -q
-cd "${REPO##*/}" || exit 1
-git fetch origin "${BASEBRANCH}":"${BASEBRANCH}"
-git checkout "${BASEBRANCH}"
-
 # create new branch off ${BASEBRANCH} (or check out latest commits if branch already exists), then push to origin
 if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
   git branch "${BRANCH}" || git checkout "${BRANCH}" && git pull origin "${BRANCH}"
@@ -55,6 +66,8 @@ if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
   git fetch origin "${BRANCH}:${BRANCH}"
   git checkout "${BRANCH}"
 fi
+
+set -e
 
 # change VERSION file
 echo "${VERSION}" > VERSION
@@ -69,10 +82,7 @@ fi
 
 if [[ $TRIGGER_RELEASE -eq 1 ]]; then
   # push new branch to release branch to trigger CI build
-  git fetch origin "${BRANCH}:${BRANCH}"
-  git checkout "${BRANCH}"
-  git branch release -f 
-  git push origin release -f
+  releaseMachineExec
 
   # tag the release
   git checkout "${BRANCH}"
@@ -119,8 +129,3 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
 ${lastCommitComment}" -b "${BRANCH}" -h "${PR_BRANCH}"
   fi 
 fi
-
-popd > /dev/null || exit
-
-# cleanup tmp dir
-cd /tmp && rm -fr "$TMP"
