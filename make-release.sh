@@ -8,7 +8,7 @@ TRIGGER_RELEASE=0
 NOCOMMIT=0
 
 REGISTRY="quay.io"
-DOCKERFILE="Dockerfile"
+DOCKERFILE="build/dockerfiles/Dockerfile"
 ORGANIZATION="eclipse"
 IMAGE="che-machine-exec"
 
@@ -41,7 +41,7 @@ tag_push() {
 
 releaseMachineExec() {
   GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-  docker build -t ${IMAGE} -f ./build/dockerfiles/Dockerfile . | cat
+  docker build -t ${IMAGE} -f ./${DOCKERFILE} . | cat
   tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${GIT_COMMIT_TAG}"
   echo "'${GIT_COMMIT_TAG}' version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
   
