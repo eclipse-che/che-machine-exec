@@ -1,8 +1,7 @@
 [![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/)
 [![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/)
 [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/)
-[![Codecov](![Codecov](https://img.shields.io/codecov/c/github/eclipse/che-machine-exec))](https://github.com/eclipse/che-machine-exec/)
-
+[![Codecov](https://img.shields.io/codecov/c/github/eclipse/che-machine-exec)](https://github.com/eclipse/che-machine-exec/)
 # Che machine exec
 
 A Golang server that creates machine-execs for Eclipse Che workspaces. It is used to spawn terminals or command processes. Che machine exec uses the JSON-RPC protocol to communicate with the client.
