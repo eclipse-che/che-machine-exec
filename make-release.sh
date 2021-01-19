@@ -41,7 +41,7 @@ tag_push() {
 
 releaseMachineExec() {
   GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-  docker build -t ${IMAGE} -f ./${DOCKERFILE} . | cat
+  docker buildx build -t ${IMAGE} -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/s390x" | cat
   tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${GIT_COMMIT_TAG}"
   echo "'${GIT_COMMIT_TAG}' version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
   
