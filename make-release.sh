@@ -33,20 +33,12 @@ if [[ ! ${VERSION} ]] || [[ ! ${REPO} ]]; then
   exit 1
 fi
 
-tag_push() {
-  local TARGET=$1
-  docker tag "${IMAGE}" "$TARGET"
-  docker push "$TARGET" | cat
-}
-
 releaseMachineExec() {
-  GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-  docker buildx build -t ${IMAGE} -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/s390x" | cat
-  tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${GIT_COMMIT_TAG}"
-  echo "'${GIT_COMMIT_TAG}' version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
-  
-  tag_push "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
-  echo "'${VERSION}'  version of images pushed to '${REGISTRY}/${ORGANIZATION}' organization"
+  # docker buildx includes automated push to registry, so build using tag we want published, not just local ${IMAGE}
+  docker buildx build \
+    --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" \
+    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/s390x" | cat
+  echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
 
 # derive branch from version
