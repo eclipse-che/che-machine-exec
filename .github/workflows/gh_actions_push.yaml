@@ -9,7 +9,7 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 
-name: Nightly Dockerimage Build
+name: Nightly Container Build
 
 on:
   schedule:
@@ -30,10 +30,16 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
-    - name: Build and push nightly
+    - id: vars
+      shell: bash
+      run: |
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Build and push both short SHA tag and nightly tag
       uses: docker/build-push-action@v2
       with:
         file: build/dockerfiles/Dockerfile
         platforms: linux/amd64,linux/ppc64le,linux/s390x
         push: true
-        tags: quay.io/eclipse/che-machine-exec:nightly
+        tags: |
+          quay.io/eclipse/che-machine-exec:nightly
+          quay.io/eclipse/che-machine-exec:${{ steps.vars.outputs.sha_short }}
