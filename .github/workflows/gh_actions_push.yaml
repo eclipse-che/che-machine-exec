@@ -9,11 +9,13 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 
-name: Nightly Container Build
+name: CI Build
 
 on:
-  schedule:
-    - cron:  '0 0 * * *'
+  push:
+    branches: [ master ]
+#  schedule:
+#    - cron:  '0 0 * * *'
 jobs:
   build-push:
     runs-on: ubuntu-latest
