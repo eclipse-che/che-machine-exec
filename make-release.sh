@@ -54,10 +54,10 @@ fi
 if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
   git branch "${BRANCH}" || git checkout "${BRANCH}" && git pull origin "${BRANCH}"
   git push origin "${BRANCH}"
-  git fetch origin "${BRANCH}:${BRANCH}"
+  git fetch origin "${BRANCH}:${BRANCH}" || true
   git checkout "${BRANCH}"
 else
-  git fetch origin "${BRANCH}:${BRANCH}"
+  git fetch origin "${BRANCH}:${BRANCH}" || true
   git checkout ${BRANCH}
 fi
 set -e
@@ -84,7 +84,7 @@ if [[ $TRIGGER_RELEASE -eq 1 ]]; then
 fi
 
 # now update ${BASEBRANCH} to the new snapshot version
-git fetch origin "${BASEBRANCH}":"${BASEBRANCH}"
+git fetch origin "${BASEBRANCH}":"${BASEBRANCH}" || true
 git checkout "${BASEBRANCH}"
 
 # change VERSION file + commit change into ${BASEBRANCH} branch
