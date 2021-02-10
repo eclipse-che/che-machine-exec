@@ -99,7 +99,7 @@ func (*ExecErrorEvent) Type() string {
 }
 
 type InitConfigParams struct {
-	ContainerName    string `json:"container"` //optional, Will be first available if not set
+	ContainerName    string `json:"container"` // optional, Will be first suitable container in pod if not set
 	KubeConfigParams `json:"kubeconfig"`
 }
 

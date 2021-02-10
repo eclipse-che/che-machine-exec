@@ -46,7 +46,7 @@ type ExecManager interface {
 	Resize(id int, cols uint, rows uint) error
 
 	// Create a kubeconfig
-	CreateKubeConfig(kubeConfigParams *model.KubeConfigParams, containerName string) error
+	CreateKubeConfig(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error
 }
 
 // CreateExecManager creates and returns new instance ExecManager.

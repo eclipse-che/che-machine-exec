@@ -13,9 +13,10 @@
 package rest
 
 import (
+	"net/http"
+
 	"github.com/eclipse/che-machine-exec/auth"
 	"github.com/eclipse/che-machine-exec/common/rest"
-	"net/http"
 
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/gin-gonic/gin"
@@ -39,6 +40,9 @@ func HandleKubeConfig(c *gin.Context) {
 		return
 	}
 
+	kubeConfigParams := initConfigParams.KubeConfigParams
+	kubeConfigParams.BearerToken = token
+
 	if initConfigParams.ContainerName == "" {
 		c.Writer.WriteHeader(http.StatusBadRequest)
 		_, err := c.Writer.Write([]byte("Container name is required"))
@@ -48,7 +52,13 @@ func HandleKubeConfig(c *gin.Context) {
 		return
 	}
 
-	err := HandleKubeConfigCreation(&initConfigParams.KubeConfigParams, token, initConfigParams.ContainerName)
+	execRequest := handleContainerResolve(c, token, initConfigParams.ContainerName)
+	if execRequest == nil {
+		rest.WriteResponse(c, http.StatusInternalServerError, "Could not retrieve exec request")
+		return
+	}
+
+	err := HandleKubeConfigCreation(&kubeConfigParams, execRequest)
 
 	if err != nil {
 		logrus.Errorf("Unable to create kubeconfig. Cause: %s", err.Error())
