@@ -49,6 +49,7 @@ FROM scratch
 COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=go_builder /etc/passwd /etc/passwd
 COPY --from=go_builder /etc/group /etc/group
+COPY --from=go_builder /bin/sleep /bin/sleep
 USER machine-exec
 
 COPY --from=go_builder /go/bin/che-machine-exec /go/bin/che-machine-exec

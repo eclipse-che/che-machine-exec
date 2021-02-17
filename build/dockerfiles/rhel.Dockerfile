@@ -27,6 +27,7 @@ RUN adduser unprivilegeduser && \
 FROM scratch
 
 COPY --from=builder /rootfs /
+COPY --from=builder /usr/bin/sleep /usr/bin/sleep
 
 USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
