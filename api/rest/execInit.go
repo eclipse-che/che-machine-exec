@@ -56,7 +56,7 @@ func HandleInit(c *gin.Context) {
 		return
 	}
 
-	err := HandleKubeConfigCreation(&kubeConfigParams, execRequest)
+	err := HandleKubeConfigCreation(&kubeConfigParams, &execRequest.ContainerInfo)
 	if err != nil {
 		rest.WriteResponse(c, http.StatusInternalServerError, err.Error())
 		return

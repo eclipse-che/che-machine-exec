@@ -69,13 +69,13 @@ func (_m *ExecManager) Create(machineExec *model.MachineExec) (int, error) {
 	return r0, r1
 }
 
-// CreateKubeConfig provides a mock function with given fields: kubeConfigParams, containerName
-func (_m *ExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams, containerName string) error {
-	ret := _m.Called(kubeConfigParams, containerName)
+// CreateKubeConfig provides a mock function with given fields: kubeConfigParams, containerInfo
+func (_m *ExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
+	ret := _m.Called(kubeConfigParams, containerInfo)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.KubeConfigParams, string) error); ok {
-		r0 = rf(kubeConfigParams, containerName)
+	if rf, ok := ret.Get(0).(func(*model.KubeConfigParams, *model.ContainerInfo) error); ok {
+		r0 = rf(kubeConfigParams, containerInfo)
 	} else {
 		r0 = ret.Error(0)
 	}

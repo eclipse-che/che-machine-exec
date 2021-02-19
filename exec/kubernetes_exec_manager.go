@@ -94,8 +94,7 @@ func (manager *KubernetesExecManager) Resolve(container, token string) (*model.R
 		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
 			containerInfo.PodName, containerInfo.ContainerName)
 		return &model.ResolvedExec{
-			PodName:       containerInfo.PodName,
-			ContainerName: containerInfo.ContainerName,
+			ContainerInfo: *containerInfo,
 			Cmd:           resolvedCmd,
 		}, nil
 	} else {
@@ -128,8 +127,7 @@ func (manager *KubernetesExecManager) findFirstAvailable(k8sAPI *client.K8sAPI, 
 		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
 			containerInfo.PodName, containerInfo.ContainerName)
 		return &model.ResolvedExec{
-			PodName:       containerInfo.PodName,
-			ContainerName: containerInfo.ContainerName,
+			ContainerInfo: *containerInfo,
 			Cmd:           resolvedCmd,
 		}, nil
 	}

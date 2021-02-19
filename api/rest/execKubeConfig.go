@@ -58,7 +58,7 @@ func HandleKubeConfig(c *gin.Context) {
 		return
 	}
 
-	err := HandleKubeConfigCreation(&kubeConfigParams, execRequest)
+	err := HandleKubeConfigCreation(&kubeConfigParams, &execRequest.ContainerInfo)
 
 	if err != nil {
 		logrus.Errorf("Unable to create kubeconfig. Cause: %s", err.Error())

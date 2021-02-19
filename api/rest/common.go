@@ -16,14 +16,11 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 )
 
-func HandleKubeConfigCreation(kubeConfigParams *model.KubeConfigParams, resolvedExec *model.ResolvedExec) error {
+func HandleKubeConfigCreation(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
 	if kubeConfigParams.Username == "" {
 		kubeConfigParams.Username = "Developer"
 	}
 
-	err := execManager.CreateKubeConfig(kubeConfigParams, &model.ContainerInfo{
-		ContainerName: resolvedExec.ContainerName,
-		PodName:       resolvedExec.PodName,
-	})
+	err := execManager.CreateKubeConfig(kubeConfigParams, containerInfo)
 	return err
 }
