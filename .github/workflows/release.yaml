@@ -7,6 +7,10 @@ on:
       version:
         description: 'The version that is going to be released. Should be in format 7.y.z'
         required: true
+      noCommit:
+        description: 'If true, will not commit the version bump changes'
+        default: ''
+        required: true
 jobs:
   build:
     name: Create Release
@@ -37,4 +41,7 @@ jobs:
           git config --global user.name "Mykhailo Kuznietsov"
           git config --global user.email "mkuznets@redhat.com"
           export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          /bin/bash make-release.sh --version ${{ github.event.inputs.version }} --trigger-release
+          if [[ ${{ github.event.inputs.noCommit}} == "true" ]]; then
+            no_commit="--no-commit"
+          fi
+          /bin/bash make-release.sh --version ${{ github.event.inputs.version }} --trigger-release $no_commit

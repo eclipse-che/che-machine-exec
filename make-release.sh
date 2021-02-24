@@ -14,9 +14,9 @@ IMAGE="che-machine-exec"
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    '-t'|'--trigger-release') TRIGGER_RELEASE=1; NOCOMMIT=0; shift 0;;
+    '-t'|'--trigger-release') TRIGGER_RELEASE=1; shift 0;;
     '-v'|'--version') VERSION="$2"; shift 1;;
-    '-n'|'--no-commit') NOCOMMIT=1; TRIGGER_RELEASE=0; shift 0;;
+    '-n'|'--no-commit') NOCOMMIT=1; shift 0;;
   esac
   shift 1
 done
@@ -36,7 +36,7 @@ releaseMachineExec() {
   # docker buildx includes automated push to registry, so build using tag we want published, not just local ${IMAGE}
   docker buildx build \
     --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" --push \
-    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/s390x" | cat
+    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le" | cat
   echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
 
