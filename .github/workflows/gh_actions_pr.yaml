@@ -15,6 +15,19 @@ on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.default == false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64]
+        default: [true]
+        include:
+          - platform: linux/arm64
+            default: false
+          - platform: linux/ppc64le
+            default: false
+          - platform: linux/s390x
+            default: false
     steps:
     - name: Checkout che-machine-exec source code
       uses: actions/checkout@v2
@@ -22,10 +35,10 @@ jobs:
       uses: docker/setup-qemu-action@v1
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
-    - name: Build and push nightly
+    - name: Check docker build
       uses: docker/build-push-action@v2
       with:
         file: build/dockerfiles/Dockerfile
-        platforms: linux/amd64,linux/ppc64le,linux/s390x
+        platforms: ${{ matrix.platform }}
         push: false
         tags: quay.io/eclipse/che-machine-exec:pr-check
