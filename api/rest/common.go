@@ -14,15 +14,13 @@ package rest
 
 import (
 	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/gin-gonic/gin"
 )
 
-func HandleKubeConfigCreation(c *gin.Context, initConfigParams *model.InitConfigParams, token string) error {
-	if initConfigParams.Username == "" {
-		initConfigParams.Username = "Developer"
+func HandleKubeConfigCreation(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
+	if kubeConfigParams.Username == "" {
+		kubeConfigParams.Username = "Developer"
 	}
 
-	initConfigParams.BearerToken = token
-	err := execManager.CreateKubeConfig(initConfigParams)
+	err := execManager.CreateKubeConfig(kubeConfigParams, containerInfo)
 	return err
 }

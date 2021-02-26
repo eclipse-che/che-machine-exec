@@ -94,8 +94,7 @@ func (manager *KubernetesExecManager) Resolve(container, token string) (*model.R
 		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
 			containerInfo.PodName, containerInfo.ContainerName)
 		return &model.ResolvedExec{
-			PodName:       containerInfo.PodName,
-			ContainerName: containerInfo.ContainerName,
+			ContainerInfo: *containerInfo,
 			Cmd:           resolvedCmd,
 		}, nil
 	} else {
@@ -128,8 +127,7 @@ func (manager *KubernetesExecManager) findFirstAvailable(k8sAPI *client.K8sAPI, 
 		logrus.Printf("%s is successfully resolved in auto discovered container %s/%s", resolvedCmd,
 			containerInfo.PodName, containerInfo.ContainerName)
 		return &model.ResolvedExec{
-			PodName:       containerInfo.PodName,
-			ContainerName: containerInfo.ContainerName,
+			ContainerInfo: *containerInfo,
 			Cmd:           resolvedCmd,
 		}, nil
 	}
@@ -318,9 +316,9 @@ func (*KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	return nil
 }
 
-func (manager *KubernetesExecManager) CreateKubeConfig(initConfigParams *model.InitConfigParams) error {
+func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {
 	machineExec := &model.MachineExec{
-		BearerToken: initConfigParams.BearerToken,
+		BearerToken: kubeConfigParams.BearerToken,
 	}
 	k8sAPI, err := manager.k8sAPIProvider.GetK8sAPI(machineExec)
 	if err != nil {
@@ -328,32 +326,17 @@ func (manager *KubernetesExecManager) CreateKubeConfig(initConfigParams *model.I
 		return err
 	}
 
-	containerFilter := filter.NewKubernetesContainerFilter(manager.namespace, k8sAPI.GetClient().CoreV1())
-	containersInfo, err := containerFilter.GetContainerList()
+	currentNamespace := GetNamespace()
+	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(currentNamespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
+
+	if kubeConfigParams.Namespace == "" {
+		kubeConfigParams.Namespace = currentNamespace
+	}
+	err = kubeconfig.CreateKubeConfig(infoExecCreator, kubeConfigParams, containerInfo)
 	if err != nil {
 		return err
 	}
-
-	if len(containersInfo) == 0 {
-		return errors.New("no containers found to exec")
-	}
-
-	for _, containerInfo := range containersInfo {
-		if containerInfo.ContainerName == initConfigParams.ContainerName || initConfigParams.ContainerName == "" {
-			currentNamespace := GetNamespace()
-			infoExecCreator := exec_info.NewKubernetesInfoExecCreator(currentNamespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
-
-			if initConfigParams.Namespace == "" {
-				initConfigParams.Namespace = currentNamespace
-			}
-			err = kubeconfig.CreateKubeConfig(infoExecCreator, &initConfigParams.KubeConfigParams, containerInfo)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-	}
-	return fmt.Errorf("No container with name %s found", initConfigParams.ContainerName)
+	return nil
 }
 
 // getByID return exec by id.
