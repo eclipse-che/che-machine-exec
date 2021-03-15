@@ -17,17 +17,6 @@ on:
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.default == false }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [linux/amd64]
-        default: [true]
-        include:
-          - platform: linux/arm64
-            default: false
-          - platform: linux/ppc64le
-            default: false
     steps:
     - name: Checkout che-machine-exec source code
       uses: actions/checkout@v2
@@ -49,7 +38,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         file: build/dockerfiles/Dockerfile
-        platforms: ${{ matrix.platform }}
+        platforms: linux/amd64,linux/ppc64le,linux/arm64
         push: true
         tags: |
           quay.io/eclipse/che-machine-exec:nightly
