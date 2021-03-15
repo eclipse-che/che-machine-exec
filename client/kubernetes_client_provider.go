@@ -14,8 +14,8 @@ package client
 
 import (
 	"errors"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/auth"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/auth"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"

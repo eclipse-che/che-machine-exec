@@ -14,7 +14,7 @@ package jsonrpc
 
 import (
 	"github.com/eclipse/che-go-jsonrpc"
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 )
 
 // Constants that represent RPC methods identifiers.

@@ -14,8 +14,8 @@ package model
 
 import (
 	"github.com/eclipse/che-go-jsonrpc/event"
-	line_buffer "github.com/eclipse/che-machine-exec/output/line-buffer"
-	ws_conn "github.com/eclipse/che-machine-exec/ws-conn"
+	line_buffer "github.com/eclipse-che/che-machine-exec/output/line-buffer"
+	ws_conn "github.com/eclipse-che/che-machine-exec/ws-conn"
 	"k8s.io/client-go/tools/remotecommand"
 )
 

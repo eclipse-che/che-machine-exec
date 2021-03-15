@@ -13,7 +13,7 @@
 package rest
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 )
 
 func HandleKubeConfigCreation(kubeConfigParams *model.KubeConfigParams, containerInfo *model.ContainerInfo) error {

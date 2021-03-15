@@ -14,9 +14,9 @@ package websocket
 
 import (
 	"errors"
-	"github.com/eclipse/che-machine-exec/auth"
-	"github.com/eclipse/che-machine-exec/common/rest"
-	"github.com/eclipse/che-machine-exec/exec"
+	"github.com/eclipse-che/che-machine-exec/auth"
+	"github.com/eclipse-che/che-machine-exec/common/rest"
+	"github.com/eclipse-che/che-machine-exec/exec"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"

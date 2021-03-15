@@ -13,7 +13,7 @@
 package exec_info
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )

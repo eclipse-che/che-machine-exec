@@ -19,10 +19,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/client"
-	exec_info "github.com/eclipse/che-machine-exec/exec-info"
-	"github.com/eclipse/che-machine-exec/shell"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/client"
+	exec_info "github.com/eclipse-che/che-machine-exec/exec-info"
+	"github.com/eclipse-che/che-machine-exec/shell"
 )
 
 // CmdResolver resolves exec command - MachineExec#Cmd. Needed to patch command

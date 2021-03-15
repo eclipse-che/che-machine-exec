@@ -13,9 +13,9 @@
 package rest
 
 import (
-	"github.com/eclipse/che-machine-exec/activity"
-	"github.com/eclipse/che-machine-exec/auth"
-	restUtil "github.com/eclipse/che-machine-exec/common/rest"
+	"github.com/eclipse-che/che-machine-exec/activity"
+	"github.com/eclipse-che/che-machine-exec/auth"
+	restUtil "github.com/eclipse-che/che-machine-exec/common/rest"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

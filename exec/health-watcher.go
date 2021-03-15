@@ -14,7 +14,7 @@ package exec
 
 import (
 	"github.com/eclipse/che-go-jsonrpc/event"
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 )
 
 // Exec health watcher. This watcher cleans up exec resources
