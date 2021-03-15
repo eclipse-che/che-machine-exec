@@ -9,7 +9,7 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 
-name: Docker Build
+name: Docker Build PR
 
 on: pull_request
 jobs:

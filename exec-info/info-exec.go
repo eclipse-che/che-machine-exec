@@ -12,7 +12,7 @@
 package exec_info
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 )
 
 // InfoExec - exec to spawn some simple not shell based command

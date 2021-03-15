@@ -14,8 +14,8 @@ package shell
 
 import (
 	"fmt"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/mocks"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"testing"

@@ -17,11 +17,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/eclipse/che-machine-exec/auth"
-	"github.com/eclipse/che-machine-exec/common/rest"
+	"github.com/eclipse-che/che-machine-exec/auth"
+	"github.com/eclipse-che/che-machine-exec/common/rest"
 
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/exec"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/exec"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )

@@ -12,7 +12,7 @@
 
 package filter
 
-import "github.com/eclipse/che-machine-exec/api/model"
+import "github.com/eclipse-che/che-machine-exec/api/model"
 
 // Container filter to find container information if it's possible by unique Che specific container name.
 type ContainerFilter interface {

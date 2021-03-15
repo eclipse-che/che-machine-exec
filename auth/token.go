@@ -16,7 +16,7 @@ import (
 	"net/http"
 	"strings"
 
-	restUtil "github.com/eclipse/che-machine-exec/common/rest"
+	restUtil "github.com/eclipse-che/che-machine-exec/common/rest"
 	"github.com/gin-gonic/gin"
 )
 

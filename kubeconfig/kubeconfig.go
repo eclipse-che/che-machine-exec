@@ -18,8 +18,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/eclipse/che-machine-exec/api/model"
-	execInfo "github.com/eclipse/che-machine-exec/exec-info"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	execInfo "github.com/eclipse-che/che-machine-exec/exec-info"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

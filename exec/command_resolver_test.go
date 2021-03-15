@@ -14,9 +14,9 @@ package exec
 
 import (
 	"errors"
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/mocks"
-	"github.com/eclipse/che-machine-exec/shell"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/mocks"
+	"github.com/eclipse-che/che-machine-exec/shell"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
