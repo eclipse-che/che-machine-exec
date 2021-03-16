@@ -327,7 +327,7 @@ func (manager *KubernetesExecManager) CreateKubeConfig(kubeConfigParams *model.K
 	}
 
 	currentNamespace := GetNamespace()
-	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(currentNamespace, k8sAPI.GetClient().Core(), k8sAPI.GetConfig())
+	infoExecCreator := exec_info.NewKubernetesInfoExecCreator(currentNamespace, k8sAPI.GetClient().CoreV1(), k8sAPI.GetConfig())
 
 	if kubeConfigParams.Namespace == "" {
 		kubeConfigParams.Namespace = currentNamespace

@@ -13,6 +13,7 @@
 package filter
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -102,7 +103,7 @@ func (filter *KubernetesContainerFilter) FindContainerInfo(identifier *model.Mac
 
 func (filter *KubernetesContainerFilter) getWorkspacePods() (*v1.PodList, error) {
 	filterOptions := metav1.ListOptions{LabelSelector: cfg.PodSelector, FieldSelector: "status.phase=Running"}
-	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(filterOptions)
+	wsPods, err := filter.podGetterApi.Pods(filter.namespace).List(context.TODO(), filterOptions)
 	if err != nil {
 		return nil, err
 	}
