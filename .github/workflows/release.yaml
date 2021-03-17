@@ -41,8 +41,10 @@ jobs:
           git config --global user.email "mkuznets@redhat.com"
           export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           NO_COMMIT=${{ github.event.inputs.noCommit}}
-          if [[ ${{ github.event.inputs.noCommit}} == "true" ]]; then
+          if [[ $NO_COMMIT == "true" ]]; then
             NO_COMMIT="--no-commit"
+          else
+            NO_COMMIT=
           fi
           /bin/bash make-release.sh --version ${{ github.event.inputs.version }} --trigger-release $NO_COMMIT
       - name: Create MM message
