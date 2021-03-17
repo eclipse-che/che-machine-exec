@@ -10,7 +10,6 @@ on:
       noCommit:
         description: 'If true, will not commit the version bump changes'
         default: ''
-        required: true
 jobs:
   build:
     name: Create Release
