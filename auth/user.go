@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -51,6 +52,8 @@ func getCurrentUserID(token string) (string, error) {
 		return "", errors.New("Failed to retrieve the current user info. Cause: " + err.Error())
 	}
 
+	logrus.Infof("user Id %s ", string(userInfo.GetUID()))
+	logrus.Info("Test")
 	return string(userInfo.GetUID()), nil
 }
 

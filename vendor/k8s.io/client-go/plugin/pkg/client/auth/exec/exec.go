@@ -33,8 +33,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"golang.org/x/term"
-
+	"golang.org/x/crypto/ssh/terminal"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -198,7 +197,7 @@ func newAuthenticator(c *cache, config *api.ExecConfig, cluster *clientauthentic
 
 		stdin:       os.Stdin,
 		stderr:      os.Stderr,
-		interactive: term.IsTerminal(int(os.Stdin.Fd())),
+		interactive: terminal.IsTerminal(int(os.Stdout.Fd())),
 		now:         time.Now,
 		environ:     os.Environ,
 
@@ -401,9 +400,7 @@ func (a *Authenticator) refreshCredsLocked(r *clientauthentication.Response) err
 		cmd.Stdin = a.stdin
 	}
 
-	err = cmd.Run()
-	incrementCallsMetric(err)
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return a.wrapCmdRunErrorLocked(err)
 	}
 
