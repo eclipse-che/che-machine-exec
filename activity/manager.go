@@ -69,7 +69,7 @@ func New(idleTimeout, stopRetryPeriod time.Duration) (Manager, error) {
 	if !isFound {
 		workspaceName, isFound = os.LookupEnv("DEVWORKSPACE_NAME")
 		if !isFound {
-			return nil, errors.New("CHE_WORKSPACE_NAME env or DEVWORKSPACE_NAME env must be set for activity manager works correctly")
+			return nil, errors.New("CHE_WORKSPACE_NAME or DEVWORKSPACE_NAME environment variables must be set for activity manager to work correctly")
 		}
 	}
 
