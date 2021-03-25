@@ -27,18 +27,18 @@ jobs:
         run: |
           set +e
           RECREATE_TAGS=${{ github.event.inputs.forceRecreateTags }}
-          VERSION=${{ github.event.inputs.checkoutExistingTag }}
-          EXISTING_TAG=$(git ls-remote --exit-code origin refs/tags/${version})
+          VERSION=${{ github.event.inputs.version }}
+          EXISTING_TAG=$(git ls-remote --exit-code origin refs/tags/${VERSION})
           if [[ -n ${EXISTING_TAG} ]]; then
             if [[ ${RECREATE_TAGS} == "true" ]]; then
-              echo "[INFO] Removing tag for ${version} version. New tag will be recreated during release."
-              git push origin :${{ github.event.inputs.version}}
+              echo "[INFO] Removing tag for ${VERSION} version. New tag will be recreated during release."
+              git push origin :$VERSION
             else
               echo "[ERROR] Cannot proceed with release - tag ${EXISTING_TAG} already exists."
               exit 1
             fi
           else
-            echo "[INFO] No existing tags detected for ${version}"
+            echo "[INFO] No existing tags detected for $VERSION"
           fi
       - name: Login to docker.io
         uses: docker/login-action@v1
