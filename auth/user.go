@@ -36,7 +36,7 @@ var (
 	}
 	UserGroupResource = &schema.GroupResource{
 		Group: "user.openshift.io",
-		Resource: "user",
+		Resource: "users",
 	}
 )
 
