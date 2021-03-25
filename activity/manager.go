@@ -162,7 +162,7 @@ func (m managerImpl) stopWorkspace() error {
 		return err
 	}
 
-	_, err = c.Resource(DevWorkspaceGroupVersion.WithResource("devfile")).Patch(context.TODO(),m.workspaceName, types.MergePatchType, jsonPath, v1.PatchOptions{}, "")
+	_, err = c.Resource(DevWorkspaceGroupVersion.WithResource("devworkspaces")).Patch(context.TODO(),m.workspaceName, types.MergePatchType, jsonPath, v1.PatchOptions{}, "")
 	if err != nil {
 		return err
 	}
