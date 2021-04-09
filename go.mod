@@ -91,7 +91,6 @@ replace (
 
 	github.com/mitchellh/mapstructure => github.com/mitchellh/mapstructure v1.1.2
 
-	github.com/moby/spdystream => github.com/moby/spdystream v0.2.0
 	github.com/modern-go/concurrent => github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 	github.com/modern-go/reflect2 => github.com/modern-go/reflect2 v1.0.1
 	github.com/munnerz/goautoneg => github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d
@@ -155,9 +154,9 @@ replace (
 	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 	honnef.co/go/tools => honnef.co/go/tools v0.0.1-2020.1.3
 
-	k8s.io/api => k8s.io/api v0.0.0-20210129201028-cfb031d9922e
-	k8s.io/apimachinery => k8s.io/apimachinery v0.21.0-beta.0
-	k8s.io/client-go => k8s.io/client-go v0.21.0-beta.0
+	k8s.io/api => k8s.io/api v0.21.0
+	k8s.io/apimachinery => k8s.io/apimachinery v0.21.0
+	k8s.io/client-go => k8s.io/client-go v0.21.0
 	k8s.io/gengo => k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac
 	k8s.io/klog/v2 => k8s.io/klog/v2 v2.8.0
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
@@ -169,15 +168,14 @@ replace (
 )
 
 require (
-	github.com/eclipse/che-go-jsonrpc v0.0.0-00010101000000-000000000000
+	github.com/eclipse/che-go-jsonrpc v0.0.0-20200317130110-931966b891fe
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gorilla/websocket v1.4.2
-	github.com/niemeyer/pretty v0.0.0-00010101000000-000000000000 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.0-beta.0
-	k8s.io/apimachinery v0.21.0-beta.0
-	k8s.io/client-go v0.21.0-beta.0
+	k8s.io/api v0.21.0
+	k8s.io/apimachinery v0.21.0
+	k8s.io/client-go v0.21.0
 )

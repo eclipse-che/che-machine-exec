@@ -47,7 +47,9 @@ func getCurrentUserID(token string) (string, error) {
 		return "", err
 	}
 
-	userInfo, err := client.Resource(UserGroupResource.WithVersion("v1")).Get(context.TODO(), "~", metav1.GetOptions{})
+	// Todo: should be returned logged in user info, but for some starange reasong new go-client returns object based on service account...
+	// We have to fix it for web terminal.
+	userInfo, err := client.Resource(UserGroupResource.WithVersion("v1")).Namespace("").Get(context.TODO(), "~", metav1.GetOptions{})
 	if err != nil {
 		return "", errors.New("Failed to retrieve the current user info. Cause: " + err.Error())
 	}
