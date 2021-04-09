@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "github.com/eclipse/che-machine-exec/api/model"
+	model "github.com/eclipse-che/che-machine-exec/api/model"
 	mock "github.com/stretchr/testify/mock"
 )
 

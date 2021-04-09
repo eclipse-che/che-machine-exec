@@ -5,7 +5,7 @@ projects:
   - name: che-machine-exec
     source:
       type: git
-      location: https://github.com/eclipse/che-machine-exec.git
+      location: https://github.com/eclipse-che/che-machine-exec.git
 components:
   - alias: ms-vscode.go
     id: golang/go/latest

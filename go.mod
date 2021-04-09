@@ -1,4 +1,4 @@
-module github.com/eclipse/che-machine-exec
+module github.com/eclipse-che/che-machine-exec
 
 go 1.14
 

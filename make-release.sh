@@ -1,10 +1,10 @@
 #!/bin/bash
-# Release process automation script. 
-# Used to create branch/tag, update VERSION files 
-# and and trigger release by force pushing changes to the release branch 
+# Release process automation script.
+# Used to create branch/tag, update VERSION files
+# and and trigger release by force pushing changes to the release branch
 
 # set to 1 to actually trigger changes in the release branch
-TRIGGER_RELEASE=0 
+TRIGGER_RELEASE=0
 NOCOMMIT=0
 
 REGISTRY="quay.io"
@@ -36,7 +36,7 @@ releaseMachineExec() {
   # docker buildx includes automated push to registry, so build using tag we want published, not just local ${IMAGE}
   docker buildx build \
     --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" --push \
-    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le" | cat
+    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/arm64" | cat
   echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
 
@@ -46,7 +46,7 @@ BRANCH=${VERSION%.*}.x
 # if doing a .0 release, use master; if doing a .z release, use $BRANCH
 if [[ ${VERSION} == *".0" ]]; then
   BASEBRANCH="master"
-else 
+else
   BASEBRANCH="${BRANCH}"
 fi
 
@@ -120,5 +120,5 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
     hub pull-request -o -f -m "${lastCommitComment}
 
 ${lastCommitComment}" -b "${BRANCH}" -h "${PR_BRANCH}"
-  fi 
+  fi
 fi

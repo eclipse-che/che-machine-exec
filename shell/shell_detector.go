@@ -13,9 +13,9 @@
 package shell
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/client"
-	"github.com/eclipse/che-machine-exec/exec-info"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/client"
+	"github.com/eclipse-che/che-machine-exec/exec-info"
 	"github.com/sirupsen/logrus"
 )
 

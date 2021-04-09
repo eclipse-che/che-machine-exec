@@ -15,8 +15,8 @@ package exec
 import (
 	"os"
 
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/client"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/client"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )

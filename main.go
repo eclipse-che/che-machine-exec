@@ -13,14 +13,14 @@
 package main
 
 import (
-	"github.com/eclipse/che-machine-exec/activity"
+	"github.com/eclipse-che/che-machine-exec/activity"
 	"net/http"
 
 	jsonrpc "github.com/eclipse/che-go-jsonrpc"
-	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
-	"github.com/eclipse/che-machine-exec/api/rest"
-	"github.com/eclipse/che-machine-exec/api/websocket"
-	"github.com/eclipse/che-machine-exec/cfg"
+	jsonRpcApi "github.com/eclipse-che/che-machine-exec/api/jsonrpc"
+	"github.com/eclipse-che/che-machine-exec/api/rest"
+	"github.com/eclipse-che/che-machine-exec/api/websocket"
+	"github.com/eclipse-che/che-machine-exec/cfg"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -50,7 +50,7 @@ func main() {
 	})
 
 	// attach to get exec output and sent user input(by simple websocket)
-	// Todo: rework to use only one websocket connection https://github.com/eclipse/che-machine-exec/issues/4
+	// Todo: rework to use only one websocket connection https://github.com/eclipse-che/che-machine-exec/issues/4
 	r.GET("/attach/:id", func(c *gin.Context) {
 		websocket.HandleAttach(c)
 	})

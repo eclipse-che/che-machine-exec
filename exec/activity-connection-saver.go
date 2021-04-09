@@ -13,7 +13,7 @@
 package exec
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 	"time"
 )
 

@@ -17,8 +17,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/eclipse/che-machine-exec/api/model"
-	"github.com/eclipse/che-machine-exec/cfg"
+	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/cfg"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -56,11 +56,7 @@ func (filter *KubernetesContainerFilter) GetContainerList() (containersInfo []*m
 
 	for _, pod := range pods.Items {
 		for _, container := range pod.Spec.Containers {
-			for _, env := range container.Env {
-				if env.Name == MachineNameEnvVar {
-					containersInfo = append(containersInfo, &model.ContainerInfo{ContainerName: container.Name, PodName: pod.Name})
-				}
-			}
+			containersInfo = append(containersInfo, &model.ContainerInfo{ContainerName: container.Name, PodName: pod.Name})
 		}
 	}
 
@@ -121,6 +117,10 @@ func findContainerName(pod v1.Pod, machineName string) string {
 			if env.Name == MachineNameEnvVar && env.Value == machineName {
 				return container.Name
 			}
+		}
+		// ^ Che specific logic failed, try devworkspace one
+		if container.Name == machineName {
+			return container.Name
 		}
 	}
 	return ""

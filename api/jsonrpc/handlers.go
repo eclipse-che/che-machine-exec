@@ -14,16 +14,16 @@ package jsonrpc
 
 import (
 	"errors"
-	"github.com/eclipse/che-machine-exec/auth"
+	"github.com/eclipse-che/che-machine-exec/auth"
 
-	"github.com/eclipse/che-machine-exec/api/events"
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/events"
+	"github.com/eclipse-che/che-machine-exec/api/model"
 	"github.com/sirupsen/logrus"
 
 	"strconv"
 
 	"github.com/eclipse/che-go-jsonrpc"
-	"github.com/eclipse/che-machine-exec/exec"
+	"github.com/eclipse-che/che-machine-exec/exec"
 )
 
 const (

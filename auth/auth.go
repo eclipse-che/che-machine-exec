@@ -13,8 +13,8 @@
 package auth
 
 import (
-	"github.com/eclipse/che-machine-exec/cfg"
-	restUtil "github.com/eclipse/che-machine-exec/common/rest"
+	"github.com/eclipse-che/che-machine-exec/cfg"
+	restUtil "github.com/eclipse-che/che-machine-exec/common/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
