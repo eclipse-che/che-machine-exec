@@ -43,9 +43,9 @@ releaseMachineExec() {
 # derive branch from version
 BRANCH=${VERSION%.*}.x
 
-# if doing a .0 release, use master; if doing a .z release, use $BRANCH
+# if doing a .0 release, use main; if doing a .z release, use $BRANCH
 if [[ ${VERSION} == *".0" ]]; then
-  BASEBRANCH="master"
+  BASEBRANCH="main"
 else
   BASEBRANCH="${BRANCH}"
 fi
@@ -110,8 +110,8 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
   PUSH_TRY="$(git push origin "${BRANCH}")"
   # shellcheck disable=SC2181
   if [[ $? -gt 0 ]] || [[ $PUSH_TRY == *"protected branch hook declined"* ]]; then
-  PR_BRANCH=pr-master-to-${NEXTVERSION}
-    # create pull request for master branch, as branch is restricted
+  PR_BRANCH=pr-main-to-${NEXTVERSION}
+    # create pull request for main branch, as branch is restricted
     git branch "${PR_BRANCH}"
     git checkout "${PR_BRANCH}"
     git pull origin "${PR_BRANCH}"

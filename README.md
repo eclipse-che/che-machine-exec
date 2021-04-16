@@ -204,10 +204,3 @@ Eclipse Che 7.x workspaces that use the Che-Theia IDE include che-theia-task-plu
 ```
 echo hello
 ```
-
-## CI
-The following [CentOS CI jobs](https://ci.centos.org/) are associated with the repository:
-
-- [![Master Build Status](https://ci.centos.org/buildStatus/icon?subject=master&job=devtools-che-machine-exec-build-master/)](https://ci.centos.org/job/devtools-che-machine-exec-build-master/) - builds CentOS images on each commit to [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
-- [![Nightly Build Status](https://ci.centos.org/buildStatus/icon?subject=nightly&job=devtools-che-machine-exec-nightly)](https://ci.centos.org/job/devtools-che-machine-exec-nightly/) - builds CentOS images and pushes them to [quay.io](https://quay.io/organization/eclipse) on a daily basis from the [`master`](https://github.com/eclipse/che-machine-exec/tree/master) branch.
-- [![Release Build Status](https://ci.centos.org/buildStatus/icon?subject=release&job=devtools-che-machine-exec-release/)](https://ci.centos.org/job/devtools-che-machine-exec-release/) -  builds images from the [`release`](https://github.com/eclipse/che-machine-exec/tree/release) branch and pushes them to [quay.io](https://quay.io/organization/eclipse).
