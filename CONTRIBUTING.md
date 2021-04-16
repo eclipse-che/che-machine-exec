@@ -22,7 +22,7 @@ This source code available inside development linux containers with names `dev` 
 
 To test che-machine-exec with ui-part you can use [che-theia](https://github.com/eclipse/che-theia.git).
 In this case you need compile che-theia inside development container `theia-dev`.
-See more: [che-theia develompent flow](https://github.com/eclipse/che-theia/blob/main/CONTRIBUTING.md).
+See more: [che-theia development flow](https://github.com/eclipse/che-theia/blob/master/CONTRIBUTING.md).
 
 ### Development commands
 
