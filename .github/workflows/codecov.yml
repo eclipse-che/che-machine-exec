@@ -20,8 +20,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Submit code coverage results
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
          echo "" > coverage.txt
          export CHE_WORKSPACE_ID=test_id; go test -v ./... -coverprofile coverage.txt
