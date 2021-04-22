@@ -66,6 +66,7 @@ func newDynamicForUsersWithToken(token string) (dynamic.Interface, error) {
 	}
 
 	config.BearerToken = token
+	config.BearerTokenFile = ""
 	config.GroupVersion = UserGroupVersion
 	config.APIPath = "apis"
 
