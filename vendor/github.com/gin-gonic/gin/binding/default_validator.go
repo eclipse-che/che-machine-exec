@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/go-playground/validator/v10"
+	"gopkg.in/go-playground/validator.v8"
 )
 
 type defaultValidator struct {
@@ -18,17 +18,11 @@ type defaultValidator struct {
 
 var _ StructValidator = &defaultValidator{}
 
-// ValidateStruct receives any kind of type, but only performed struct or pointer to struct type.
 func (v *defaultValidator) ValidateStruct(obj interface{}) error {
-	value := reflect.ValueOf(obj)
-	valueType := value.Kind()
-	if valueType == reflect.Ptr {
-		valueType = value.Elem().Kind()
-	}
-	if valueType == reflect.Struct {
+	if kindOfData(obj) == reflect.Struct {
 		v.lazyinit()
 		if err := v.validate.Struct(obj); err != nil {
-			return err
+			return error(err)
 		}
 	}
 	return nil
@@ -45,7 +39,16 @@ func (v *defaultValidator) Engine() interface{} {
 
 func (v *defaultValidator) lazyinit() {
 	v.once.Do(func() {
-		v.validate = validator.New()
-		v.validate.SetTagName("binding")
+		config := &validator.Config{TagName: "binding"}
+		v.validate = validator.New(config)
 	})
+}
+
+func kindOfData(data interface{}) reflect.Kind {
+	value := reflect.ValueOf(data)
+	valueType := value.Kind()
+	if valueType == reflect.Ptr {
+		valueType = value.Elem().Kind()
+	}
+	return valueType
 }
