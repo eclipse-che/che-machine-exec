@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Red Hat, Inc.
+# Copyright (c) 2019-2021 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -8,6 +8,9 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
+
+# https://quay.io/repository/eclipse/kubernetes-image-puller?tab=tags
+FROM quay.io/eclipse/kubernetes-image-puller:e28a7fb as k8s-image-puller
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
 FROM registry.redhat.io/rhel8/go-toolset:1.14.12-5 as builder
@@ -27,7 +30,7 @@ RUN adduser unprivilegeduser && \
 FROM scratch
 
 COPY --from=builder /rootfs /
-COPY --from=builder /usr/bin/sleep /usr/bin/sleep
+COPY --from=k8s-image-puller /bin/sleep /bin/sleep
 
 USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
