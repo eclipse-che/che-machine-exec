@@ -9,9 +9,6 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-# https://quay.io/repository/eclipse/kubernetes-image-puller?tab=tags
-FROM quay.io/eclipse/kubernetes-image-puller:e28a7fb as k8s-image-puller
-
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
 FROM registry.redhat.io/rhel8/go-toolset:1.14.12-5 as builder
 ENV GOPATH=/go/
@@ -30,7 +27,10 @@ RUN adduser unprivilegeduser && \
 FROM scratch
 
 COPY --from=builder /rootfs /
-COPY --from=k8s-image-puller /bin/sleep /bin/sleep
+# Arch-specific version of sleep binary can be found in quay.io/repository/crw/imagepuller-rhel8:2.9-4 (or newer)
+# see https://github.com/redhat-developer/codeready-workspaces-deprecated/blob/crw-2-rhel-8/sleep/build.sh to fetch single-arch locally
+# see https://main-jenkins-csb-crwqe.apps.ocp4.prod.psi.redhat.com/job/CRW_CI/job/crw-deprecated_2.x/ to build multi-arch
+COPY --from=builder /che-machine-exec/sleep /bin/sleep
 
 USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
