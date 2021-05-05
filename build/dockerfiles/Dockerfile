@@ -37,7 +37,7 @@ WORKDIR /che-machine-exec/
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-FROM docker.io/node:10.16-alpine as cloud_shell_builder
+FROM docker.io/node:16.0.0-alpine as cloud_shell_builder
 COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
 WORKDIR cloud-shell-src
 RUN yarn && \
