@@ -27,9 +27,10 @@ RUN adduser unprivilegeduser && \
 FROM scratch
 
 COPY --from=builder /rootfs /
-# Arch-specific version of sleep binary can be found in quay.io/repository/crw/imagepuller-rhel8:2.9-4 (or newer)
-# see https://github.com/redhat-developer/codeready-workspaces-deprecated/blob/crw-2-rhel-8/sleep/build.sh to fetch single-arch locally
-# see https://main-jenkins-csb-crwqe.apps.ocp4.prod.psi.redhat.com/job/CRW_CI/job/crw-deprecated_2.x/ to build multi-arch
+# Arch-specific version of sleep binary can be found in quay.io/crw/imagepuller-rhel8 as of 2.9-4 (or newer tag)
+# see https://github.com/redhat-developer/codeready-workspaces-deprecated/tree/crw-2-rhel-8/sleep/build.sh to fetch single-arch locally
+# see https://main-jenkins-csb-crwqe.apps.ocp4.prod.psi.redhat.com/job/CRW_CI/job/crw-deprecated_2.x/ to build multi-arch tarballs that can
+# then be used in Brew
 COPY --from=builder /che-machine-exec/sleep /bin/sleep
 
 USER unprivilegeduser
