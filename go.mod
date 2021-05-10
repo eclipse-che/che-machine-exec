@@ -87,7 +87,7 @@ replace (
 	github.com/kr/pty => github.com/kr/pty v0.0.0-20180113180813-282ce0e5322c
 	github.com/kr/text => github.com/kr/text v0.0.0-20200214203106-702c74938df4
 
-	github.com/leodido/go-urn => github.com/leodido/go-urn v1.2.0
+	// github.com/leodido/go-urn => github.com/leodido/go-urn v1.2.0
 	github.com/mailru/easyjson => github.com/mailru/easyjson v0.0.0-20200218084223-8edcc4e51f39
 	github.com/mattn/go-isatty => github.com/mattn/go-isatty v0.0.3
 
