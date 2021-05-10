@@ -65,7 +65,7 @@ github.com/pmezard/go-difflib/difflib
 github.com/sirupsen/logrus
 # github.com/stretchr/objx v0.2.0 => github.com/stretchr/objx v0.3.0
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.6.1 => github.com/stretchr/testify v0.0.0-20190311161405-34c6fa2dc709
+# github.com/stretchr/testify v1.6.1 => github.com/stretchr/testify v1.4.0
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
@@ -444,7 +444,7 @@ sigs.k8s.io/yaml
 # github.com/spf13/afero => github.com/spf13/afero v1.2.2
 # github.com/spf13/pflag => github.com/spf13/pflag v1.0.5
 # github.com/stretchr/objx => github.com/stretchr/objx v0.3.0
-# github.com/stretchr/testify => github.com/stretchr/testify v0.0.0-20190311161405-34c6fa2dc709
+# github.com/stretchr/testify => github.com/stretchr/testify v1.4.0
 # github.com/ugorji/go => github.com/ugorji/go v0.0.0-20180407103000-f3cacc17c85e
 # github.com/ugorji/go/codec => github.com/ugorji/go/codec v1.1.7
 # go.opencensus.io => go.opencensus.io v0.22.3

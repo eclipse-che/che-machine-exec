@@ -115,7 +115,7 @@ replace (
 	github.com/spf13/afero => github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag => github.com/spf13/pflag v1.0.5
 	github.com/stretchr/objx => github.com/stretchr/objx v0.3.0
-	github.com/stretchr/testify => github.com/stretchr/testify v0.0.0-20190311161405-34c6fa2dc709
+	github.com/stretchr/testify => github.com/stretchr/testify v1.4.0
 
 	github.com/ugorji/go => github.com/ugorji/go v0.0.0-20180407103000-f3cacc17c85e
 
