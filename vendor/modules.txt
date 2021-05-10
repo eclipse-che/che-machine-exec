@@ -395,7 +395,6 @@ sigs.k8s.io/yaml
 # github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.3
 # github.com/go-openapi/swag => github.com/go-openapi/swag v0.19.5
 # github.com/go-playground/assert/v2 => github.com/go-playground/assert/v2 v2.0.0-20160126235308-4f4dfbc7d1c4
-# github.com/go-playground/locales => github.com/go-playground/locales v0.0.0-20160126235308-f63010822830
 # github.com/go-playground/universal-translator => github.com/go-playground/universal-translator v0.0.0-20160126235308-2223ab324566
 # github.com/go-playground/validator/v10 => github.com/go-playground/validator/v10 v10.2.0
 # github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
