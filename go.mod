@@ -63,7 +63,7 @@ replace (
 	github.com/golang/protobuf => github.com/golang/protobuf v1.4.3
 	github.com/google/btree => github.com/google/btree v1.0.0
 	github.com/google/go-cmp => github.com/google/go-cmp v0.5.2
-	github.com/google/gofuzz => github.com/google/gofuzz v1.1.0
+	github.com/google/gofuzz => github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367
 	github.com/google/martian => github.com/google/martian v0.0.0-20180813215018-c223d6f7955e
 	github.com/google/pprof => github.com/google/pprof v0.0.0-20180921154107-7dadf64105bb
 	github.com/google/renameio => github.com/google/renameio v0.1.0
