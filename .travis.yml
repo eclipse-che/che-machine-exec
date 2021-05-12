@@ -1,0 +1,157 @@
+#
+# Copyright (c) 2021 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+
+language: go
+go:
+- '1.15'
+os: linux
+dist: focal
+git:
+  depth: false
+env:
+  global:
+  - TAG=next
+  - TRAVIS_TAG=travis
+  - REGISTRY=quay.io
+  - ORGANIZATION=eclipse
+  - IMAGE=che-machine-exec
+  - PR_NUMBER=
+  - secure: Vhp1MM0P44a5pwT8DJIU+RGKGenvIRJ+456ljvRVMjcbDL4JVQEJpyloSuBunFjpWzoB8Uom0+W3zFNdhfZPvRSxiBtNPFwd+jqlgWME2IGhwtXALx+35FqaGxKh9iEJk8ecj0ChWvNf82GBeyhntqx676T0g2v1qMbDH8vIf9k28qAHDGowc0PjSRTMrr/VbYk3YlzgWEPAf4kvgahFxVF8Z52RL84pxcazpsi4tSxDTo5qWYNMXPAldrIK2/7hfvYhv02drdK0tWlbPqz6A7gAHT2P8lPdDbBeaTo2hYxVKjSsZyS85PGHWGNpavCy6XW5o8zwh2YiMq5WwTY/VRQce/t6Tj81rSX13HtYJSMx7T1yH2X5KJUltsZnzx8lqdJviW7x1FiuxPdVMzJs2YpWvlGTljPHz9FHbqMreqJO2n83XZ1dBJdfbrI4L183I+AJrKCK7/HT9WUDSz4tRgCRdBGH5MxXUdiF4MK2kR3UWR4c/ZV5DhpA3WRl26JFvAUWB2ocOfi9u5ZxwfsKSItwhdWT/1OWBSlzb/1io+scgEmHrH771S9KOj4Wkc0abKFGluwAfU+cCHWUnsDrdY+DOKjO4a0uSihj/HercbfHeghqtogAB+eZ01qBHqwPf/e9NqnrvZqE3CnjTGI4MIiP/PYXyWlgJY/PaJVPKDs=
+  - secure: Vd+x05xuL0ZeYeabhDZpasAZhTWzeJjs05cLhzKLydx+h5WRjJb4iEC3x76ovlJKwMniFkE1SeIfRqg4yFLWYaHU0NDqGfORODOiI3h2EoNOnEJbOfQERFVjpdFG4NaETdH2/da63bKkMZUfuoPfSTqL5W9388nEKgUwyiPTqrQZyPzhlXKWDjtVu99pYP1CITCWeuVEb/W1y0heZu6sn0y/wA83Dbt4pUHCJO3GadkQx4eHbQrdus9nKS4dxBw/AZPxgCG5VOnTDPwK5mQmE99ohWIwt8wvtoW8/Oezs/HSh7ueaCAHevRSCGC5aqDm6Dfkg10QqRkrdb4R637j09eE60Pg6ADgAGyR+zF2DEDhlnNFnlMxO1sa1W/AGi7tDqXdrai71aufDryi1Ppyxy9Cd+KDCxFY5yOtpj1SvukQqoaz2CLbiB3ejEbJasqsMkBtNPuZoGeoZ4Mn3OIWQ+mM3XKwyvKfx+HkBNR73p2QWVthaXQWriGCnSXOrXgCdKnWNUbJxKc151QSfDmwAiry6ixa80UONm1TUnKQjOvqF8eup/EnauABqHPH0z+1CjcJ+3hY0dJbQYD2fHtOdP9KNnSFOs6SL0uu4cdO1noG758HBoqJakNHwMO/TOP9ssyvc04r/OjwLeTJ8siQLf7tOs3nczYyw7BojMGdN08=
+  - secure: YrhBrtiBlUG/iDX34yNCnzK/zlUwu7fyl/Qy6j3fUSly2AN6iYi1GPL8EmgaI+U6pwq+n5QwxApbXMckBfUY8er1FiBb0z2qui7bURixCq+VvniFqf0Z/8kStk1SvS+4tMrYwhyTs9CxeAAjZaFac7LtRHUCS5mMF8hVEKjzETCTv3n4Z6sVtbVmLfIzzwdHirGvZqOlT2zU+Onosy8FVnOeWEp2cfSQxY8oZYbeenFG37XnRxK3Tuf1E/uMmamAtq0CmVTWXPBoK6U7E2CuZqYIpQ359481qqkAwA7PHECutQEFm4ZDWQcu/YJCQdgf+YwomXJjd6EWTLvsXH8G2YINd76blLJ1rvA7uxWalB4jwiwl2BX59Qw+3dyXOBj4rWQF5sby3UWc1oO+PPHcguVngfic6uVYqRY9YwohTA2fq6Fm03eOZp51ZH3ASdu1MDsQ8xcDiiFNej8mCFb+HzY0pz0nB4amtWA+fM+16llns5WTedx545UqHZ2EjXiDD1ZXRSg6mSTU2JTxAWshN0sKODvNTcp7wksVOZdriVNzNjwD9oJKbUNvj4jC2Zgsf4n41sAgqXMuyVCBQwc8xLmArw7TtRH3mFks8UTVifslHpXn8kXKiGXksKQ1k1WIeTQOvPz3jAWccUAA1vOGt32ppEQYDcwgaJLv2Vz8w6w=
+  - secure: bTZrUWGQxcAhhpx47LXJcNVux4IJqFG+qGbSQJYDvOlRx0ybTaBnKO1bliunnV+6qb7mD2roLJchlj18SUoetcdSt7ztwvst+eNuTC/otyfuYfgKdU4ThR+UTadR4q9JAqroTGmT4gmlbsXFOjBSPVY+5UUPkB61D1gInIasO5xC2kiNX9iaRKgWCMIShiJ1wG5purLlbnYyUCUFqelz0ZNsVgeHGbINCf947qykA7LjZwJnpBf77gdnIpSPH1qSpnFio+kg3xaEeqhSMhRUB0AU7yJ8OaX4y2rKeZ/eDBMw0vhDnMW6YARd3bIDa4y4GSPcVls9NKEv4F6as74kQ9dF9Y6S/nn/dAYwmimt70BHa8qPC0YuV5BfooKc71bEYXeqUNlBQLNA99tRf/oOC1OUghpUIq0k3hF0kj13Mp1V0gZBq6Df3BoaxbcfbZ+h8zOWoXjJP5qARNjffpEzTOD1A3L4tshpGbSl2rDuCw5bqyxXKSphkWwb2XCXfGZQANz4NnlrP8yDs9lo+MzSz1yEi7HueCVJKPK1n0lAxNtKiNT5uq/x+BtiqJ0jWQFav9bgn2nca78MsaroCN1KRMbczmwas9LqVkZUwAEIMT2WrHGxKfaFvp2saQNhogzG1cQaOZeUDdz2T3xWwPIbJeN65lTXbGR9AImwfqWX4DU=
+  - secure: da6OrXaWPokMgH7slCKuUOlDiMjOwlSb7zTDkM8Op6i/Nae6oDwXn/DCmC8gAlCkTtC9jyIX3q2dSXKKiykJhA9OTE7Pmd3UqLKfXoYVNDFYzwQrfToUTGWE1tdlnNxBPrKgZN8j68vVU8+PoUXZa1RGbdeyi4tbjqa5YIgjOlqECNu17xkuJo0r31oBsv7wgDgK5OcPJliWHjR/LzH0NhNZpN4fL8MUXyOJfdqX77f1iFc+jHK8UbLctTFFWk+wqpxtKN4M9EWYtbnXfdMEgjjxJK8cPAHxykfo7KlwCSZTsSrYa6Vr+9BzSeCJlXuxkq0MOGfAG1LWke/PcSUl5gIs7g67zSKMOJ045pzRLRnjgvKfGR6nVwt6DoraeGELxhgu3q6AjFLVSl6XvaTnB3BzddgvCI1a00knvub2BqTXpPjG8J5ecvVu6hpJQ4XGKnI8sv+qdpoQ1jBSPQqDKDAfdp47a4GYzNsIUw7K9Pk/sSzVR1h+Rfr18/pBFt3WuSa9ghcm1qf/b1SlwzrxWsPajI0rcYctpUmSOGAMDGdQt5hrKWmHfG8uMyNB31cBO/HGyuaaVIV3UFLmKjBX2F2/G8E9xj6jXORQg/1KMQBcCd/Z6LhOAYHTAYeNdzZrS8VDYAJwhoUOpMLyqELcZi9719Pf5XsmXWD2Z3BZP20=
+install:
+- export SHORT_SHA=$(git rev-parse --short HEAD)
+- export GITHUB_TOKEN="$CHE_BOT_GITHUB_TOKEN"
+- echo "$RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD" | docker login -u "$RH_CHE_AUTOMATION_DOCKERHUB_USERNAME"
+  --password-stdin
+- echo "$QUAY_ECLIPSE_CHE_PASSWORD" | docker login quay.io -u "$QUAY_ECLIPSE_CHE_USERNAME
+  " --password-stdin
+jobs:
+  fast_finish: true
+  allow_failures:
+  - if: env(PR_NUMBER) IS present
+    arch: arm64
+  - if: env(PR_NUMBER) IS present
+    arch: ppc64le
+  - if: env(PR_NUMBER) IS present
+    arch: s390x
+  include:
+  - stage: PR Check
+    if: env(PR_NUMBER) IS present
+    name: Check docker build on amd64
+    arch: amd64
+    install: &1
+    - git fetch origin +refs/pull/${PR_NUMBER}/merge
+    - git checkout -qf FETCH_HEAD
+    script: docker build -f build/dockerfiles/Dockerfile -t "${REGISTRY}/${ORGANIZATION}/${IMAGE}:pr-check-${TRAVIS_CPU_ARCH}"
+      .
+  - stage: PR Check
+    if: env(PR_NUMBER) IS present
+    name: Check docker build on arm64
+    arch: arm64
+    install: *1
+    script: docker build -f build/dockerfiles/Dockerfile -t "${REGISTRY}/${ORGANIZATION}/${IMAGE}:pr-check-${TRAVIS_CPU_ARCH}"
+      .
+  - stage: PR Check
+    if: env(PR_NUMBER) IS present
+    name: Check docker build on ppc64le
+    arch: ppc64le
+    install: *1
+    script: docker build -f build/dockerfiles/Dockerfile -t "${REGISTRY}/${ORGANIZATION}/${IMAGE}:pr-check-${TRAVIS_CPU_ARCH}"
+      .
+  - stage: PR Check
+    if: env(PR_NUMBER) IS present
+    name: check docker build PR on s390x
+    arch: s390x
+    install: *1
+    script: docker build -f build/dockerfiles/Dockerfile -t "${REGISTRY}/${ORGANIZATION}/${IMAGE}:pr-check-${TRAVIS_CPU_ARCH}"
+      .
+  - if: env(PR_NUMBER) IS present
+    name: Run unit tests on amd64
+    arch: amd64
+    install: &2
+    - git fetch origin +refs/pull/${PR_NUMBER}/merge
+    - git checkout -qf FETCH_HEAD
+    - export GO111MODULE="on"
+    - go get ${gobuild_args} ./...
+    script: &3
+    - |
+      CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
+      export CHE_WORKSPACE_ID=test_id
+      go test ./... -test.v
+  - if: env(PR_NUMBER) IS present
+    name: Run unit tests on arm64
+    arch: arm64
+    install: *2
+    script: *3
+  - if: env(PR_NUMBER) IS present
+    name: Run unit tests on ppc64le
+    arch: ppc64le
+    install: *2
+    script: *3
+  - if: env(PR_NUMBER) IS present
+    name: Run unit tests on s390x
+    arch: s390x
+    install: *2
+    script: *3
+  - stage: Build and push both short SHA tag and next tag
+    if: type = api AND branch = main AND env(TAG) = "next"
+    name: Build image on amd64
+    arch: amd64
+    script: &4
+    - bash .travis/build_image.sh
+  - stage: Build and push both short SHA tag and next tag
+    if: type = api AND branch = main AND env(TAG) = "next"
+    name: Build image on arm64
+    arch: arm64
+    script: *4
+  - stage: Build and push both short SHA tag and next tag
+    if: type = api AND branch = main AND env(TAG) = "next"
+    name: Build image on ppc64le
+    arch: ppc64le
+    script: *4
+  - stage: Build and push both short SHA tag and next tag
+    if: type = api AND branch = main AND env(TAG) = "next"
+    name: Build image on s390x
+    arch: s390x
+    script: *4
+  - stage: Publish multiarch image with next & short_sha tag
+    if: type = api AND branch = main AND env(TAG) = "next"
+    script: bash .travis/publish_multiarch.sh
+  - stage: Release che-machine-exec
+    if: type = api AND env(TAG) IS present AND env(TAG) != "next"
+    name: Build image on amd64
+    arch: amd64
+    script: &5
+    - |
+      BRANCH=${TAG%.*}.x
+      git checkout "${BRANCH}"
+      bash .travis/build_image.sh
+  - stage: Release che-machine-exec
+    if: type = api AND env(TAG) IS present AND env(TAG) != "next"
+    name: Build image on arm64
+    arch: arm64
+    script: *5
+  - stage: Release che-machine-exec
+    if: type = api AND env(TAG) IS present AND env(TAG) != "next"
+    name: Build image on ppc64le
+    arch: ppc64le
+    script: *5
+  - stage: Release che-machine-exec
+    if: type = api AND env(TAG) IS present AND env(TAG) != "next"
+    name: Build image on s390x
+    arch: s390x
+    script: *5
+  - stage: Publish multiarch image with release tag
+    if: type = api AND env(TAG) IS present AND env(TAG) != "next"
+    script: bash .travis/publish_multiarch.sh
