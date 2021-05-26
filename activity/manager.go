@@ -13,19 +13,22 @@
 package activity
 
 import (
+	"context"
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/eclipse-che/che-machine-exec/exec"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 var (
@@ -162,7 +165,7 @@ func (m managerImpl) stopWorkspace() error {
 		return err
 	}
 
-	_, err = c.Resource(DevWorkspaceAPIResource, m.namespace).Patch(m.workspaceName, types.MergePatchType, jsonPath)
+	_, err = c.Resource(DevWorkspaceGroupVersion.WithResource("devworkspaces")).Namespace(m.namespace).Patch(context.TODO(), m.workspaceName, types.MergePatchType, jsonPath, v1.PatchOptions{}, "")
 	if err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func newWorkspaceClientInCluster() (dynamic.Interface, error) {
 	config.APIPath = "/apis"
 	config.GroupVersion = DevWorkspaceGroupVersion
 
-	c, err := dynamic.NewClient(config)
+	c, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}

@@ -75,8 +75,8 @@ func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.Res
 	}
 
 	if id == -1 {
-		logrus.Errorln("A container where it's possible to initialize terminal is not found")
-		t.SendError(jsonrpc.NewArgsError(errors.New("A container where it's possible to initialize terminal is not found")))
+		logrus.Errorln("A container where it's possible to initialize terminal was not found")
+		t.SendError(jsonrpc.NewArgsError(errors.New("A container where is possible to initialize terminal was not found")))
 		return
 	}
 
