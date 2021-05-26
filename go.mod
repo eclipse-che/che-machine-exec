@@ -8,7 +8,6 @@ replace (
 	cloud.google.com/go/datastore => cloud.google.com/go/datastore v1.2.0
 	cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.2.0
 	cloud.google.com/go/storage => cloud.google.com/go/storage v1.5.0
-	dmitri.shuralyov.com/gpu/mtl => dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9
 
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v0.0.0-20200908233159-fafe600ec8bd
 	github.com/Azure/go-autorest/autorest => github.com/Azure/go-autorest/autorest v0.0.0-20200908233159-fafe600ec8bd
@@ -30,6 +29,7 @@ replace (
 	github.com/chzyer/readline => github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/chzyer/test => github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1
 	github.com/client9/misspell => github.com/client9/misspell v0.3.4
+	github.com/cncf/udpa/go => github.com/cncf/udpa/go v0.0.0-20200327203949-e8cd3a4bb307
 	github.com/creack/pty => github.com/creack/pty v1.1.9
 	github.com/davecgh/go-spew => github.com/davecgh/go-spew v1.1.1
 	github.com/docopt/docopt-go => github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
@@ -40,8 +40,7 @@ replace (
 	github.com/emicklei/go-restful => github.com/emicklei/go-restful v0.0.0-20200129102538-a2fa14558f9a
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.0.0-20200213201256-ba8e577f987f
 	github.com/envoyproxy/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v0.1.0
-	github.com/evanphx/json-patch => github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/form3tech-oss/jwt-go => github.com/form3tech-oss/jwt-go v3.2.2+incompatible
+	github.com/evanphx/json-patch => github.com/evanphx/json-patch v0.0.0-20191220184958-bf22ed931162
 	github.com/fsnotify/fsnotify => github.com/fsnotify/fsnotify v1.4.7
 	github.com/gin-contrib/sse => github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v0.0.0-20180501062418-bd4f73af679e
@@ -60,7 +59,6 @@ replace (
 	github.com/golang/groupcache => github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/golang/mock => github.com/golang/mock v1.5.0
 	github.com/golang/protobuf => github.com/golang/protobuf v1.4.3
-	github.com/google/btree => github.com/google/btree v1.0.0
 	github.com/google/go-cmp => github.com/google/go-cmp v0.5.2
 	github.com/google/gofuzz => github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367
 	github.com/google/martian => github.com/google/martian v0.0.0-20180813215018-c223d6f7955e
@@ -85,12 +83,12 @@ replace (
 	github.com/kr/pretty => github.com/kr/pretty v0.0.0-20200729040243-ead452280cd0
 	github.com/kr/pty => github.com/kr/pty v0.0.0-20180113180813-282ce0e5322c
 	github.com/kr/text => github.com/kr/text v0.0.0-20200214203106-702c74938df4
-
-	// github.com/leodido/go-urn => github.com/leodido/go-urn v1.2.0
 	github.com/mailru/easyjson => github.com/mailru/easyjson v0.0.0-20200218084223-8edcc4e51f39
 	github.com/mattn/go-isatty => github.com/mattn/go-isatty v0.0.3
 
 	github.com/mitchellh/mapstructure => github.com/mitchellh/mapstructure v1.1.2
+
+	github.com/moby/spdystream => github.com/moby/spdystream v0.2.0
 
 	github.com/modern-go/concurrent => github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 	github.com/modern-go/reflect2 => github.com/modern-go/reflect2 v1.0.1
@@ -153,7 +151,6 @@ replace (
 	gopkg.in/tomb.v1 => gopkg.in/tomb.v1 v1.0.0-20161208151619-d5d1b5820637
 
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	honnef.co/go/tools => honnef.co/go/tools v0.0.0-20200822191040-81508471876c
 
 	k8s.io/api => k8s.io/api v0.21.0
