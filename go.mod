@@ -1,6 +1,6 @@
 module github.com/eclipse-che/che-machine-exec
 
-go 1.14
+go 1.15
 
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.54.0
