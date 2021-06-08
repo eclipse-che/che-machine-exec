@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2021 Red Hat, Inc.
+// Copyright (c) 2019-2021 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,7 @@ package shell
 import (
 	"github.com/eclipse-che/che-machine-exec/api/model"
 	"github.com/eclipse-che/che-machine-exec/client"
-	"github.com/eclipse-che/che-machine-exec/exec-info"
+	exec_info "github.com/eclipse-che/che-machine-exec/exec-info"
 	"github.com/sirupsen/logrus"
 )
 
