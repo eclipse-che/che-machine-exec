@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 CURRENT_YEAR = datetime.today().year
 
-COPYRIGHT_RE=r'Copyright \(c\) 2019-2021 Red Hat, Inc.'
+COPYRIGHT_RE=r'Copyright \(c\) (\d+)'
 PATTERN1=r'This program and the accompanying materials are made'
 PATTERN2=r'available under the terms of the Eclipse Public License 2.0'
 PATTERN3=r'which is available at https://www.eclipse.org/legal/epl-2.0/'

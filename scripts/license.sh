@@ -35,11 +35,11 @@ function addLicensetoChectlCode() {
 
 # catch first arguments with $1
 case "$1" in
- -c|--check-license)
+ check)
   echo -e "[INFO] Launching Eclipse Che license header check."
   validateChectlLicenseHeader
   ;;
- -a|--add-license)
+ add)
   echo -e "[INFO] Start adding Eclipse Che license headers to code."
   addLicensetoChectlCode
   ;;

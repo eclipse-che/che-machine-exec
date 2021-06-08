@@ -14,7 +14,7 @@ on: [pull_request]
 
 jobs:
   run:
-    name: Automation checks
+    name: License
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repo
@@ -25,4 +25,4 @@ jobs:
           node-version: 12.x
       - name: Check Eclipse license headers
         run: |
-          /bin/bash scripts/license.sh --check-license 
+          /bin/bash scripts/license.sh check
