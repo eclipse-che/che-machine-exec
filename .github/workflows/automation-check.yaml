@@ -9,18 +9,20 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 
-name: Code Coverage Report
-on: [push]
+name: Che Machine Exec
+on: [pull_request]
+
 jobs:
-  build-and-deploy:
+  run:
+    name: Automation checks
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2.3.1
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
         with:
-          persist-credentials: false
-      - name: Submit code coverage results
+          node-version: 12.x
+      - name: Check Eclipse license headers
         run: |
-         echo "" > coverage.txt
-         export CHE_WORKSPACE_ID=test_id; go test -v ./... -coverprofile coverage.txt
-         bash <(curl -s https://codecov.io/bash)
+          /bin/bash scripts/check-license.sh --check-license 
