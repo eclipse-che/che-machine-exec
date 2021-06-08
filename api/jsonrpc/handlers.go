@@ -23,7 +23,7 @@ import (
 	"strconv"
 
 	"github.com/eclipse-che/che-machine-exec/exec"
-	jsonrpc "github.com/eclipse/che-go-jsonrpc"
+	"github.com/eclipse/che-go-jsonrpc"
 )
 
 const (

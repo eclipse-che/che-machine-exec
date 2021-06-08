@@ -25,4 +25,4 @@ jobs:
           node-version: 12.x
       - name: Check Eclipse license headers
         run: |
-          /bin/bash scripts/check-license.sh --check-license 
+          /bin/bash scripts/license.sh --check-license 

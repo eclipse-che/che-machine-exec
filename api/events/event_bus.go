@@ -12,7 +12,7 @@
 package events
 
 import (
-	jsonrpc "github.com/eclipse/che-go-jsonrpc"
+	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/event"
 	"github.com/sirupsen/logrus"
 )
