@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2019 Red Hat, Inc.
+// Copyright (c) 2019-2021 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -8,7 +8,6 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
-//
 
 package filter
 
@@ -78,7 +77,7 @@ func TestShouldReturnContainerInfoWhenWorkspaceContainsTwoContainerInThePod(t *t
 	podList := corev1.PodList{Items: []corev1.Pod{pod}}
 
 	podGetter.On("Pods", Namespace).Return(podInterface).Once()
-	podInterface.On("List", mock.Anything,  mock.Anything).Return(&podList, nil)
+	podInterface.On("List", mock.Anything, mock.Anything).Return(&podList, nil)
 
 	containerFilter := NewKubernetesContainerFilter(Namespace, podGetter)
 	containerInfo, _ := containerFilter.FindContainerInfo(identifier)
