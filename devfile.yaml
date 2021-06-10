@@ -43,7 +43,7 @@ components:
 
   - alias: dev
     type: dockerimage
-    image: quay.io/eclipse/che-golang-1.12:7.12.1
+    image: quay.io/eclipse/che-golang-1.14:next
     mountSources: true
     endpoints:
       - name: exec-server
