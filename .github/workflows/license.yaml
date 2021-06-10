@@ -19,10 +19,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Set up Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12.x
       - name: Check Eclipse license headers
         run: |
           /bin/bash scripts/license.sh check
