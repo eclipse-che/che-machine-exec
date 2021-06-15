@@ -565,11 +565,6 @@ https://github.com/kubernetes/gengo/tree/0689ccc1d7d65d9dd1bedcc3b0b1ed7df91ba26
 RATE 91
 https://clearlydefined.io/definitions/git/github/kubernetes/gengo/0689ccc1d7d65d9dd1bedcc3b0b1ed7df91ba266
 
-k8s.io/kube-openapi
-https://github.com/kubernetes/kube-openapi/tree/d219536bb9fd63731fa65ca4b42f14bc2f10c61b
-RATE 74
-https://clearlydefined.io/definitions/git/github/kubernetes/kube-openapi/d219536bb9fd63731fa65ca4b42f14bc2f10c61b
-
 k8s.io/utils
 https://github.com/kubernetes/utils/tree/67b214c5f920060488eda08cd2b5c30597f2f1d7
 RATE 77
@@ -625,6 +620,16 @@ https://github.com/mitchellh/mapstructure/releases/tag/v1.1.2
 v1.1.2
 RATE 77
 https://clearlydefined.io/definitions/git/github/mitchellh/mapstructure/3536a929edddb9a5b34bd6861dc4a9647cb459fe
+
+gopkg.in/check.v1
+https://github.com/go-check/check/tree/64131543e7896d5bcc6bd5a76287eb75ea96c673
+RATE 70
+https://clearlydefined.io/definitions/git/github/go-check/check/64131543e7896d5bcc6bd5a76287eb75ea96c673
+http://dev.eclipse.org/ipzilla/show_bug.cgi?id=23345
+
+k8s.io/kube-openapi
+https://github.com/kubernetes/kube-openapi/commit/591a79e4bda78206200568bf0e501b964f2f8908
+https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23346
 
 ============== Golang dependencies(We can skip their license rate)
 
