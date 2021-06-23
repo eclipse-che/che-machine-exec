@@ -12,15 +12,20 @@
 
 # Release process automation script.
 # Used to create branch/tag, update VERSION files
-# and trigger release by force pushing changes to the release branch
+# and and trigger release by force pushing changes to the release branch
 
-# set to 1 to actually tag changes
-TAG_RELEASE=0
+# set to 1 to actually trigger changes in the release branch
+TRIGGER_RELEASE=0
 NOCOMMIT=0
+
+REGISTRY="quay.io"
+DOCKERFILE="build/dockerfiles/Dockerfile"
+ORGANIZATION="eclipse"
+IMAGE="che-machine-exec"
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    '-t'|'--tag-release') TAG_RELEASE=1; shift 0;;
+    '-t'|'--trigger-release') TRIGGER_RELEASE=1; shift 0;;
     '-v'|'--version') VERSION="$2"; shift 1;;
     '-n'|'--no-commit') NOCOMMIT=1; shift 0;;
   esac
@@ -29,14 +34,22 @@ done
 
 usage ()
 {
-  echo "Usage: $0 --version [VERSION TO RELEASE] [--tag-release]"
-  echo "Example: $0 --version 7.7.0 --tag-release"; echo
+  echo "Usage: $0 --version [VERSION TO RELEASE] [--trigger-release]"
+  echo "Example: $0 --version 7.7.0 --trigger-release"; echo
 }
 
 if [[ ! ${VERSION} ]]; then
   usage
   exit 1
 fi
+
+releaseMachineExec() {
+  # docker buildx includes automated push to registry, so build using tag we want published, not just local ${IMAGE}
+  docker buildx build \
+    --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" --push \
+    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/arm64" | cat
+  echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
+}
 
 # derive branch from version
 BRANCH=${VERSION%.*}.x
@@ -71,7 +84,10 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
   git push origin "${BRANCH}"
 fi
 
-if [[ $TAG_RELEASE -eq 1 ]]; then
+if [[ $TRIGGER_RELEASE -eq 1 ]]; then
+  # push new branch to release branch to trigger CI build
+  releaseMachineExec
+
   # tag the release
   git checkout "${BRANCH}"
   git tag "${VERSION}"
