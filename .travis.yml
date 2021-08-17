@@ -16,21 +16,22 @@ os: linux
 dist: focal
 git:
   depth: false
+
+install:
+  # TODO when we're confident that sha-tagged travis-built images won't collide with GHA built ones, we can remove the -travis suffix here
+  - export SHORT_SHA=$(git rev-parse --short HEAD)-travis
+  - export GITHUB_TOKEN="$CHE_BOT_GITHUB_TOKEN"
+  - echo "$RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD" | docker login -u "$RH_CHE_AUTOMATION_DOCKERHUB_USERNAME" --password-stdin
+  - echo "$QUAY_ECLIPSE_CHE_PASSWORD" | docker login quay.io -u "$QUAY_ECLIPSE_CHE_USERNAME" --password-stdin
+
 env:
   global:
   - TAG=next
-  - TRAVIS_TAG=travis
   - REGISTRY=quay.io
   - ORGANIZATION=eclipse
   - IMAGE=che-machine-exec
   - PR_NUMBER=
-install:
-- export SHORT_SHA=$(git rev-parse --short HEAD)
-- export GITHUB_TOKEN="$CHE_BOT_GITHUB_TOKEN"
-- echo "$RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD" | docker login -u "$RH_CHE_AUTOMATION_DOCKERHUB_USERNAME"
-  --password-stdin
-- echo "$QUAY_ECLIPSE_CHE_PASSWORD" | docker login quay.io -u "$QUAY_ECLIPSE_CHE_USERNAME
-  " --password-stdin
+
 jobs:
   fast_finish: true
   allow_failures:
@@ -104,7 +105,7 @@ jobs:
     name: Build image on amd64
     arch: amd64
     script: &4
-    - bash .travis/build_image.sh
+    - .travis/build_image.sh
   - stage: Build and push both short SHA tag and next tag
     if: type = api AND branch = main AND env(TAG) = "next"
     name: Build image on arm64
@@ -122,7 +123,7 @@ jobs:
     script: *4
   - stage: Publish multiarch image with next & short_sha tag
     if: type = api AND branch = main AND env(TAG) = "next"
-    script: bash .travis/publish_multiarch.sh
+    script: .travis/publish_multiarch.sh
   - stage: Release che-machine-exec
     if: type = api AND env(TAG) IS present AND env(TAG) != "next"
     name: Build image on amd64
@@ -131,7 +132,7 @@ jobs:
     - |
       BRANCH=${TAG%.*}.x
       git checkout "${BRANCH}"
-      bash .travis/build_image.sh
+      .travis/build_image.sh
   - stage: Release che-machine-exec
     if: type = api AND env(TAG) IS present AND env(TAG) != "next"
     name: Build image on arm64
@@ -149,4 +150,4 @@ jobs:
     script: *5
   - stage: Publish multiarch image with release tag
     if: type = api AND env(TAG) IS present AND env(TAG) != "next"
-    script: bash .travis/publish_multiarch.sh
+    script: .travis/publish_multiarch.sh
