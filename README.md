@@ -155,7 +155,7 @@ $ minikube dashboard
 > * Java 8 or higher
 > * Maven 3.5 or higher
 
-1. Clone Eclipse Che:
+1. Clone Eclipse Che: 
 ```
 $ git clone https://github.com/eclipse/che.git ~/projects/che
 ```
