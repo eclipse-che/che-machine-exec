@@ -105,3 +105,23 @@ func jsonRpcResizeExec(_ *jsonrpc.Tunnel, params interface{}) (interface{}, erro
 		Id: resizeParam.Id, Text: "Exec with id " + strconv.Itoa(resizeParam.Id) + "  was successfully resized",
 	}, nil
 }
+
+func jsonRpcListContainersExec(tunnel *jsonrpc.Tunnel, _ interface{}, t jsonrpc.RespTransmitter) {
+	// use a machine exec object to propagate token
+	machineExec := &model.MachineExec{}
+	if auth.IsEnabled() {
+		if token, ok := tunnel.Attributes[BearerTokenAttr]; ok && len(token) > 0 {
+			machineExec.BearerToken = token
+		} else {
+			err := errors.New("bearer token should not be an empty")
+			logrus.Errorf(err.Error())
+			t.SendError(jsonrpc.NewArgsError(err))
+			return
+		}
+	}
+	containerList, err := execManager.ListAvailableContainers(machineExec)
+	if err != nil {
+		t.SendError(jsonrpc.NewArgsError(err))
+	}
+	t.Send(containerList)
+}
