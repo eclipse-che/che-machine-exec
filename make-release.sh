@@ -63,7 +63,7 @@ fi
 
 # create new branch off ${BASEBRANCH} (or check out latest commits if branch already exists), then push to origin
 if [[ "${BASEBRANCH}" != "${BRANCH}" ]]; then
-  git branch "${BRANCH}" || git checkout "${BRANCH}" && git pull origin "${BRANCH}"
+  git branch "${BRANCH}" || git checkout "${BRANCH}"
   git push origin "${BRANCH}"
   git fetch origin "${BRANCH}:${BRANCH}" || true
   git checkout "${BRANCH}"
@@ -80,7 +80,6 @@ echo "${VERSION}" > VERSION
 if [[ ${NOCOMMIT} -eq 0 ]]; then
   COMMIT_MSG="[release] Bump to ${VERSION} in ${BRANCH}"
   git commit -s -m "${COMMIT_MSG}" VERSION
-  git pull origin "${BRANCH}"
   git push origin "${BRANCH}"
 fi
 
@@ -116,7 +115,6 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
   # commit change into branch
   COMMIT_MSG="[release] Bump to ${NEXTVERSION} in ${BRANCH}"
   git commit -s -m "${COMMIT_MSG}" VERSION
-  git pull origin "${BRANCH}"
 
   PUSH_TRY="$(git push origin "${BRANCH}")"
   # shellcheck disable=SC2181
@@ -125,7 +123,6 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
     # create pull request for main branch, as branch is restricted
     git branch "${PR_BRANCH}"
     git checkout "${PR_BRANCH}"
-    git pull origin "${PR_BRANCH}"
     git push origin "${PR_BRANCH}"
     lastCommitComment="$(git log -1 --pretty=%B)"
     hub pull-request -o -f -m "${lastCommitComment}
