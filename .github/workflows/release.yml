@@ -71,6 +71,7 @@ jobs:
         run: |
           git config --global user.name "Mykhailo Kuznietsov"
           git config --global user.email "mkuznets@redhat.com"
+          git config --global pull.rebase true
           export GITHUB_TOKEN=${{ secrets.CHE_BOT_GITHUB_TOKEN }}
           NO_COMMIT=${{ github.event.inputs.noCommit}}
           if [[ $NO_COMMIT == "true" ]]; then
