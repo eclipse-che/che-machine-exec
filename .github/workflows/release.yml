@@ -28,7 +28,7 @@ on:
 jobs:
   build:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -71,7 +71,8 @@ jobs:
         run: |
           git config --global user.name "Mykhailo Kuznietsov"
           git config --global user.email "mkuznets@redhat.com"
-          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          git config --global pull.rebase true
+          export GITHUB_TOKEN=${{ secrets.CHE_BOT_GITHUB_TOKEN }}
           NO_COMMIT=${{ github.event.inputs.noCommit}}
           if [[ $NO_COMMIT == "true" ]]; then
             NO_COMMIT="--no-commit"
