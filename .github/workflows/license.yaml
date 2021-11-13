@@ -8,6 +8,7 @@
 #
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
+#
 
 name: Che Machine Exec
 on: [pull_request]
@@ -17,8 +18,13 @@ jobs:
     name: License
     runs-on: ubuntu-20.04
     steps:
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: Check Eclipse license headers
         run: |
+          go get -u github.com/che-incubator/check-license-header@379ba18fdb906d341ae451ea155cc34f1c4b4f1a
           /bin/bash scripts/license.sh check

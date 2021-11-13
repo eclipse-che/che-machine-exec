@@ -9,6 +9,7 @@
 #
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
+#
 
 # Release process automation script.
 # Used to create branch/tag, update VERSION files
