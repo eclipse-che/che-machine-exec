@@ -27,7 +27,7 @@ function validateLicenseHeader() {
     exit 1
   fi
   setUpCodeBaseFileList
-  check-license-header -f "${ROOT_DIR}"/license_header.txt ${CODE_BASE_FILES}
+  check-license-header -f "${ROOT_DIR}"/hack/license_header.txt ${CODE_BASE_FILES}
 }
 
 # Add a license to a files without license.
@@ -39,7 +39,7 @@ function addLicensesToCode() {
   fi
 
   setUpCodeBaseFileList
-  addlicense -v -f "${ROOT_DIR}"/license_header.txt ${CODE_BASE_FILES}
+  addlicense -v -f "${ROOT_DIR}"/hack/license_header.txt ${CODE_BASE_FILES}
 }
 
 # catch first arguments with $1
