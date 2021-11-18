@@ -8,8 +8,10 @@
 #
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
-#
 
+name: Release Che Machine Exec
+
+on:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
