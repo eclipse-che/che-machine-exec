@@ -10,42 +10,6 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-- [x] che-operator
-    - [x] https://github.com/eclipse-che/che-operator/pull/1177
-- [ ] plugin-broker
-- [x] plugin-registry https://github.com/eclipse-che/che-plugin-registry
-- [ ] website
-- [ ] workspace-client
-- [ ] che-cert-manager-ca-cert-generator-image
-- [ ] che-buildkit-base
-- [ ] che-sidecar-scala
-- [ ] che-buildah-base
-- [ ] che-docker-registry-image-copier
-- [ ] che-php-base
-- [ ] che-tls-secret-creator
-- [ ] build-action
-- [ ] che-theia-openshift-auth
-- [ ] configbump
-- [ ] workspace-data-sync
-- [ ] che-workspace-telemetry-client
-- [x] kubernetes-image-puller https://github.com/che-incubator/kubernetes-image-puller
-- [x] kubernetes-image-puller-operator https://github.com/che-incubator/kubernetes-image-puller-operator
-
-### Describe the solution you'd like
-
-Each repo should have the 'Try in Web IDE GitHub action'  enabled https://github.com/marketplace/actions/try-in-web-ide
-
-
-### Describe alternatives you've considered
-
-_No response_
-
-### Additional context
-
-Blog Posts
-https://developers.redhat.com/articles/2021/10/07/test-pull-requests-try-web-ide-github-action
-https://che.eclipseprojects.io/2021/10/18/@david.kwon-test-pull-requests-with-the-try-in-web-ide-github-action.html
-
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
