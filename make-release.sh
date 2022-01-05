@@ -79,7 +79,7 @@ echo "${VERSION}" > VERSION
 
 # commit change into branch
 if [[ ${NOCOMMIT} -eq 0 ]]; then
-  COMMIT_MSG="[release] Bump to ${VERSION} in ${BRANCH}"
+  COMMIT_MSG="chore: release: bump to ${VERSION} in ${BRANCH}"
   git commit -s -m "${COMMIT_MSG}" VERSION
   git pull origin "${BRANCH}"
   git push origin "${BRANCH}"
@@ -115,7 +115,7 @@ echo "${NEXTVERSION}" > VERSION
 if [[ ${NOCOMMIT} -eq 0 ]]; then
   BRANCH=${BASEBRANCH}
   # commit change into branch
-  COMMIT_MSG="[release] Bump to ${NEXTVERSION} in ${BRANCH}"
+  COMMIT_MSG="chore: release: bump to ${NEXTVERSION} in ${BRANCH}"
   git commit -s -m "${COMMIT_MSG}" VERSION
   git pull origin "${BRANCH}"
 
