@@ -26,11 +26,16 @@ import (
 var (
 	DevWorkspaceGroupVersion = &schema.GroupVersion{
 		Group:   "workspace.devfile.io",
-		Version: "v1alpha1",
+		Version: "v1alpha2",
 	}
 )
 
-func stopWorkspace(namespace string, workspaceName string) error {
+const (
+	stoppedByInactivity = "inactivity"
+	stoppedByRunTimeout = "run-timeout"
+)
+
+func stopWorkspace(namespace string, workspaceName string, reason string) error {
 	c, err := newWorkspaceClientInCluster()
 	if err != nil {
 		return err
@@ -40,7 +45,7 @@ func stopWorkspace(namespace string, workspaceName string) error {
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
 				"annotations": map[string]interface{}{
-					"controller.devfile.io/stopped-by": "inactivity",
+					"controller.devfile.io/stopped-by": reason,
 				},
 			},
 			"spec": map[string]interface{}{
