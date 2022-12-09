@@ -15,10 +15,10 @@ name: Unit Tests
 on: pull_request
 jobs:
   unit-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout che-machine-exec source code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Build che-machine-exec binary
       run: CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
     - name: Run unit tests
