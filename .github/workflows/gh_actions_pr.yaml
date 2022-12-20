@@ -15,7 +15,7 @@ name: Docker Build PR
 on: pull_request
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout che-machine-exec source code
       uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
         tags: quay.io/eclipse/che-machine-exec:pr-check
 
   travis-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
     - name: Trigger build on Travis CI

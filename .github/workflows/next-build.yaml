@@ -19,7 +19,7 @@ on:
     branches: [ main ]
 jobs:
   build-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout che-machine-exec source code
       uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
           quay.io/eclipse/che-machine-exec:${{ steps.vars.outputs.sha_short }}
 
   travis-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
     - name: Trigger build on Travis CI

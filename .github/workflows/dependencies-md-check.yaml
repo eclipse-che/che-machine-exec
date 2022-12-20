@@ -14,7 +14,7 @@ on: pull_request
 jobs:
   dependencies-md-check:
     name: DEPENDENCIES.md file validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
