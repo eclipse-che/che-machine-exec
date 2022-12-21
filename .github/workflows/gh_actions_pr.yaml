@@ -15,16 +15,16 @@ name: Docker Build PR
 on: pull_request
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout che-machine-exec source code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
     - name: Check docker build
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         file: build/dockerfiles/Dockerfile
         platforms: linux/amd64,linux/ppc64le,linux/arm64
@@ -32,7 +32,7 @@ jobs:
         tags: quay.io/eclipse/che-machine-exec:pr-check
 
   travis-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
     - name: Trigger build on Travis CI
