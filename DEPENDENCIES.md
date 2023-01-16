@@ -125,10 +125,10 @@
 | [golang.org/x/sync@43a5402ce75a95522677f77c619865d66b8c57ab](https://cs.opensource.google/go) | BSD-3-Clause | N/A |
 | [golang.org/x/sys@1e4c9ba3b0c4fcddbe90893331bdc829813066a1](https://cs.opensource.google/go) | BSD-3-Clause | N/A |
 | [golang.org/x/text@v0.3.4](https://cs.opensource.google/go) | BSD-3-Clause | N/A |
-| [github.com/go-playground/validator/v10](https://github.com/go-playground/validator/) | MIT | [8.18.2](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=16583)
-| github.com/go-playground/assert/v2
-| github.com/pelletier/go-toml/v2
-| github.com/goccy/go-json
-| github.com/leodido/go-urn
-| github.com/go-playground/universal-translator
-| github.com/go-playground/locales
+| [github.com/go-playground/validator@v10.2.0](https://github.com/go-playground/validator) | MIT | N/A |
+| [github.com/go-playground/assert@v2.0.1](https://github.com/go-playground/assert) | MIT | N/A |
+| [github.com/pelletier/go-toml@v2.0.6](https://github.com/pelletier/go-toml) | MIT | N/A |
+| [github.com/goccy/go-json@v0.10.0](https://github.com/goccy/go-json) | MIT | N/A |
+| [github.com/leodido/go-urn@v1.2.1](https://github.com/leodido/go-urn) | MIT | N/A |
+| [github.com/go-playground/universal-translator@v0.18.0](https://github.com/go-playground/universal-translator) | MIT | N/A |
+| [github.com/go-playground/locales@v0.14.0](https://github.com/go-playground/locales) | MIT | N/A |
