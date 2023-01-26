@@ -68,6 +68,8 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          version: v0.9.1
       - name: Create Release
         run: |
           git config --global user.name "Mykhailo Kuznietsov"
