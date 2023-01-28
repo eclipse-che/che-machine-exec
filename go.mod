@@ -172,14 +172,14 @@ replace (
 require (
 	github.com/eclipse/che-go-jsonrpc v0.0.0-20200317130110-931966b891fe
 	github.com/gin-gonic/gin v1.8.2
-	github.com/gorilla/websocket v1.4.2
-	github.com/pkg/errors v0.0.0-20200114194744-614d223910a1
-	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.4.0
+	github.com/gorilla/websocket v1.5.0
+	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.9.0
+	github.com/stretchr/testify v1.8.1
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.0
-	k8s.io/apimachinery v0.21.0
-	k8s.io/client-go v0.21.0
+	k8s.io/api v0.26.1
+	k8s.io/apimachinery v0.26.1
+	k8s.io/client-go v1.5.2
 )
 
 require (
