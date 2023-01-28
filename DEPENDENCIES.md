@@ -24,7 +24,7 @@
 | [github.com/docopt/docopt-go@ee0de3bc6815ee19d4a46c7eb90f829db0e014b1](https://github.com/clearlydefined/curated-data/pull/11118.git) | MIT | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23292) |
 | [github.com/go-logr/logr@v0.4.0](https://github.com/go-logr/logr.git) | Apache-2.0 | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23305) |
 | [github.com/gin-contrib/sse@22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae](https://github.com/gin-contrib/sse.git) | MIT | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23306) |
-| [github.com/gin-gonic/gin@bd4f73af679e7d645f6d0277258fa360eda96f2d](https://github.com/gin-gonic/gin.git) | MIT | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=16574) |
+| [github.com/gin-gonic/gin@v1.8.2](https://github.com/gin-gonic/gin.git) | MIT | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=16574) |
 | [github.com/go-openapi/jsonreference@v0.19.3](https://github.com/go-openapi/jsonreference.git) | Apache-2.0 | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23303) |
 | [github.com/go-openapi/jsonpointer@v0.19.3](https://github.com/go-openapi/jsonpointer.git) | Apache-2.0 | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23304) |
 | [github.com/envoyproxy/protoc-gen-validate@v0.1.0](https://github.com/envoyproxy/protoc-gen-validate.git) | Apache-2.0 | [CQ](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23307) |
@@ -130,5 +130,5 @@
 | [github.com/pelletier/go-toml/v2@v2.0.6](https://github.com/pelletier/go-toml) | MIT | N/A |
 | [github.com/goccy/go-json@v0.10.0](https://github.com/goccy/go-json) | MIT | N/A |
 | [github.com/leodido/go-urn@v1.2.1](https://github.com/leodido/go-urn) | MIT | N/A |
-| [github.com/go-playground/universal-translator@v0.18.0](https://github.com/go-playground/universal-translator) | MIT | N/A |
+| [github.com/go-playground/universal-translator@v0.17.0](https://github.com/go-playground/universal-translator) | MIT | N/A |
 | [github.com/go-playground/locales@v0.14.0](https://github.com/go-playground/locales) | MIT | N/A |
