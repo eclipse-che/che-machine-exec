@@ -52,8 +52,6 @@ replace (
 	github.com/go-openapi/swag => github.com/go-openapi/swag v0.19.5
 
 	github.com/go-playground/assert/v2 => github.com/go-playground/assert/v2 v2.0.1
-	github.com/go-playground/universal-translator => github.com/go-playground/universal-translator v0.17.0
-	github.com/go-playground/validator/v10 => github.com/go-playground/validator/v10 v10.2.0
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	github.com/golang/glog => github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache => github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
@@ -120,7 +118,6 @@ replace (
 
 	go.opencensus.io => go.opencensus.io v0.22.3
 
-	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20190426190305-956cc1757749
 	golang.org/x/image => golang.org/x/image v0.0.0-20161005234226-dc590effac8b
 	golang.org/x/lint => golang.org/x/lint v0.0.0-20200130185559-910be7a94367
@@ -206,6 +203,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/ugorji/go v1.1.1 // indirect
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.3.0 // indirect
