@@ -47,7 +47,9 @@ fi
 releaseMachineExec() {
   # docker buildx includes automated push to registry, so build using tag we want published, not just local ${IMAGE}
   docker buildx build \
-    --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" --push \
+    --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" \
+    --push \
+    --provenance=false \
     -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/arm64" | cat
   echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
