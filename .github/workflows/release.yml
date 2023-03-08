@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019-2021 Red Hat, Inc.
+# Copyright (c) 2019-2023 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -95,30 +95,3 @@ jobs:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
           MATTERMOST_CHANNEL: eclipse-che-releases
           MATTERMOST_USERNAME: che-bot
-
-  # TODO: uncomment this when we're happy that travis is working for PRs and :next builds
-  # travis-build:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   steps:
-  #   - name: Trigger build on Travis CI
-  #     run: |
-  #       body="{
-  #       \"request\":{
-  #       \"config\": {
-  #         \"env\": {
-  #           \"global\": [
-  #             \"TAG=${{ github.event.inputs.version }}\"
-  #            ]
-  #          }
-  #       }
-  #       }}"
-
-  #       curl -s -X POST \
-  #       -H "Content-Type: application/json" \
-  #       -H "Accept: application/json" \
-  #       -H "Travis-API-Version: 3" \
-  #       -H "Authorization: token ${{ secrets.TRAVIS_TOKEN }}" \
-  #       -d "$body" \
-  #       https://api.travis-ci.com/repo/eclipse-che%2Fche-machine-exec/requests
