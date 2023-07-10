@@ -31,7 +31,11 @@ RUN addgroup --gid "$GID" "$USER" \
       --uid "$UID" \
       "$USER"
 # initialize CA certificates to propagate them into scratch image
-RUN apk update && apk add --no-cache git && update-ca-certificates
+RUN apk --update --no-cache add \
+    build-base \
+    gcc \
+    git \
+  && rm -rf /tmp/* /var/cache/apk/* && update-ca-certificates
 
 # compile machine exec binary file
 WORKDIR /che-machine-exec/
