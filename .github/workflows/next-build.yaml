@@ -35,7 +35,7 @@ jobs:
         registry: quay.io
     - id: vars
       shell: bash
-      run: echo "sha_short=$(git rev-parse --short HEAD)" >> &GITHUB_OUTPUT
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: Build and push both short SHA tag and next tag
       uses: docker/build-push-action@v3
       with:
