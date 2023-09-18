@@ -50,7 +50,7 @@ releaseMachineExec() {
     --tag "${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}" \
     --push \
     --provenance=false \
-    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/ppc64le,linux/arm64" | cat
+    -f ./${DOCKERFILE} . --platform "linux/amd64,linux/arm64" | cat
   echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
 

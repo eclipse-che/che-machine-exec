@@ -27,7 +27,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         file: build/dockerfiles/Dockerfile
-        platforms: linux/amd64,linux/ppc64le,linux/arm64
+        platforms: linux/amd64,linux/arm64
         push: false
         tags: quay.io/eclipse/che-machine-exec:pr-check
 
