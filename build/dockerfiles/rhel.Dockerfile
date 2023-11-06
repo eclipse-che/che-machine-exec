@@ -30,7 +30,7 @@ RUN adduser unprivilegeduser && \
 FROM registry.access.redhat.com/ubi8-minimal:8.8-1072 as runtime
 COPY --from=builder /rootfs /
 RUN microdnf install -y openssl && \
-    microdnf -y -q update && \
+    microdnf -y update && \
     microdnf clean -y all
 
 USER unprivilegeduser
