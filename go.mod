@@ -1,6 +1,6 @@
 module github.com/eclipse-che/che-machine-exec
 
-go 1.19
+go 1.20
 
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.54.0
@@ -169,13 +169,13 @@ replace (
 require (
 	github.com/eclipse/che-go-jsonrpc v0.0.0-20200317130110-931966b891fe
 	github.com/gin-gonic/gin v1.9.1
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.1
+	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.26.1
-	k8s.io/apimachinery v0.26.1
+	k8s.io/api v0.28.4
+	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v1.5.2
 )
 
