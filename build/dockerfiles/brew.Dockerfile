@@ -30,7 +30,7 @@ RUN dnf -y install golang && \
 # https://registry.access.redhat.com/ubi8-minimal
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2-1222 as runtime
 COPY --from=builder /rootfs /
-RUN dnf install -y openssl; microdnf clean -y all
+RUN dnf install -y openssl; dnf clean -y all
 USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
 
