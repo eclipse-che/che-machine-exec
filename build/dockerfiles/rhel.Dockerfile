@@ -27,7 +27,7 @@ RUN adduser unprivilegeduser && \
     cp -rf /che-machine-exec/che-machine-exec /rootfs/go/bin
 
 # https://registry.access.redhat.com/ubi8-minimal
-FROM registry.access.redhat.com/ubi8-minimal:8.9-1108 as runtime
+FROM registry.access.redhat.com/ubi8-minimal:8.10-1086 as runtime
 COPY --from=builder /rootfs /
 RUN microdnf install -y openssl && \
     microdnf -y update && \
