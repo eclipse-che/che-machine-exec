@@ -26,5 +26,5 @@ jobs:
         uses: actions/checkout@v3
       - name: Check Eclipse license headers
         run: |
-          go get -u github.com/che-incubator/check-license-header@379ba18fdb906d341ae451ea155cc34f1c4b4f1a
+          go install github.com/che-incubator/check-license-header@379ba18fdb906d341ae451ea155cc34f1c4b4f1a
           /bin/bash scripts/license.sh check
