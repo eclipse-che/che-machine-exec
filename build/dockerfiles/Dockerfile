@@ -41,7 +41,7 @@ RUN apk --update --no-cache add \
 WORKDIR /che-machine-exec/
 COPY . .
 # to test FIPS compliance, run https://github.com/openshift/check-payload#scan-a-container-or-operator-image against a built image
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=0
 RUN GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
 # NOTE: could not compile with node:18-alpine, so for now stick with node:16-alpine
