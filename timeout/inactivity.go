@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2022 Red Hat, Inc.
+// Copyright (c) 2019-2025 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -60,6 +60,7 @@ func NewInactivityIdleManager(idleTimeout, stopRetryPeriod time.Duration) (Inact
 		idleTimeout:     idleTimeout,
 		stopRetryPeriod: stopRetryPeriod,
 		activityC:       make(chan bool),
+		watcher:         nil, // Will be initialized in Start()
 	}, nil
 }
 
@@ -78,6 +79,8 @@ type inactivityIdleManagerImpl struct {
 	stopRetryPeriod time.Duration
 
 	activityC chan bool
+
+	watcher *cliWatcher
 }
 
 func (m inactivityIdleManagerImpl) Tick() {
@@ -118,4 +121,13 @@ func (m inactivityIdleManagerImpl) Start() {
 			}
 		}
 	}()
+
+	m.watcher = NewCliWatcher(m.Tick)
+	m.watcher.Start()
+}
+
+func (m *inactivityIdleManagerImpl) Stop() {
+	if m.watcher != nil {
+		m.watcher.Stop()
+	}
 }
