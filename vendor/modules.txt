@@ -9,7 +9,7 @@ github.com/eclipse/che-go-jsonrpc/jsonrpcws
 # github.com/gin-contrib/sse v0.1.0 => github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7
 ## explicit
 github.com/gin-contrib/sse
-# github.com/gin-gonic/gin v1.10.0 => github.com/gin-gonic/gin v1.8.2
+# github.com/gin-gonic/gin v1.11.0 => github.com/gin-gonic/gin v1.8.2
 ## explicit; go 1.18
 github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
@@ -105,13 +105,13 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0 => github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/sirupsen/logrus v1.9.3 => github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.9.4 => github.com/sirupsen/logrus v1.4.2
 ## explicit
 github.com/sirupsen/logrus
 # github.com/stretchr/objx v0.2.0 => github.com/stretchr/objx v0.3.0
 ## explicit; go 1.12
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.9.0 => github.com/stretchr/testify v1.4.0
+# github.com/stretchr/testify v1.11.1 => github.com/stretchr/testify v1.4.0
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
@@ -203,7 +203,7 @@ gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# k8s.io/api v0.31.1 => k8s.io/api v0.21.0
+# k8s.io/api v0.35.0 => k8s.io/api v0.21.0
 ## explicit; go 1.16
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
@@ -248,7 +248,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.31.1 => k8s.io/apimachinery v0.21.0
+# k8s.io/apimachinery v0.35.0 => k8s.io/apimachinery v0.21.0
 ## explicit; go 1.16
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
