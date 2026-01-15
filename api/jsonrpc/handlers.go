@@ -55,7 +55,7 @@ func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.Res
 	machineExec := params.(*model.MachineExec)
 	err := setToken(tunnel, machineExec)
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorf("%s", err.Error())
 		t.SendError(jsonrpc.NewArgsError(err))
 		return
 	}
@@ -107,7 +107,7 @@ func jsonRpcListContainersExec(tunnel *jsonrpc.Tunnel, _ interface{}, t jsonrpc.
 	machineExec := &model.MachineExec{}
 	err := setToken(tunnel, machineExec)
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorf("%s", err.Error())
 		t.SendError(jsonrpc.NewArgsError(err))
 		return
 	}
