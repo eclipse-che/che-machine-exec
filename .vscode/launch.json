@@ -6,6 +6,18 @@
             "request": "launch",
             "name": "Bash-Debug (simplest configuration)",
             "program": "${file}"
+        },
+        {
+            "name": "Remote debug che-machine-exec",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--url", "0.0.0.0:3130",
+                "--static", "${workspaceFolder}/cloud-shell"
+            ]
         }
     ]
 }
