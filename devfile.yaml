@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019-2021 Red Hat, Inc.
+# Copyright (c) 2019-2026 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,136 +9,129 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
+schemaVersion: 2.3.0
 
-apiVersion: 1.0.0
 metadata:
   name: che-machine-exec
-projects:
-  - name: che-machine-exec
-    source:
-      type: git
-      location: https://github.com/eclipse-che/che-machine-exec.git
+
 components:
-  - alias: ms-vscode.go
-    id: golang/go/latest
-    type: chePlugin
-    memoryLimit: 1G
 
-  - alias: typescript-plugin
-    type: chePlugin
-    id: vscode/typescript-language-features/latest
-    memoryLimit: 512M
-
-  - alias: theia-dev-or-cloud-shell
-    type: dockerimage
-    image: quay.io/eclipse/che-theia-dev:next
-    mountSources: true
-    endpoints:
-      - name: theia-dev-or-cloud-shell
-        port: 3130
-        attributes:
+  - container:
+      endpoints:
+        - name: cloud-shell
+          targetPort: 3130
+          exposure: public
           protocol: http
-          secure: 'false'
-          public: 'true'
-    memoryLimit: 512M
+        - exposure: none
+          name: debug
+          targetPort: 5858
+        - name: exec-server
+          targetPort: 5555
+          exposure: public
+          attributes:
+            type: terminal-dev
+            protocol: ws
+            secure: false
+      image: registry.access.redhat.com/ubi9/go-toolset:1.25.5-1770596585
+      args:
+        - tail
+        - '-f'
+        - /dev/null
+      env:
+        - name: DEBUG_PORT
+          value: '5858'
+        - name: GOPATH
+          value: $(PROJECTS_ROOT)/.go
+        - name: GOMODCACHE
+          value: /var/tmp/.go/pkg/mod
+        - name: GOCACHE
+          value: /var/tmp/.go/build
+        - name: XDG_CACHE_HOME
+          value: /var/tmp/.go/xdg
+      memoryLimit: 2.5Gi
+      mountSources: true
+    name: dev
 
-  - alias: dev
-    type: dockerimage
-    image: quay.io/eclipse/che-golang-1.14:next
-    mountSources: true
-    endpoints:
-      - name: exec-server
-        port: 5555
-        attributes:
-          type: terminal-dev
-          protocol: ws
-          secure: 'false'
-          public: 'true'
-    memoryLimit: 1024M
-    env:
-      - name: GOPATH
-        value: /go:$(CHE_PROJECTS_ROOT)
-      - name: GOCACHE
-      # replicate the GOCACHE from the plugin, even though the cache is not shared
-      # between the two
-        value: /tmp/.cache
+  - name: node
+    container:
+      image: docker.io/node:22-alpine
+      args:
+        - tail
+        - '-f'
+        - /dev/null
+      mountSources: true
+      memoryLimit: 1.5Gi
 
 commands:
-  - name: compile
-    actions:
-      - type: exec
-        component: dev
-        command: ./compile.sh
-        workdir: /projects/che-machine-exec
+  - id: compile
+    exec:
+      component: dev
+      commandLine: ./compile.sh
+      workingDir: /projects/che-machine-exec
+      group:
+        kind: build
+        isDefault: true
 
-  - name: test
-    actions:
-      - type: exec
-        component: dev
-        command: export CHE_WORKSPACE_ID=test_id; go test ./...
-        workdir: /projects/che-machine-exec
+  - id: format
+    exec:
+      component: dev
+      commandLine: go fmt ./... && printf "\033[32mDone.\033[0m"
+      workingDir: /projects/che-machine-exec
+      group:
+        kind: build
+        isDefault: false
 
-  - name: format
-    actions:
-      - type: exec
-        component: dev
-        command: go fmt ./... && printf "\033[32mDone.\033[0m"
-        workdir: /projects/che-machine-exec
+  - id: test
+    exec:
+      component: dev
+      commandLine: export CHE_WORKSPACE_ID=test_id; go test ./...
+      workingDir: /projects/che-machine-exec
+      group:
+        kind: test
+        isDefault: true
 
-  - name: start exec server
-    actions:
-      - type: exec
-        component: dev
-        command: ./che-machine-exec --url 0.0.0.0:5555
-        workdir: /projects/che-machine-exec
+  - id: start-exec-server
+    exec:
+      component: dev
+      commandLine: ./che-machine-exec --url 0.0.0.0:5555
+      workingDir: /projects/che-machine-exec
+      group:
+        kind: run
+        isDefault: true
 
-  - name: stop exec server
-    actions:
-      - type: exec
-        component: dev
-        command: >-
-          pid=$(pidof che-machine-exec) && kill ${pid} &&
-          printf "\033[32mDone.\033[0m" ||
-          printf "\033[32mNothing to stop... Done.\033[0m"
+  - id: stop-exec-server
+    exec:
+      component: dev
+      commandLine: >-
+        pid=$(pidof che-machine-exec) && kill ${pid} &&
+        printf "\033[32mDone.\033[0m" ||
+        printf "\033[32mNothing to stop... Done.\033[0m"
+      group:
+        kind: run
+        isDefault: false
 
-  - name: build cloud shell
-    actions:
-      - type: exec
-        command: yarn && yarn run build
-        component: theia-dev-or-cloud-shell
-        workdir: /projects/che-machine-exec/cloud-shell
+  - id: build-cloud-shell
+    exec:
+      component: node
+      commandLine: >-
+        export HOME=/projects &&
+        export GOPATH=/projects/.go &&
+        export GOMODCACHE=/var/tmp/.go/pkg/mod &&
+        export GOCACHE=/var/tmp/.go/build &&
+        export XDG_CACHE_HOME=/var/tmp/.go/xdg &&
+        YARN_NETWORK_CONCURRENCY=1 corepack yarn install --immutable &&
+        corepack yarn run build
+      workingDir: /projects/che-machine-exec/cloud-shell
+      group:
+        kind: build
+        isDefault: false
 
-  - name: start cloud shell
-    actions:
-      - workdir: /projects/che-machine-exec
-        type: exec
-        command: >-
-          ./che-machine-exec --url 0.0.0.0:3130 --static /projects/che-machine-exec/cloud-shell
-        component: dev
-
-  - name: Debug exec server
-    actions:
-      - type: vscode-launch
-        referenceContent: |
-          {
-            "version": "0.2.0",
-            "configurations": [
-              {
-                "useApiV1": false,
-                "dlvLoadConfig": {
-                  "followPointers": true,
-                  "maxVariableRecurse": 1,
-                  "maxStringLen": 3000,
-                  "maxArrayValues": 100,
-                  "maxStructFields": -1
-                },
-                "name": "Remote debug che-machine-exec",
-                "type": "go",
-                "request": "launch",
-                "mode": "auto",
-                "program": "${workspaceFolder}/che-machine-exec/main.go",
-                "cwd": "${workspaceFolder}",
-                "args": [ "--url", "0.0.0.0:3130", "--static", "/projects/che-machine-exec/cloud-shell" ]
-              }
-            ]
-          }
+  - id: start-cloud-shell
+    exec:
+      component: dev
+      commandLine: >-
+        ./che-machine-exec --url 0.0.0.0:3130 --static /projects/che-machine-exec/cloud-shell
+      workingDir: /projects/che-machine-exec
+      group:
+        kind: run
+        isDefault: false
