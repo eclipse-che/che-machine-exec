@@ -27,7 +27,8 @@
   },
   "resolutions": {
     "cipher-base": "^1.0.6",
-    "sha.js": "^2.4.12"
+    "sha.js": "^2.4.12",
+    "tar": "7.5.7"
   },
   "packageManager": "yarn@4.12.0"
 }
