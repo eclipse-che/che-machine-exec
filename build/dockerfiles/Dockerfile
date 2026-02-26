@@ -12,7 +12,7 @@
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
 
-FROM docker.io/golang:1.24.11-alpine as go_builder
+FROM docker.io/golang:1.25.7-alpine as go_builder
 
 ENV USER=machine-exec
 ENV UID=12345
