@@ -11,8 +11,8 @@
   "author": "Oleksandr Andriienko",
   "license": "EPL-2.0",
   "devDependencies": {
-    "css-loader": "^0.28.9",
-    "style-loader": "^0.20.1",
+    "css-loader": "^5.2.7",
+    "style-loader": "^2.0.0",
     "ts-loader": "^5.3.3",
     "typescript": "3.4.5",
     "webpack": "^4.0.0",
