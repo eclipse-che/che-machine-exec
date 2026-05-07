@@ -54,6 +54,35 @@ releaseMachineExec() {
   echo "Pushed ${REGISTRY}/${ORGANIZATION}/${IMAGE}:${VERSION}"
 }
 
+commitChangeOrCreatePR()
+{
+  if [[ ${NOCOMMIT} -eq 1 ]]; then
+    echo "[INFO] NOCOMMIT = 1; so nothing will be committed. Run this script with no flags for usage + list of flags/options."
+  else
+    aVERSION="$1"
+    aBRANCH="$2"
+    PR_BRANCH="$3"
+
+    COMMIT_MSG="chore: release: bump to ${aVERSION} in ${aBRANCH}"
+
+    # commit change into branch
+    git add -A || true
+    git commit -s -m "${COMMIT_MSG}"
+    git pull origin "${aBRANCH}"
+
+    PUSH_TRY="$(git push origin "${aBRANCH}")"
+    # shellcheck disable=SC2181
+    if [[ $? -gt 0 ]] || [[ $PUSH_TRY == *"protected branch hook declined"* ]]; then
+      # create pull request for main branch, as branch is restricted
+      git branch "${PR_BRANCH}"
+      git checkout "${PR_BRANCH}"
+      git pull origin "${PR_BRANCH}"
+      git push origin "${PR_BRANCH}"
+      gh pr create -f -B "${aBRANCH}" -H "${PR_BRANCH}"
+    fi
+  fi
+}
+
 # derive branch from version
 BRANCH=${VERSION%.*}.x
 
@@ -85,6 +114,7 @@ if [[ ${NOCOMMIT} -eq 0 ]]; then
   git commit -s -m "${COMMIT_MSG}" VERSION
   git pull origin "${BRANCH}"
   git push origin "${BRANCH}"
+  commitChangeOrCreatePR "${VERSION}" "${BRANCH}" "pr-${BRANCH}-to-${NEXTVERSION}"
 fi
 
 if [[ $TRIGGER_RELEASE -eq 1 ]]; then
@@ -115,21 +145,5 @@ fi
 # change VERSION file
 echo "${NEXTVERSION}" > VERSION
 if [[ ${NOCOMMIT} -eq 0 ]]; then
-  BRANCH=${BASEBRANCH}
-  # commit change into branch
-  COMMIT_MSG="chore: release: bump to ${NEXTVERSION} in ${BRANCH}"
-  git commit -s -m "${COMMIT_MSG}" VERSION
-  git pull origin "${BRANCH}"
-
-  PUSH_TRY="$(git push origin "${BRANCH}")"
-  # shellcheck disable=SC2181
-  if [[ $? -gt 0 ]] || [[ $PUSH_TRY == *"protected branch hook declined"* ]]; then
-  PR_BRANCH=pr-main-to-${NEXTVERSION}
-    # create pull request for main branch, as branch is restricted
-    git branch "${PR_BRANCH}"
-    git checkout "${PR_BRANCH}"
-    git pull origin "${PR_BRANCH}"
-    git push origin "${PR_BRANCH}"
-    gh pr create -f -B "${BRANCH}" -H "${PR_BRANCH}"
-  fi
+  commitChangeOrCreatePR "$NEXTVERSION" "$BASEBRANCH" pr-main-to-${NEXTVERSION}
 fi
