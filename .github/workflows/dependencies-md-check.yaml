@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
     - name: DEPENDENCIES.md file validator.
       uses: che-incubator/dependencies-license-action@0.0.2
       env:
