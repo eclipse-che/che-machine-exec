@@ -1,0 +1,74 @@
+# Example .noidle configuration for CLI Watcher
+#
+# This file shows all available configuration options.
+# For minimal config, see .noidle.minimal (just 'enabled: true' is enough!)
+#
+# Place this file in your project directory, or in $HOME/.noidle
+# You can also set CLI_WATCHER_CONFIG environment variable to specify a custom path.
+#
+# NOTE: Comments (lines starting with #) are part of YAML syntax and work fine.
+#       Copy any section below directly into your .noidle file.
+
+enabled: true
+checkPeriod: 30                     # How often to check for active processes (accepts: 30, 30s, etc.)
+activityWindow: 25m                 # How long to wait for activity from interactive processes
+gracePeriod: 5m                     # All processes prevent idling when this young
+maxProcessAge: 6h                   # Safety limit to prevent indefinite idling prevention
+
+watchedCommands:
+  # Simple string format (backward compatible)
+  # These commands will be auto-detected (interactive vs work process)
+  - claude     # AI assistant, will be auto-detected as interactive (checks for user input activities)
+  - gemini     # AI assistant, will be auto-detected as interactive (checks for user input activities)
+  - kubectl    # Kubernetes deployment, will be auto-detected as non-interactive (always prevents idling)
+
+  # Object format with explicit interactive mode control
+  - name: vim
+    interactive: auto              # Auto-detect based on foreground + TTY read behavior
+
+  # Force interactive mode (always check for user input activity)
+  - name: claude
+    interactive: true              # Force interactive even if auto-detection thinks otherwise
+
+  # Long-running build/deploy commands - force non-interactive (always prevent idling)
+  - name: npm
+    interactive: false             # Force non-interactive (always prevent idling)
+
+  - name: docker
+    interactive: no                # Same as 'false'
+
+  - name: gradle
+    interactive: false             # Force non-interactive (always prevent idling during builds)
+
+  # Override always-ignored commands (USE WITH CAUTION)
+  - name: watch
+    interactive: false
+    forceWatch: true               # Override always-ignored list to watch 'watch' command
+                                   # Normally 'watch', 'top', 'htop', 'tail' are always ignored
+
+  - name: top
+    forceWatch: yes                # Also accepts: true, yes, false, no (default: false)
+
+# Interactive mode options:
+#   - auto:  Auto-detect (foreground + has read from TTY → interactive, otherwise → work process)
+#   - true/yes:  Force interactive (always check for user input activity)
+#   - false/no:  Force non-interactive work process (always prevent idling, default)
+#
+# ForceWatch option (optional, defaults to false):
+#   - true/yes:  Override always-ignored list (tail, watch, top, htop) to monitor this command
+#   - false/no:  Respect always-ignored list (default behavior)
+#   WARNING: Use forceWatch with caution. Always-ignored commands are typically passive
+#           monitoring tools that shouldn't prevent workspace idling.
+#
+# Global settings:
+#   - activityWindowSeconds: How long to wait for input from interactive processes (default: 1500 = 25 min)
+#   - gracePeriodSeconds: All processes prevent idling when younger than this (default: 300 = 5 min)
+#   - checkPeriodSeconds: How often to scan for processes (default: 60 = 1 min)
+#
+# Unconfigured commands:
+#   - Auto-detected as interactive or work process during grace period
+#   - After grace period: interactive processes checked for activity, work processes always prevent idling
+#
+# Always-ignored commands (never prevent idling):
+#   - tail, watch, top, htop (passive monitoring tools)
+#   These are always ignored even if explicitly listed in watchedCommands.
