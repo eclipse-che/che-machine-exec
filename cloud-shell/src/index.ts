@@ -12,9 +12,8 @@
 
 import { CloudShellTerminal, TerminalHandler } from "./terminal";
 import { JsonRpcConnection } from "./json-rpc-connection";
-import { GenericNotificationHandler } from "vscode-jsonrpc";
+import { GenericNotificationHandler, NotificationType } from "vscode-jsonrpc";
 import { MachineExec, EXIT_METHOD, ERROR_METHOD, ExecExitEvent, ExecErrorEvent } from "./terminal-protocol";
-import { NotificationType } from 'vscode-ws-jsonrpc';
 import { ANSIControlSequences as CS } from './const';
 
 const terminalElem = document.getElementById('terminal-container');
@@ -75,12 +74,12 @@ rpcConnecton.create().then(connection => {
             terminal.sendLine(CS.RED_COLOR + 'Unable to connect to json-rpc channel. Cause: ' + onRejected + CS.RESET_COLOR)
         });
     });
-    const exitNotification = new NotificationType<ExecExitEvent, void>(EXIT_METHOD);
+    const exitNotification = new NotificationType<ExecExitEvent>(EXIT_METHOD);
     connection.onNotification(exitNotification, (event: ExecExitEvent) => {
         terminal.sendLine(CS.GREEN_COLOR + "Process completed." + CS.RESET_COLOR)
     });
 
-    const errorNotification = new NotificationType<ExecErrorEvent, void>(ERROR_METHOD);
+    const errorNotification = new NotificationType<ExecErrorEvent>(ERROR_METHOD);
     connection.onNotification(errorNotification, (event: ExecErrorEvent) => {
         terminal.sendLine(CS.RED_COLOR + 'Failed to create terminal. Error: ' + event.stack + CS.RESET_COLOR)
     });

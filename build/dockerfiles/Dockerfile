@@ -12,7 +12,7 @@
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
 
-FROM docker.io/golang:1.25.7-alpine as go_builder
+FROM docker.io/golang:1.25.9-alpine AS go_builder
 
 ENV USER=machine-exec
 ENV UID=12345
@@ -44,19 +44,21 @@ COPY . .
 ENV CGO_ENABLED=1
 RUN GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-FROM docker.io/node:22-alpine as cloud_shell_builder
-RUN corepack enable && corepack prepare yarn@4.0.0 --activate
-COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
-WORKDIR cloud-shell-src
+FROM docker.io/node:22-alpine AS cloud_shell_builder
+RUN corepack enable && corepack prepare yarn@4.12.0 --activate
+COPY --from=go_builder /che-machine-exec/cloud-shell /cloud-shell-src
+WORKDIR /cloud-shell-src
 RUN yarn install --immutable && \
     yarn run build && \
     mkdir /app && \
-    cp -rf index.html dist node_modules /app
+    cp -rf index.html dist /app
 
 FROM scratch
 COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=go_builder /etc/passwd /etc/passwd
 COPY --from=go_builder /etc/group /etc/group
+# Copy musl library for CGO binary (architecture-specific)
+COPY --from=go_builder /lib/ld-musl-*.so.1 /lib/
 USER machine-exec
 
 COPY --from=go_builder /go/bin/che-machine-exec /go/bin/che-machine-exec
