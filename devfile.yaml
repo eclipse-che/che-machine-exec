@@ -9,37 +9,30 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
-schemaVersion: 2.3.0
 
+schemaVersion: 2.3.0
 metadata:
   name: che-machine-exec
-
+  version: 1.0.0
 components:
-
-  - container:
-      endpoints:
-        - name: cloud-shell
-          targetPort: 3130
-          exposure: public
-          protocol: http
-        - exposure: none
-          name: debug
-          targetPort: 5858
-        - name: exec-server
-          targetPort: 5555
-          exposure: public
-          attributes:
-            type: terminal-dev
-            protocol: ws
-            secure: false
-      image: registry.access.redhat.com/ubi9/go-toolset:1.25.5-1770596585
+  - name: dev
+    container:
+      image: registry.access.redhat.com/ubi9/go-toolset:1.25.9-1778675823
+      mountSources: true
       args:
         - tail
         - '-f'
         - /dev/null
+      endpoints:
+        - name: exec-server
+          targetPort: 5555
+          protocol: ws
+          secure: false
+          exposure: public
+          attributes:
+            type: terminal-dev
+      memoryLimit: 2.5Gi
       env:
-        - name: DEBUG_PORT
-          value: '5858'
         - name: GOPATH
           value: $(PROJECTS_ROOT)/.go
         - name: GOMODCACHE
@@ -48,18 +41,15 @@ components:
           value: /var/tmp/.go/build
         - name: XDG_CACHE_HOME
           value: /var/tmp/.go/xdg
-      memoryLimit: 2.5Gi
-      mountSources: true
-    name: dev
 
   - name: node
     container:
       image: docker.io/node:22-alpine
+      mountSources: true
       args:
         - tail
         - '-f'
         - /dev/null
-      mountSources: true
       memoryLimit: 1.5Gi
 
 commands:
@@ -115,10 +105,6 @@ commands:
       component: node
       commandLine: >-
         export HOME=/projects &&
-        export GOPATH=/projects/.go &&
-        export GOMODCACHE=/var/tmp/.go/pkg/mod &&
-        export GOCACHE=/var/tmp/.go/build &&
-        export XDG_CACHE_HOME=/var/tmp/.go/xdg &&
         YARN_NETWORK_CONCURRENCY=1 corepack yarn install --immutable &&
         corepack yarn run build
       workingDir: /projects/che-machine-exec/cloud-shell

@@ -11,7 +11,8 @@
  */
 
 import ReconnectingWebSocket from "reconnecting-websocket";
-import { IWebSocket, ConsoleLogger, createWebSocketConnection, Logger, MessageConnection } from 'vscode-ws-jsonrpc';
+import { IWebSocket, ConsoleLogger, createWebSocketConnection } from 'vscode-ws-jsonrpc';
+import { Logger, MessageConnection } from 'vscode-jsonrpc';
 
 export class JsonRpcConnection {
 
