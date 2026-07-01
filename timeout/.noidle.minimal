@@ -1,0 +1,32 @@
+# Minimal .noidle configuration
+#
+# This is the absolute minimum needed to enable CLI watcher.
+# All user processes will be watched with smart defaults.
+#
+# NOTE: Comments (lines starting with #) are supported in YAML.
+#       You can copy these examples directly into your .noidle file.
+
+enabled: true
+
+# That's it! With just this, the CLI watcher will:
+#
+# ✅ Watch ALL user-initiated processes (processes with TTY from user terminals)
+# ✅ Auto-detect interactive processes (vim, python REPL, etc.) vs work processes (builds, deploys)
+# ✅ Interactive processes: check for user input activity within 25 minutes
+# ✅ Work processes: always prevent idling while running
+# ✅ All processes: prevent idling for first 5 minutes (grace period)
+# ✅ Safety limit: stop preventing idling after 6 hours (catches hung/forgotten processes)
+# ✅ Ignore passive monitoring tools: tail, watch, top, htop
+#
+# You can override any defaults:
+#
+# checkPeriod: 45                  # Check every 45 seconds instead of default 60
+# activityWindow: 30m              # 30 minutes instead of default 25m
+# gracePeriod: 10m                 # 10 minutes instead of default 5m
+# maxProcessAge: 8h                # 8 hours instead of default 6h
+#
+# Explicitly configure specific commands only if you need to override auto-detection:
+#
+# watchedCommands:
+#   - name: myTool
+#     interactive: false           # Force non-interactive (always prevent idling)
