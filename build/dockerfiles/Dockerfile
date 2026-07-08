@@ -12,6 +12,41 @@
 # Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
 #
 
+#########################################################################
+############################# BUILD: ubi8-machine-exec ##################
+#########################################################################
+
+FROM registry.access.redhat.com/ubi8/go-toolset:1782923914 AS ubi8-machineexec-builder
+ENV GOPATH=/go/
+ENV CGO_ENABLED=1
+USER root
+
+WORKDIR /che-machine-exec/
+COPY . .
+
+RUN GOOS=linux go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . \
+    && mkdir -p /rootfs/go/bin \
+    && cp -rf /che-machine-exec/che-machine-exec /rootfs/go/bin
+
+#########################################################################
+############################# BUILD: ubi9-machine-exec ##################
+#########################################################################
+
+FROM registry.access.redhat.com/ubi9/go-toolset:9.8-1783442369 AS ubi9-machineexec-builder
+ENV GOPATH=/go/
+ENV CGO_ENABLED=1
+USER root
+
+WORKDIR /che-machine-exec/
+COPY . .
+
+RUN GOOS=linux go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . \
+    && mkdir -p /rootfs/go/bin \
+    && cp -rf /che-machine-exec/che-machine-exec /rootfs/go/bin
+
+#########################################################################
+############################# BUILD: alpine-machine-exec ################
+#########################################################################
 FROM docker.io/golang:1.25.7-alpine as go_builder
 
 ENV USER=machine-exec
@@ -59,6 +94,8 @@ COPY --from=go_builder /etc/passwd /etc/passwd
 COPY --from=go_builder /etc/group /etc/group
 USER machine-exec
 
-COPY --from=go_builder /go/bin/che-machine-exec /go/bin/che-machine-exec
+COPY --from=ubi8-machineexec-builder --chown=0:0 /rootfs/go/bin/che-machine-exec /go/ubi8/bin/che-machine-exec
+COPY --from=ubi9-machineexec-builder --chown=0:0 /rootfs/go/bin/che-machine-exec /go/ubi9/bin/che-machine-exec
+COPY --from=go_builder --chown=0:0 /go/bin/che-machine-exec /go/bin/che-machine-exec
 COPY --from=cloud_shell_builder /app /cloud-shell
 ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
