@@ -68,6 +68,19 @@ const (
 	SafetyBufferPercent  = 0.2             // Or 20% of idle timeout, whichever is smaller
 )
 
+// Environment variable names for admin-level CLI Watcher configuration
+const (
+	EnvCliWatcherEnabled        = "CLI_ACTIVITY_TRACKER_ENABLED"
+	EnvCliWatcherCheckPeriod    = "CLI_ACTIVITY_TRACKER_CHECK_PERIOD"
+	EnvCliWatcherActivityWindow = "CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW"
+	EnvCliWatcherGracePeriod    = "CLI_ACTIVITY_TRACKER_GRACE_PERIOD"
+	EnvCliWatcherMaxProcessAge  = "CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE"
+	EnvCliWatcherVerbose        = "CLI_ACTIVITY_TRACKER_VERBOSE"
+)
+
+// DefaultCliWatcherEnabled is the default for CLI_ACTIVITY_TRACKER_ENABLED (flip to true when ready for general rollout)
+const DefaultCliWatcherEnabled = false
+
 // ttyCache holds cached TTY device information to reduce redundant filesystem operations
 type ttyCache struct {
 	path       string    // TTY device path (e.g., "/dev/pts/1")
@@ -146,6 +159,19 @@ type cliWatcherConfig struct {
 	_activityWindowParsed time.Duration    `json:"-"`
 	_gracePeriodParsed    time.Duration    `json:"-"`
 	_maxProcessAgeParsed  time.Duration    `json:"-"`
+	_fromFile             bool             `json:"-"` // true only if loaded from an actual .noidle file
+	_verbose              bool             `json:"-"` // resolved from CLI_ACTIVITY_TRACKER_VERBOSE
+}
+
+// cliWatcherEnvConfig holds admin-level configuration from environment variables.
+// Pointer fields: nil = not set by admin, non-nil = admin-enforced ceiling.
+type cliWatcherEnvConfig struct {
+	enabled        *bool
+	checkPeriod    *time.Duration
+	activityWindow *time.Duration
+	gracePeriod    *time.Duration
+	maxProcessAge  *time.Duration
+	verbose        *bool
 }
 
 // Watcher monitors CLI processes and invokes a tick callback when active ones are found
@@ -159,6 +185,7 @@ type cliWatcher struct {
 	tickFunc            func()        // Immutable after construction (safe to read without lock)
 	myPID               string        // Immutable after construction (safe to read without lock)
 	idleTimeout         time.Duration // Immutable after construction (safe to read without lock)
+	envConfig           cliWatcherEnvConfig // Immutable after Start() (safe to read without lock)
 }
 
 // Commands that should NEVER prevent workspace idling (passive monitoring tools)
@@ -258,6 +285,54 @@ func getPlatformDefaultClockTicks() int64 {
 	}
 }
 
+func loadEnvConfig() cliWatcherEnvConfig {
+	var cfg cliWatcherEnvConfig
+
+	if v, ok := os.LookupEnv(EnvCliWatcherEnabled); ok {
+		if b, err := strconv.ParseBool(v); err == nil {
+			cfg.enabled = &b
+		} else {
+			logrus.Errorf("CLI Watcher: Invalid value '%s' for %s, expected boolean", v, EnvCliWatcherEnabled)
+		}
+	}
+
+	parseDurationEnv := func(envName string, target **time.Duration) {
+		if v, ok := os.LookupEnv(envName); ok && len(v) > 0 {
+			d := parseDuration(v, envName, 0)
+			if d > 0 {
+				*target = &d
+			} else {
+				logrus.Errorf("CLI Watcher: Invalid value '%s' for %s, expected positive duration (e.g. 30s, 5m, 1h)", v, envName)
+			}
+		}
+	}
+
+	parseDurationEnv(EnvCliWatcherCheckPeriod, &cfg.checkPeriod)
+	parseDurationEnv(EnvCliWatcherActivityWindow, &cfg.activityWindow)
+	parseDurationEnv(EnvCliWatcherGracePeriod, &cfg.gracePeriod)
+	parseDurationEnv(EnvCliWatcherMaxProcessAge, &cfg.maxProcessAge)
+
+	if v, ok := os.LookupEnv(EnvCliWatcherVerbose); ok {
+		if b, err := strconv.ParseBool(v); err == nil {
+			cfg.verbose = &b
+		} else {
+			logrus.Errorf("CLI Watcher: Invalid value '%s' for %s, expected boolean", v, EnvCliWatcherVerbose)
+		}
+	}
+
+	return cfg
+}
+
+// activityLogf logs CLI Watcher activity-detection details at Info level when verbose
+// is true (CLI_ACTIVITY_TRACKER_VERBOSE), otherwise at Debug level.
+func activityLogf(verbose bool, format string, args ...interface{}) {
+	if verbose {
+		logrus.Infof(format, args...)
+	} else {
+		logrus.Debugf(format, args...)
+	}
+}
+
 // New creates a new Watcher with the given config and tick callback
 func NewCliWatcher(tickFunc func(), idleTimeout time.Duration) *cliWatcher {
 	if tickFunc == nil {
@@ -279,7 +354,32 @@ func (w *cliWatcher) Start() {
 		return
 	}
 	w.started = true
+	w.envConfig = loadEnvConfig()
 	w.mu.Unlock()
+
+	logrus.Infof("CLI Watcher: Admin config from environment:")
+	if w.envConfig.enabled != nil {
+		logrus.Infof("CLI Watcher:   %s = %t", EnvCliWatcherEnabled, *w.envConfig.enabled)
+	} else {
+		logrus.Infof("CLI Watcher:   %s not set (default: %t)", EnvCliWatcherEnabled, DefaultCliWatcherEnabled)
+	}
+	logEnvDuration := func(envName string, val *time.Duration) {
+		if val != nil {
+			logrus.Infof("CLI Watcher:   %s = %v", envName, *val)
+		} else {
+			logrus.Infof("CLI Watcher:   %s not set", envName)
+		}
+	}
+	logEnvDuration(EnvCliWatcherCheckPeriod, w.envConfig.checkPeriod)
+	logEnvDuration(EnvCliWatcherActivityWindow, w.envConfig.activityWindow)
+	logEnvDuration(EnvCliWatcherGracePeriod, w.envConfig.gracePeriod)
+	logEnvDuration(EnvCliWatcherMaxProcessAge, w.envConfig.maxProcessAge)
+	if w.envConfig.verbose != nil {
+		logrus.Infof("CLI Watcher:   %s = %t", EnvCliWatcherVerbose, *w.envConfig.verbose)
+	} else {
+		logrus.Infof("CLI Watcher:   %s not set (default: false)", EnvCliWatcherVerbose)
+	}
+	checkDevptsAtimeSupport()
 
 	go func() {
 		var err error
@@ -340,7 +440,7 @@ func (w *cliWatcher) Start() {
 
 				found, name := isWatchedProcessRunning(configSnapshot, w.myPID)
 				if found {
-					logrus.Debugf("CLI Watcher: Detected CLI command: %s — reporting activity tick", name)
+					activityLogf(configSnapshot._verbose, "CLI Watcher: Detected CLI command: %s — reporting activity tick", name)
 					if w.tickFunc != nil {
 						w.tickFunc()
 					}
@@ -415,11 +515,11 @@ func isWatchedProcessRunning(config *cliWatcherConfig, myPID string) (bool, stri
 
 		// STEP 1: Check if command is in always-ignored list OR config ignored list
 		if slices.Contains(alwaysIgnoredCommands, cmdName) {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) is in always-ignored list, skipping", cmdName, pid)
+			activityLogf(config._verbose, "CLI Watcher: Process %s (PID %s) is in always-ignored list, skipping", cmdName, pid)
 			continue
 		}
 		if slices.Contains(config.IgnoredCommands, cmdName) {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) is in config ignored list, skipping", cmdName, pid)
+			activityLogf(config._verbose, "CLI Watcher: Process %s (PID %s) is in config ignored list, skipping", cmdName, pid)
 			continue
 		}
 
@@ -450,11 +550,11 @@ func isWatchedProcessRunning(config *cliWatcherConfig, myPID string) (bool, stri
 		}
 		if processAge == 0 {
 			// Can't determine age (getProcessStartTime failed) - give benefit of doubt with grace period
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) age unknown, applying grace period protection", cmdName, pid)
+			activityLogf(config._verbose, "CLI Watcher: Process %s (PID %s) age unknown, applying grace period protection", cmdName, pid)
 			return true, cmdName
 		}
 		if processAge < gracePeriod {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) in grace period (age: %v), preventing idling", cmdName, pid, processAge)
+			activityLogf(config._verbose, "CLI Watcher: Process %s (PID %s) in grace period (age: %v), preventing idling", cmdName, pid, processAge)
 			return true, cmdName
 		}
 
@@ -472,7 +572,7 @@ func isWatchedProcessRunning(config *cliWatcherConfig, myPID string) (bool, stri
 			policySource = "default"
 		}
 
-		if !applyPolicy(pid, cmdName, mode, config._activityWindowParsed, policySource) {
+		if !applyPolicy(pid, cmdName, mode, config._activityWindowParsed, policySource, config._verbose) {
 			continue
 		}
 
@@ -499,6 +599,8 @@ type procStat struct {
 	ppid       string // Parent PID (field 4)
 	pgrp       int    // Process group ID (field 5)
 	tpgid      int    // Foreground process group of TTY (field 8)
+	utimeTicks int64  // CPU time in user mode, clock ticks (field 14)
+	stimeTicks int64  // CPU time in kernel mode, clock ticks (field 15)
 	startTicks int64  // Process start time in clock ticks (field 22)
 }
 
@@ -518,7 +620,11 @@ func parseProcStat(pid string) (*procStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			logrus.Debugf("CLI Watcher: Failed to close %s: %v", statPath, closeErr)
+		}
+	}()
 
 	// Read with size limit
 	data := make([]byte, maxStatFileSize)
@@ -564,6 +670,16 @@ func parseProcStat(pid string) (*procStat, error) {
 		return nil, fmt.Errorf("failed to parse tpgid")
 	}
 
+	// Field 14 (index 11): utime — CPU time in user mode (clock ticks)
+	if n, err := fmt.Sscanf(fields[11], "%d", &stat.utimeTicks); err != nil || n != 1 {
+		return nil, fmt.Errorf("failed to parse utime")
+	}
+
+	// Field 15 (index 12): stime — CPU time in kernel mode (clock ticks)
+	if n, err := fmt.Sscanf(fields[12], "%d", &stat.stimeTicks); err != nil || n != 1 {
+		return nil, fmt.Errorf("failed to parse stime")
+	}
+
 	// Field 22 (index 19): starttime (clock ticks since boot)
 	// Validate > 0: starttime=0 is invalid (would mean process started at boot time),
 	// and negative values indicate corrupted /proc data
@@ -577,38 +693,38 @@ func parseProcStat(pid string) (*procStat, error) {
 // applyPolicy applies the interactive policy for a command
 // Returns true if process should prevent idling, false otherwise
 // Unified function handling both configured and default policies
-func applyPolicy(pid, cmdName string, mode InteractiveMode, activityWindow time.Duration, policySource string) bool {
+func applyPolicy(pid, cmdName string, mode InteractiveMode, activityWindow time.Duration, policySource string, verbose bool) bool {
 	// Determine if process is interactive
 	var checkActivity bool
 
 	switch mode {
 	case InteractiveModeAuto:
 		// Auto-detect: use foreground + TTY read analysis
-		checkActivity = isInteractiveProcess(pid)
+		checkActivity = isInteractiveProcess(pid, verbose)
 		if checkActivity {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) auto-detected as interactive (%s policy)", cmdName, pid, policySource)
+			activityLogf(verbose, "CLI Watcher: Process %s (PID %s) auto-detected as interactive (%s policy)", cmdName, pid, policySource)
 		} else {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) auto-detected as work process (%s policy)", cmdName, pid, policySource)
+			activityLogf(verbose, "CLI Watcher: Process %s (PID %s) auto-detected as work process (%s policy)", cmdName, pid, policySource)
 		}
 
 	case InteractiveModeTrue, InteractiveModeYes:
 		// Force interactive mode
 		checkActivity = true
-		logrus.Debugf("CLI Watcher: Process %s (PID %s) forced interactive (%s policy)", cmdName, pid, policySource)
+		activityLogf(verbose, "CLI Watcher: Process %s (PID %s) forced interactive (%s policy)", cmdName, pid, policySource)
 
 	case InteractiveModeFalse, InteractiveModeNo:
 		// Force non-interactive (work) mode
 		checkActivity = false
-		logrus.Debugf("CLI Watcher: Process %s (PID %s) forced non-interactive (%s policy)", cmdName, pid, policySource)
+		activityLogf(verbose, "CLI Watcher: Process %s (PID %s) forced non-interactive (%s policy)", cmdName, pid, policySource)
 	}
 
 	// If interactive, check for recent activity
 	if checkActivity {
-		if !hasRecentActivity(activityWindow, pid) {
-			logrus.Debugf("CLI Watcher: Process %s (PID %s) is interactive but no recent activity (%s policy)", cmdName, pid, policySource)
+		if !hasRecentActivity(activityWindow, pid, verbose) {
+			activityLogf(verbose, "CLI Watcher: Process %s (PID %s) is interactive but no recent activity (%s policy)", cmdName, pid, policySource)
 			return false
 		}
-		logrus.Debugf("CLI Watcher: Process %s (PID %s) is interactive with recent activity (%s policy)", cmdName, pid, policySource)
+		activityLogf(verbose, "CLI Watcher: Process %s (PID %s) is interactive with recent activity (%s policy)", cmdName, pid, policySource)
 	}
 
 	return true
@@ -897,7 +1013,7 @@ func getTTYAtime(pid string) time.Time {
 // hasEverReadFromTTY checks if the process has ever read from its TTY
 // NOTE: This depends on filesystem access time (atime) being updated.
 // On filesystems mounted with 'noatime' or 'relatime', this may not work reliably.
-func hasEverReadFromTTY(pid string) bool {
+func hasEverReadFromTTY(pid string, verbose bool) bool {
 	startTime := getProcessStartTime(pid)
 	if startTime.IsZero() {
 		return false
@@ -914,100 +1030,39 @@ func hasEverReadFromTTY(pid string) bool {
 	}
 
 	// Atime failed - fall back to alternative detection methods
-	logrus.Debugf("CLI Watcher: TTY atime for PID %s unavailable or unreliable, using fallback detection", pid)
-	return hasInteractiveBehaviorFallback(pid)
+	activityLogf(verbose, "CLI Watcher: TTY atime for PID %s unavailable or unreliable, using fallback detection", pid)
+	return hasInteractiveBehaviorFallback(pid, verbose)
 }
 
-// hasInteractiveBehaviorFallback uses alternative methods when atime is unavailable
-// Combines: process state analysis, enhanced wchan analysis, and FD analysis
-func hasInteractiveBehaviorFallback(pid string) bool {
-	score := 0
-
-	// Method #1: Process State Analysis
-	// Interactive processes are typically sleeping (waiting for input)
-	if state := getProcessState(pid); state == "S" {
-		score += 2 // Sleeping = likely waiting for input
-	}
-
-	// Method #2: Enhanced wchan Analysis (beyond basic TTY read)
+// hasInteractiveBehaviorFallback checks whether the process is blocked in a syscall
+// pattern consistent with waiting for user input, used when TTY atime is unavailable
+// or unreliable.
+//
+// Process state ("S") and /proc/<pid>/fd's mtime were previously part of a weighted
+// score, but both proved non-specific: any blocking syscall reports state "S", and
+// /proc/<pid>/fd's mtime is set once when the fd table is created (effectively process
+// start time) and never updates again for processes that don't open/close fds
+// afterward — so it really measured "process age < 5 minutes," not activity. Verified
+// on a live workspace: a non-interactive `sleep` was misclassified as interactive
+// during its first ~5 minutes solely because of this.
+func hasInteractiveBehaviorFallback(pid string, verbose bool) bool {
 	wchan := getWaitChannel(pid)
-	if wchan == "poll_schedule_timeout" || // Polling with timeout (interactive pattern)
+	isInteractive := wchan == "poll_schedule_timeout" || // Polling with timeout (interactive pattern)
 		wchan == "pipe_wait" || // Waiting on pipe input
 		wchan == "unix_stream_read_generic" || // Reading from socket
 		wchan == "select" || // Select/poll waiting for input
-		wchan == "ep_poll" { // Epoll waiting (event-driven input)
-		score += 3 // Strong indicator of waiting for input
-	}
+		wchan == "ep_poll" // Epoll waiting (event-driven input)
 
-	// Method #3: File Descriptor Analysis
-	// Check if stdin is actively connected to TTY
-	if hasActiveTTYConnection(pid) {
-		score += 2
-	}
-
-	// Threshold: score >= 4 indicates interactive behavior
-	// This is conservative - when in doubt, assume interactive to prevent false negatives
-	isInteractive := score >= 4
 	if isInteractive {
-		logrus.Debugf("CLI Watcher: PID %s detected as interactive via fallback (score: %d, wchan: %s)", pid, score, wchan)
+		activityLogf(verbose, "CLI Watcher: PID %s detected as interactive via fallback (wchan: %s)", pid, wchan)
 	}
 	return isInteractive
-}
-
-// getProcessState returns the process state from /proc/[pid]/stat field 3
-func getProcessState(pid string) string {
-	// Read the raw stat file for state (field 3)
-	statPath := filepath.Join("/proc", pid, "stat")
-	data, err := os.ReadFile(statPath)
-	if err != nil {
-		return ""
-	}
-
-	str := string(data)
-	// Find the last ')' to handle process names with spaces/parens
-	lastParen := strings.LastIndex(str, ")")
-	if lastParen == -1 {
-		return ""
-	}
-
-	// State is the first field after ')'
-	fields := strings.Fields(str[lastParen+1:])
-	if len(fields) > 0 {
-		return fields[0] // State (R/S/D/Z/T)
-	}
-	return ""
-}
-
-// hasActiveTTYConnection checks if process has active TTY file descriptors
-func hasActiveTTYConnection(pid string) bool {
-	// Check if stdin (fd/0) points to a TTY and is recently accessed
-	fd0Path := filepath.Join("/proc", pid, "fd", "0")
-	target, err := os.Readlink(fd0Path)
-	if err != nil {
-		return false
-	}
-
-	// Must be a TTY device
-	if !strings.HasPrefix(target, "/dev/pts/") && !strings.HasPrefix(target, "/dev/tty") {
-		return false
-	}
-
-	// Check if the fd directory itself has been recently modified
-	// This indicates recent file descriptor activity
-	fdDir := filepath.Join("/proc", pid, "fd")
-	stat, err := os.Stat(fdDir)
-	if err != nil {
-		return false
-	}
-
-	// If fd directory was modified recently, there's active FD usage
-	return time.Since(stat.ModTime()) < 5*time.Minute
 }
 
 // isInteractiveProcess detects if a process is interactive by checking:
 // 1. Is it in foreground process group?
 // 2. Is it waiting on TTY read OR has it ever read from TTY?
-func isInteractiveProcess(pid string) bool {
+func isInteractiveProcess(pid string, verbose bool) bool {
 	if !isInForegroundProcessGroup(pid) {
 		return false // Background processes are not interactive
 	}
@@ -1025,7 +1080,7 @@ func isInteractiveProcess(pid string) bool {
 	}
 
 	// Has it ever read from TTY?
-	if hasEverReadFromTTY(pid) {
+	if hasEverReadFromTTY(pid, verbose) {
 		return true
 	}
 
@@ -1061,36 +1116,139 @@ func processHasTTY(pid string) bool {
 }
 
 // hasRecentActivity checks if a process has had recent I/O activity
-func hasRecentActivity(activityWindow time.Duration, pid string) bool {
+func hasRecentActivity(activityWindow time.Duration, pid string, verbose bool) bool {
 	window := activityWindow
 	if window <= 0 {
 		window = DefaultActivityWindow
 	}
 
-	// Check TTY access time for user input activity
-	return hasTTYActivity(pid, window)
+	return hasTTYActivity(pid, window, verbose)
 }
 
-// hasTTYActivity checks if the TTY has been accessed recently
-func hasTTYActivity(pid string, window time.Duration) bool {
+// checkDevptsAtimeSupport inspects /proc/mounts for the devpts filesystem (backing
+// /dev/pts/*, i.e. workspace terminals) and warns once at startup if it's mounted with
+// `noatime`. TTY atime is the primary signal for interactive activity; when disabled,
+// CLI Watcher falls back to CPU-usage based detection (see hasTTYActivity /
+// hasRecentCPUActivity), which is coarser — it can tell a process did *something*, not
+// specifically that a user typed something.
+func checkDevptsAtimeSupport() {
+	data, err := os.ReadFile("/proc/mounts")
+	if err != nil {
+		logrus.Debugf("CLI Watcher: Could not read /proc/mounts to check devpts atime support: %v", err)
+		return
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 4 || fields[2] != "devpts" {
+			continue
+		}
+
+		options := strings.Split(fields[3], ",")
+		if slices.Contains(options, "noatime") {
+			logrus.Warnf("CLI Watcher: devpts (%s) is mounted with 'noatime' — TTY access-time tracking is disabled, so interactive-process activity will be detected via a CPU-usage fallback instead of keystroke timing (coarser; may keep workspaces alive slightly longer than expected)", fields[1])
+		} else {
+			logrus.Debugf("CLI Watcher: devpts (%s) mount options: %s (atime tracking available)", fields[1], fields[3])
+		}
+		return
+	}
+
+	logrus.Debugf("CLI Watcher: No devpts mount found in /proc/mounts, cannot verify TTY atime support")
+}
+
+// hasTTYActivity checks if the TTY has been accessed recently, using atime when it's
+// reliable (has advanced past process start), falling back to CPU-usage tracking when
+// it hasn't — e.g. under a `noatime` devpts mount, where atime for a shared pty never
+// advances past whatever value it had before this process even started.
+func hasTTYActivity(pid string, window time.Duration, verbose bool) bool {
+	startTime := getProcessStartTime(pid)
 	_, atime, valid := getCachedTTYInfo(pid)
-	if !valid {
+
+	if valid && !startTime.IsZero() && atime.After(startTime) {
+		threshold := time.Now().Add(-window)
+		return atime.After(threshold)
+	}
+
+	activityLogf(verbose, "CLI Watcher: TTY atime for PID %s unavailable or unreliable, using CPU-activity fallback", pid)
+	return hasRecentCPUActivity(pid, window, verbose)
+}
+
+// cpuActivityCache tracks per-process CPU ticks (utime+stime) across check cycles, used
+// as an atime-independent activity signal when TTY atime is unavailable or unreliable
+// (e.g. a `noatime` devpts mount, where atime for a shared pty never advances).
+var (
+	cpuActivityCache      = make(map[string]*cpuActivitySample)
+	cpuActivityCacheMutex sync.Mutex
+)
+
+type cpuActivitySample struct {
+	lastTicks    int64
+	lastActiveAt time.Time
+}
+
+const cpuActivityCacheCleanupAt = 800 // Trigger cleanup when reaching this size
+
+// cleanupCPUActivityCache removes entries for PIDs that no longer exist.
+// MUST be called with cpuActivityCacheMutex held.
+func cleanupCPUActivityCache() {
+	for pid := range cpuActivityCache {
+		if _, err := os.Stat(filepath.Join("/proc", pid)); os.IsNotExist(err) {
+			delete(cpuActivityCache, pid)
+		}
+	}
+}
+
+// getProcessCPUTicks returns the total CPU ticks (utime+stime) consumed by the process.
+func getProcessCPUTicks(pid string) (int64, bool) {
+	stat, err := parseProcStat(pid)
+	if err != nil {
+		return 0, false
+	}
+	return stat.utimeTicks + stat.stimeTicks, true
+}
+
+// hasRecentCPUActivity reports whether a process has consumed any CPU since it was last
+// sampled, tracking a per-PID "last seen active" timestamp across check cycles. Used as
+// a fallback for hasTTYActivity when TTY atime can't be trusted.
+func hasRecentCPUActivity(pid string, window time.Duration, verbose bool) bool {
+	ticks, ok := getProcessCPUTicks(pid)
+	if !ok {
 		return false
 	}
 
-	threshold := time.Now().Add(-window)
-	return atime.After(threshold)
+	cpuActivityCacheMutex.Lock()
+	defer cpuActivityCacheMutex.Unlock()
+
+	now := time.Now()
+	sample, exists := cpuActivityCache[pid]
+	if !exists {
+		if len(cpuActivityCache) >= cpuActivityCacheCleanupAt {
+			cleanupCPUActivityCache()
+		}
+		cpuActivityCache[pid] = &cpuActivitySample{lastTicks: ticks, lastActiveAt: now}
+		activityLogf(verbose, "CLI Watcher: PID %s has no CPU-activity baseline yet, assuming active", pid)
+		return true
+	}
+
+	if ticks > sample.lastTicks {
+		sample.lastTicks = ticks
+		sample.lastActiveAt = now
+	}
+
+	recentlyActive := now.Sub(sample.lastActiveAt) < window
+	activityLogf(verbose, "CLI Watcher: PID %s CPU-activity fallback: recent=%v (last active %v ago)", pid, recentlyActive, now.Sub(sample.lastActiveAt).Round(time.Second))
+	return recentlyActive
 }
 
 // Finds the CLI Watcher configuration file in:
-// 1. Use explicit override by using "CLI_WATCHER_CONFIG" env. variable, or if not set then
+// 1. Use explicit override by using "CLI_ACTIVITY_TRACKER_CONFIG" env. variable, or if not set then
 // 2. Search for '.noidle' upward from current project directory up to "PROJECTS_ROOT" directory, or
 // 3. Fallback to $HOME/.<binary> file, or if doesn't exist/isn't accessble then
 // 4. Otherwise, give up. Repeating the search on next run (thus waiting for a config to appear)
 func getConfigPath() string {
 
 	// 1. Use explicit override
-	if configEnv := os.Getenv("CLI_WATCHER_CONFIG"); configEnv != "" {
+	if configEnv := os.Getenv("CLI_ACTIVITY_TRACKER_CONFIG"); configEnv != "" {
 		return configEnv
 	}
 
@@ -1178,7 +1336,7 @@ func findUpward(start, stop, filename string) string {
 func (w *cliWatcher) loadConfig(path string, current *cliWatcherConfig) (*cliWatcherConfig, error) {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		if current != nil {
+		if current != nil && current._fromFile {
 			logrus.Infof("CLI Watcher: Config file at %s was removed, stopping config-based detection", path)
 		} else if !w.warnedMissingConfig {
 			if strings.TrimSpace(path) == "" {
@@ -1188,7 +1346,17 @@ func (w *cliWatcher) loadConfig(path string, current *cliWatcherConfig) (*cliWat
 			}
 			w.warnedMissingConfig = true
 		}
-		return nil, nil
+
+		// Already on env vars + defaults, nothing changed — stay quiet
+		if current != nil && !current._fromFile {
+			return current, nil
+		}
+
+		// No .noidle file — build config from env vars and defaults only
+		var defaultCfg cliWatcherConfig
+		defaultCfg = applyDefaults(defaultCfg, w.idleTimeout)
+		defaultCfg = w.applyEnvCeilings(defaultCfg, false)
+		return &defaultCfg, nil
 	} else if err != nil {
 		return current, fmt.Errorf("CLI Watcher: Failed to stat config file: %w", err)
 	}
@@ -1221,8 +1389,10 @@ func (w *cliWatcher) loadConfig(path string, current *cliWatcherConfig) (*cliWat
 	}
 
 	newCfg._lastModTime = info.ModTime()
+	newCfg._fromFile = true
 	newCfg = applyDefaults(newCfg, w.idleTimeout)
 	newCfg = ignoreExclusions(alwaysIgnoredCommands, newCfg)
+	newCfg = w.applyEnvCeilings(newCfg, true)
 
 	// Log config changes
 	logrus.Infof("CLI Watcher: Config reloaded from %s", path)
@@ -1476,6 +1646,69 @@ func applyDefaults(c cliWatcherConfig, idleTimeout time.Duration) cliWatcherConf
 	if checkPeriodDuration > c._activityWindowParsed/2 {
 		logrus.Warnf("CLI Watcher: checkPeriod (%v) may be too long for activityWindow (%v), activity might not be detected in time", checkPeriodDuration, c._activityWindowParsed)
 	}
+
+	return c
+}
+
+func (w *cliWatcher) applyEnvCeilings(c cliWatcherConfig, noidle bool) cliWatcherConfig {
+	env := &w.envConfig
+
+	// --- enabled: always admin-controlled ---
+	resolvedEnabled := DefaultCliWatcherEnabled
+	if env.enabled != nil {
+		resolvedEnabled = *env.enabled
+	}
+
+	if noidle && c.Enabled != resolvedEnabled {
+		if env.enabled != nil {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s; .noidle 'enabled: %t' rejected — deprecated, admin-controlled)", resolvedEnabled, EnvCliWatcherEnabled, c.Enabled)
+		} else {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (default; .noidle 'enabled: %t' rejected — deprecated, use %s env var)", resolvedEnabled, c.Enabled, EnvCliWatcherEnabled)
+		}
+	} else if noidle {
+		if env.enabled != nil {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s; .noidle 'enabled' is deprecated — admin-controlled)", resolvedEnabled, EnvCliWatcherEnabled)
+		} else {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (default; .noidle 'enabled' is deprecated — use %s env var)", resolvedEnabled, EnvCliWatcherEnabled)
+		}
+	} else {
+		if env.enabled != nil {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s)", resolvedEnabled, EnvCliWatcherEnabled)
+		} else {
+			logrus.Infof("CLI Watcher: 'enabled' = %t (default)", resolvedEnabled)
+		}
+	}
+	c.Enabled = resolvedEnabled
+
+	// --- verbose: admin-controlled activity-detection logging, no .noidle equivalent ---
+	c._verbose = env.verbose != nil && *env.verbose
+
+	// --- timing params: env var is ceiling, .noidle can only tighten ---
+	applyDurationCeiling := func(fieldName, envName, noidleRaw string, envVal *time.Duration, parsed *time.Duration) {
+		noifileSet := noidle && noidleRaw != ""
+		if envVal != nil {
+			if noifileSet && *parsed > *envVal {
+				logrus.Infof("CLI Watcher: '%s' = %v (admin limit; .noidle value %v rejected — exceeds admin ceiling)", fieldName, *envVal, *parsed)
+				*parsed = *envVal
+			} else if noifileSet {
+				logrus.Infof("CLI Watcher: '%s' = %v (from .noidle; within admin limit %v)", fieldName, *parsed, *envVal)
+			} else {
+				logrus.Infof("CLI Watcher: '%s' = %v (from %s)", fieldName, *envVal, envName)
+				*parsed = *envVal
+			}
+		} else {
+			if noifileSet {
+				logrus.Infof("CLI Watcher: '%s' = %v (from .noidle)", fieldName, *parsed)
+			} else {
+				logrus.Infof("CLI Watcher: '%s' = %v (default)", fieldName, *parsed)
+			}
+		}
+	}
+
+	applyDurationCeiling("checkPeriod", EnvCliWatcherCheckPeriod, c.CheckPeriod, env.checkPeriod, &c._checkPeriodParsed)
+	applyDurationCeiling("activityWindow", EnvCliWatcherActivityWindow, c.ActivityWindow, env.activityWindow, &c._activityWindowParsed)
+	applyDurationCeiling("gracePeriod", EnvCliWatcherGracePeriod, c.GracePeriod, env.gracePeriod, &c._gracePeriodParsed)
+	applyDurationCeiling("maxProcessAge", EnvCliWatcherMaxProcessAge, c.MaxProcessAge, env.maxProcessAge, &c._maxProcessAgeParsed)
 
 	return c
 }

@@ -514,8 +514,8 @@ func TestApplyPolicy(t *testing.T) {
 			note:           "Empty mode should behave as non-interactive",
 		},
 		// Note: Cannot fully test interactive modes without real /proc:
-		// - InteractiveModeAuto calls isInteractiveProcess(pid) which needs /proc
-		// - InteractiveModeTrue/Yes call hasRecentActivity(pid) which needs /proc/[pid]/fd/0
+		// - InteractiveModeAuto calls isInteractiveProcess(pid, verbose) which needs /proc
+		// - InteractiveModeTrue/Yes call hasRecentActivity(activityWindow, pid, verbose) which needs /proc/[pid]/fd/0
 		// These require integration testing with real processes
 	}
 
@@ -523,7 +523,7 @@ func TestApplyPolicy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use a non-existent PID since we're only testing non-interactive modes
 			// which don't call process inspection functions
-			result := applyPolicy("99999", "testcmd", tt.mode, 60*time.Second, "test")
+			result := applyPolicy("99999", "testcmd", tt.mode, 60*time.Second, "test", false)
 
 			if result != tt.expectedResult {
 				t.Errorf("applyPolicy with mode %q = %v, want %v (%s)",
@@ -710,9 +710,15 @@ func TestProcParsing(t *testing.T) {
 		if stat.startTicks <= 0 {
 			t.Errorf("parseProcStat returned invalid startTicks: %d", stat.startTicks)
 		}
+		if stat.utimeTicks < 0 {
+			t.Errorf("parseProcStat returned negative utimeTicks: %d", stat.utimeTicks)
+		}
+		if stat.stimeTicks < 0 {
+			t.Errorf("parseProcStat returned negative stimeTicks: %d", stat.stimeTicks)
+		}
 
-		t.Logf("Current process stats: ppid=%s, pgrp=%d, tpgid=%d, startTicks=%d",
-			stat.ppid, stat.pgrp, stat.tpgid, stat.startTicks)
+		t.Logf("Current process stats: ppid=%s, pgrp=%d, tpgid=%d, utimeTicks=%d, stimeTicks=%d, startTicks=%d",
+			stat.ppid, stat.pgrp, stat.tpgid, stat.utimeTicks, stat.stimeTicks, stat.startTicks)
 	})
 
 	t.Run("parseProcStat with init process", func(t *testing.T) {
@@ -842,6 +848,89 @@ func TestProcParsing(t *testing.T) {
 	})
 }
 
+// Test getProcessCPUTicks, used by the CPU-usage activity fallback
+func TestGetProcessCPUTicks(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping /proc parsing tests on non-Linux platform")
+	}
+
+	t.Run("current process returns non-negative ticks", func(t *testing.T) {
+		myPID := fmt.Sprintf("%d", os.Getpid())
+		ticks, ok := getProcessCPUTicks(myPID)
+		if !ok {
+			t.Fatalf("getProcessCPUTicks(%s) failed", myPID)
+		}
+		if ticks < 0 {
+			t.Errorf("getProcessCPUTicks returned negative ticks: %d", ticks)
+		}
+	})
+
+	t.Run("invalid PID returns false", func(t *testing.T) {
+		_, ok := getProcessCPUTicks("999999")
+		if ok {
+			t.Error("getProcessCPUTicks(999999) should fail for non-existent PID")
+		}
+	})
+}
+
+// Test hasRecentCPUActivity, the atime-independent fallback used by hasTTYActivity
+// when TTY atime is unavailable or unreliable (e.g. noatime devpts mounts)
+func TestHasRecentCPUActivity(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping CPU-activity fallback tests on non-Linux platform")
+	}
+
+	myPID := fmt.Sprintf("%d", os.Getpid())
+
+	t.Run("first observation returns true (no baseline yet)", func(t *testing.T) {
+		cpuActivityCache = make(map[string]*cpuActivitySample)
+
+		if !hasRecentCPUActivity(myPID, time.Minute, false) {
+			t.Error("hasRecentCPUActivity should return true on first observation (benefit of doubt)")
+		}
+	})
+
+	t.Run("recent baseline still counts as active", func(t *testing.T) {
+		cpuActivityCache = make(map[string]*cpuActivitySample)
+		hasRecentCPUActivity(myPID, time.Minute, false) // establish baseline
+
+		if !hasRecentCPUActivity(myPID, time.Minute, false) {
+			t.Error("hasRecentCPUActivity should still be true immediately after establishing baseline")
+		}
+	})
+
+	t.Run("stale baseline with no new CPU ticks returns false", func(t *testing.T) {
+		cpuActivityCache = make(map[string]*cpuActivitySample)
+		cpuActivityCache[myPID] = &cpuActivitySample{
+			lastTicks:    1 << 30, // implausibly high so real CPU usage won't exceed it
+			lastActiveAt: time.Now().Add(-time.Hour),
+		}
+
+		if hasRecentCPUActivity(myPID, time.Minute, false) {
+			t.Error("hasRecentCPUActivity should return false when last activity predates the window and ticks haven't increased")
+		}
+	})
+
+	t.Run("invalid PID returns false", func(t *testing.T) {
+		cpuActivityCache = make(map[string]*cpuActivitySample)
+
+		if hasRecentCPUActivity("999999", time.Minute, false) {
+			t.Error("hasRecentCPUActivity should return false for a non-existent PID")
+		}
+	})
+}
+
+// Smoke test for checkDevptsAtimeSupport: verify it doesn't panic against the real
+// /proc/mounts. It only logs, so there's nothing else to assert without adding a
+// logrus-capture harness.
+func TestCheckDevptsAtimeSupport(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping devpts atime check on non-Linux platform")
+	}
+
+	checkDevptsAtimeSupport()
+}
+
 // Test backward compatibility with deprecated fields
 func TestBackwardCompatibility(t *testing.T) {
 	tests := []struct {
@@ -882,4 +971,196 @@ func TestBackwardCompatibility(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test loadEnvConfig parsing
+func TestLoadEnvConfig(t *testing.T) {
+	t.Run("no env vars set", func(t *testing.T) {
+		for _, env := range []string{EnvCliWatcherEnabled, EnvCliWatcherCheckPeriod, EnvCliWatcherActivityWindow, EnvCliWatcherGracePeriod, EnvCliWatcherMaxProcessAge} {
+			os.Unsetenv(env)
+		}
+		cfg := loadEnvConfig()
+		if cfg.enabled != nil {
+			t.Errorf("enabled should be nil when env var not set, got %v", *cfg.enabled)
+		}
+		if cfg.checkPeriod != nil {
+			t.Errorf("checkPeriod should be nil when env var not set")
+		}
+		if cfg.activityWindow != nil {
+			t.Errorf("activityWindow should be nil when env var not set")
+		}
+		if cfg.gracePeriod != nil {
+			t.Errorf("gracePeriod should be nil when env var not set")
+		}
+		if cfg.maxProcessAge != nil {
+			t.Errorf("maxProcessAge should be nil when env var not set")
+		}
+	})
+
+	t.Run("enabled true", func(t *testing.T) {
+		t.Setenv(EnvCliWatcherEnabled, "true")
+		cfg := loadEnvConfig()
+		if cfg.enabled == nil || !*cfg.enabled {
+			t.Errorf("enabled should be true")
+		}
+	})
+
+	t.Run("enabled false", func(t *testing.T) {
+		t.Setenv(EnvCliWatcherEnabled, "false")
+		cfg := loadEnvConfig()
+		if cfg.enabled == nil || *cfg.enabled {
+			t.Errorf("enabled should be false")
+		}
+	})
+
+	t.Run("enabled invalid", func(t *testing.T) {
+		t.Setenv(EnvCliWatcherEnabled, "notabool")
+		cfg := loadEnvConfig()
+		if cfg.enabled != nil {
+			t.Errorf("enabled should be nil for invalid value, got %v", *cfg.enabled)
+		}
+	})
+
+	t.Run("duration env vars", func(t *testing.T) {
+		t.Setenv(EnvCliWatcherCheckPeriod, "45s")
+		t.Setenv(EnvCliWatcherActivityWindow, "20m")
+		t.Setenv(EnvCliWatcherGracePeriod, "3m")
+		t.Setenv(EnvCliWatcherMaxProcessAge, "4h")
+		cfg := loadEnvConfig()
+		if cfg.checkPeriod == nil || *cfg.checkPeriod != 45*time.Second {
+			t.Errorf("checkPeriod = %v, want 45s", cfg.checkPeriod)
+		}
+		if cfg.activityWindow == nil || *cfg.activityWindow != 20*time.Minute {
+			t.Errorf("activityWindow = %v, want 20m", cfg.activityWindow)
+		}
+		if cfg.gracePeriod == nil || *cfg.gracePeriod != 3*time.Minute {
+			t.Errorf("gracePeriod = %v, want 3m", cfg.gracePeriod)
+		}
+		if cfg.maxProcessAge == nil || *cfg.maxProcessAge != 4*time.Hour {
+			t.Errorf("maxProcessAge = %v, want 4h", cfg.maxProcessAge)
+		}
+	})
+
+	t.Run("duration as plain integer (seconds)", func(t *testing.T) {
+		t.Setenv(EnvCliWatcherCheckPeriod, "30")
+		cfg := loadEnvConfig()
+		if cfg.checkPeriod == nil || *cfg.checkPeriod != 30*time.Second {
+			t.Errorf("checkPeriod = %v, want 30s", cfg.checkPeriod)
+		}
+	})
+}
+
+// Test applyEnvCeilings
+func TestApplyEnvCeilings(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+	durPtr := func(d time.Duration) *time.Duration { return &d }
+
+	t.Run("enabled from env var overrides noidle", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{enabled: boolPtr(false)}}
+		cfg := cliWatcherConfig{Enabled: true}
+		result := w.applyEnvCeilings(cfg, true)
+		if result.Enabled {
+			t.Error("enabled should be false (admin override)")
+		}
+	})
+
+	t.Run("enabled uses default when env var not set", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
+		cfg := cliWatcherConfig{Enabled: true}
+		result := w.applyEnvCeilings(cfg, true)
+		if result.Enabled != DefaultCliWatcherEnabled {
+			t.Errorf("enabled should be %t (default), got %t", DefaultCliWatcherEnabled, result.Enabled)
+		}
+	})
+
+	t.Run("enabled without noidle uses env var", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{enabled: boolPtr(true)}}
+		cfg := cliWatcherConfig{}
+		result := w.applyEnvCeilings(cfg, false)
+		if !result.Enabled {
+			t.Error("enabled should be true (from env var)")
+		}
+	})
+
+	t.Run("timing param clamped to admin ceiling", func(t *testing.T) {
+		adminLimit := 15 * time.Minute
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{activityWindow: durPtr(adminLimit)}}
+		cfg := cliWatcherConfig{
+			ActivityWindow:        "30m",
+			_activityWindowParsed: 30 * time.Minute,
+		}
+		result := w.applyEnvCeilings(cfg, true)
+		if result._activityWindowParsed != adminLimit {
+			t.Errorf("activityWindow = %v, want %v (admin ceiling)", result._activityWindowParsed, adminLimit)
+		}
+	})
+
+	t.Run("timing param accepted when stricter than ceiling", func(t *testing.T) {
+		adminLimit := 15 * time.Minute
+		noifileVal := 10 * time.Minute
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{activityWindow: durPtr(adminLimit)}}
+		cfg := cliWatcherConfig{
+			ActivityWindow:        "10m",
+			_activityWindowParsed: noifileVal,
+		}
+		result := w.applyEnvCeilings(cfg, true)
+		if result._activityWindowParsed != noifileVal {
+			t.Errorf("activityWindow = %v, want %v (noidle stricter)", result._activityWindowParsed, noifileVal)
+		}
+	})
+
+	t.Run("timing param uses env var when no noidle", func(t *testing.T) {
+		envVal := 20 * time.Minute
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{activityWindow: durPtr(envVal)}}
+		cfg := cliWatcherConfig{
+			_activityWindowParsed: DefaultActivityWindow,
+		}
+		result := w.applyEnvCeilings(cfg, false)
+		if result._activityWindowParsed != envVal {
+			t.Errorf("activityWindow = %v, want %v (from env)", result._activityWindowParsed, envVal)
+		}
+	})
+
+	t.Run("timing param uses default when no env and no noidle", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
+		cfg := cliWatcherConfig{
+			_activityWindowParsed: DefaultActivityWindow,
+		}
+		result := w.applyEnvCeilings(cfg, false)
+		if result._activityWindowParsed != DefaultActivityWindow {
+			t.Errorf("activityWindow = %v, want %v (default)", result._activityWindowParsed, DefaultActivityWindow)
+		}
+	})
+
+	t.Run("all timing params clamped", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{
+			checkPeriod:    durPtr(30 * time.Second),
+			activityWindow: durPtr(10 * time.Minute),
+			gracePeriod:    durPtr(2 * time.Minute),
+			maxProcessAge:  durPtr(3 * time.Hour),
+		}}
+		cfg := cliWatcherConfig{
+			CheckPeriod:           "60s",
+			ActivityWindow:        "25m",
+			GracePeriod:           "5m",
+			MaxProcessAge:         "6h",
+			_checkPeriodParsed:    60 * time.Second,
+			_activityWindowParsed: 25 * time.Minute,
+			_gracePeriodParsed:    5 * time.Minute,
+			_maxProcessAgeParsed:  6 * time.Hour,
+		}
+		result := w.applyEnvCeilings(cfg, true)
+		if result._checkPeriodParsed != 30*time.Second {
+			t.Errorf("checkPeriod = %v, want 30s", result._checkPeriodParsed)
+		}
+		if result._activityWindowParsed != 10*time.Minute {
+			t.Errorf("activityWindow = %v, want 10m", result._activityWindowParsed)
+		}
+		if result._gracePeriodParsed != 2*time.Minute {
+			t.Errorf("gracePeriod = %v, want 2m", result._gracePeriodParsed)
+		}
+		if result._maxProcessAgeParsed != 3*time.Hour {
+			t.Errorf("maxProcessAge = %v, want 3h", result._maxProcessAgeParsed)
+		}
+	})
 }

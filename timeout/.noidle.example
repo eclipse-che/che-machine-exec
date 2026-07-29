@@ -1,15 +1,15 @@
 # Example .noidle configuration for CLI Watcher
 #
 # This file shows all available configuration options.
-# For minimal config, see .noidle.minimal (just 'enabled: true' is enough!)
+# Enablement is admin-controlled via CLI_ACTIVITY_TRACKER_ENABLED env var (CheCluster CR or ConfigMap).
 #
 # Place this file in your project directory, or in $HOME/.noidle
-# You can also set CLI_WATCHER_CONFIG environment variable to specify a custom path.
+# You can also set CLI_ACTIVITY_TRACKER_CONFIG environment variable to specify a custom path.
 #
 # NOTE: Comments (lines starting with #) are part of YAML syntax and work fine.
 #       Copy any section below directly into your .noidle file.
 
-enabled: true
+# enabled: true                      # DEPRECATED: Use CLI_ACTIVITY_TRACKER_ENABLED env var instead (admin-controlled)
 checkPeriod: 30                     # How often to check for active processes (accepts: 30, 30s, etc.)
 activityWindow: 25m                 # How long to wait for activity from interactive processes
 gracePeriod: 5m                     # All processes prevent idling when this young
