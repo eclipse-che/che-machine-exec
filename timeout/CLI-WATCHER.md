@@ -11,180 +11,282 @@ The watcher periodically scans `/proc` to detect **all user-initiated CLI proces
 - **Configured commands** (`watchedCommands`) allow you to override auto-detection behavior
 - **Unconfigured commands** are intelligently classified as interactive or work processes after grace period
 
-## Upgrading from Previous Versions
-
-**⚠️ BREAKING BEHAVIORAL CHANGE:** The CLI Watcher now watches **ALL user-initiated terminal processes** by default, not just those explicitly listed in `watchedCommands`.
-
-### What Changed
-
-**Before (old behavior):**
-- Only commands listed in `watchedCommands` were monitored
-- Other processes were completely ignored
-- Only `tail` was globally excluded
-
-**After (new behavior):**
-- **ALL user processes with TTY are monitored automatically**
-- `watchedCommands` now **overrides auto-detection** for specific commands (not required to enable watching)
-- `tail`, `watch`, `top`, `htop` are now **always ignored** (expanded exclusion list)
-
-### Impact on Your Workspace
-
-1. **Workspaces may stay active longer** - processes that were previously ignored (shells, scripts, REPLs) now prevent idling
-2. **Commands in `watchedCommands` may behave differently**:
-   - If you configured `watch`, `top`, or `htop` → now ignored with a warning
-   - If you only listed specific commands → other user processes are now also monitored
-3. **Auto-detection may differ from your expectations** - interactive processes (vim, python REPL) only prevent idling when actively used
-
-### Migration Steps
-
-**If you have an existing `.noidle` configuration:**
-
-1. **Review your current `watchedCommands` list**
-   ```yaml
-   # Old config - only these were watched
-   watchedCommands:
-     - helm
-     - kubectl
-     - watch  # ⚠️ Now globally ignored!
-   ```
-
-2. **Understand the new behavior**:
-   - All user terminal processes are now watched (helm, kubectl, vim, bash scripts, etc.)
-   - `watchedCommands` is now for **overriding** auto-detection, not enabling watching
-   - Remove `watch`, `top`, `htop` from your config (they're always ignored)
-
-3. **Option A: Embrace auto-detection** (recommended for most users)
-   ```yaml
-   # Minimal config - let auto-detection handle everything
-   enabled: true
-   ```
-   The watcher will automatically distinguish interactive (vim, REPLs) from work processes (builds, deploys).
-
-4. **Option B: Restrict to specific commands only**
-   ```yaml
-   enabled: true
-   
-   # Override auto-detection for specific commands
-   watchedCommands:
-     - helm
-     - kubectl
-   
-   # Add all other commands you DON'T want watched
-   ignoredCommands:
-     - bash
-     - sh
-     - python3
-     - node
-     # ... any other commands you want to ignore
-   ```
-
-5. **Test in a non-production workspace first** - verify idle timeout behavior matches your expectations
-
-### Examples
-
-**Example 1: Old config watching only deployments**
-```yaml
-# Before
-watchedCommands:
-  - helm
-  - kubectl
-  - odo
-```
-
-**After migration (Option A - auto-detect):**
-```yaml
-# After - auto-detection handles everything
-enabled: true
-
-# Optional: Force these to always prevent idling (skip auto-detection)
-watchedCommands:
-  - helm
-  - kubectl
-  - odo
-```
-
-**Example 2: Old config with globally-excluded commands**
-```yaml
-# Before
-watchedCommands:
-  - watch  # Monitoring logs
-  - kubectl
-```
-
-**After migration:**
-```yaml
-# After - remove 'watch' (now globally ignored)
-enabled: true
-
-watchedCommands:
-  - kubectl  # Keep kubectl if you want to override auto-detection
-  
-# WARNING will be logged:
-# "You configured [watch] in watchedCommands, but these are globally excluded"
-```
-
-### Verification
-
-After updating your configuration:
-
-1. Check logs for warnings about globally-excluded commands
-2. Monitor workspace idle timeout behavior
-3. Use `LOG_LEVEL=debug` to see which processes are detected and classified
-4. Refer to the [Testing](#testing) section for validation scenarios
-
-### Rollback
-
-If the new behavior doesn't suit your workflow:
-
-1. Use `ignoredCommands` to exclude unwanted processes
-2. Set explicit `interactive` modes in `watchedCommands` to override auto-detection
-3. Contact your platform administrator if workspace idle policies need adjustment
-
 ## Configuration
 
-### Configuration File Requirement
+CLI Watcher configuration has three layers:
 
-**IMPORTANT**: The CLI Watcher requires a configuration file to enable watching. Without a config file, NO processes will be watched and workspaces will idle normally.
+1. **Administrator configuration** (CheCluster CR) - cluster-wide policy via `spec.devEnvironments.cliActivityTracker` fields, propagated by the Che operator as environment variables to all workspace containers
+2. **Administrator configuration** (environment variables / ConfigMap) - namespace-level or per-workspace overrides via `CLI_ACTIVITY_TRACKER_*` env vars
+3. **User configuration** (`.noidle` file) - per-project or workspace-wide tuning within admin-defined bounds
 
-**Minimum Required Configuration**:
-```yaml
-enabled: true
+### Configuration Precedence
+
+```
+Environment variables (admin)  >  .noidle file (user, stricter only)  >  Adaptive defaults
 ```
 
-That's it! With just this one line:
-- ✅ ALL user processes are automatically watched
-- ✅ Interactive vs. work processes are auto-detected
-- ✅ All settings use smart defaults (grace period: 5min, activity window: 25min, max age: 6h)
-- ✅ Passive monitoring tools (tail, watch, top, htop) are automatically ignored
+- **`enabled`**: Always controlled by the `CLI_ACTIVITY_TRACKER_ENABLED` env var or its default. The `.noidle` `enabled` field is **deprecated and ignored**.
+- **Timing params** (`checkPeriod`, `activityWindow`, `gracePeriod`, `maxProcessAge`): Admin env vars set ceilings. Users can make values **stricter** (shorter) via `.noidle`, but **cannot loosen** (lengthen) beyond the admin ceiling.
+- **`watchedCommands` / `ignoredCommands`**: User-only (`.noidle` file). Not configurable via env vars.
+- **`verbose`**: Admin/env-only (`CLI_ACTIVITY_TRACKER_VERBOSE`). Not configurable via `.noidle` — it's an operational logging toggle, not a per-project idling policy.
 
-### Configuration File Locations
+### Administrator Configuration (Environment Variables)
 
-The CLI Watcher looks for a `.noidle` configuration file in the following order:
+Cluster and DevWorkspace administrators control CLI Watcher behavior through environment variables injected into the che-machine-exec container. These are set at pod creation time and are immutable for the container lifetime.
 
-1. **Explicit override**: Set via `CLI_WATCHER_CONFIG` environment variable
+#### Environment Variables
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `CLI_ACTIVITY_TRACKER_ENABLED` | boolean | `false` | Master switch. Set to `true` to enable CLI Watcher cluster-wide. |
+| `CLI_ACTIVITY_TRACKER_CHECK_PERIOD` | duration | `60s` | How often to scan `/proc` for active processes. |
+| `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW` | duration | adaptive (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)) | How long to wait for input from interactive processes before considering them idle. |
+| `CLI_ACTIVITY_TRACKER_GRACE_PERIOD` | duration | adaptive (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)) | All processes unconditionally prevent idling when younger than this. |
+| `CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE` | duration | `6h` | Safety limit. Processes older than this stop preventing idling. |
+| `CLI_ACTIVITY_TRACKER_VERBOSE` | boolean | `false` | Promotes activity-detection details (which process was detected, why it does or doesn't prevent idling) from Debug to Info level, without needing `LOG_LEVEL=debug` for the whole application. |
+
+**Duration format**: Accepts Go duration strings (`30s`, `5m`, `1h`, `1h30m`) or plain integers (treated as seconds).
+
+**Boolean format**: Accepts `true`, `false`, `1`, `0`, `t`, `f`, `TRUE`, `FALSE`, `True`, `False`, `T`, `F`.
+
+#### Additional Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CLI_ACTIVITY_TRACKER_CONFIG` | Override `.noidle` config file path (for user-level config) |
+| `PROJECT_SOURCE` | Starting point for upward `.noidle` search |
+| `PROJECTS_ROOT` | Stop point for upward `.noidle` search (defaults to `/`) |
+
+#### Configuring via CheCluster Custom Resource (Recommended)
+
+The recommended way to configure CLI Watcher cluster-wide is through the CheCluster custom resource. The Che operator reads these fields and propagates them as `CLI_ACTIVITY_TRACKER_*` environment variables to all workspace containers via the `che-user-settings` ConfigMap.
+
+##### CheCluster CR Fields
+
+| Field (under `spec.devEnvironments.cliActivityTracker`) | Type | Default | Maps to env var |
+|---|---|---|---|
+| `enabled` | bool | `false` | `CLI_ACTIVITY_TRACKER_ENABLED` |
+| `secondsOfCheckPeriod` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_CHECK_PERIOD` |
+| `secondsOfActivityWindow` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW` |
+| `secondsOfGracePeriod` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_GRACE_PERIOD` |
+| `secondsOfMaxProcessAge` | int32 | not set (`6h`) | `CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE` |
+
+Timing fields are in **seconds**. Set to `-1` to use the default value calculated by che-machine-exec (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)). When a timing field is not set (or set to `-1`), the corresponding env var is not written to the ConfigMap, and che-machine-exec uses its adaptive defaults.
+
+##### Full Example
+
+Save as `cli-watcher-config.yaml`:
+
+```yaml
+apiVersion: org.eclipse.che/v2
+kind: CheCluster
+metadata:
+  name: eclipse-che
+  namespace: eclipse-che
+spec:
+  devEnvironments:
+    cliActivityTracker:
+      enabled: true
+      secondsOfCheckPeriod: 60
+      secondsOfActivityWindow: 900    # 15 minutes
+      secondsOfGracePeriod: 180       # 3 minutes
+      secondsOfMaxProcessAge: 14400   # 4 hours
+```
+
+Apply with:
+
+```bash
+kubectl apply -f cli-watcher-config.yaml
+```
+
+##### Minimal Example (enable with adaptive defaults)
+
+Save as `cli-watcher-enable.yaml`:
+
+```yaml
+apiVersion: org.eclipse.che/v2
+kind: CheCluster
+metadata:
+  name: eclipse-che
+  namespace: eclipse-che
+spec:
+  devEnvironments:
+    cliActivityTracker:
+      enabled: true
+```
+
+Apply with:
+
+```bash
+kubectl apply -f cli-watcher-enable.yaml
+```
+
+##### Quick Changes with `kubectl patch`
+
+For one-off changes without a file:
+
+```bash
+# Enable CLI Watcher with adaptive defaults
+kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
+  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":true}}}}'
+
+# Enable with custom timing
+kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
+  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":true,"secondsOfActivityWindow":900,"secondsOfGracePeriod":180}}}}'
+
+# Disable CLI Watcher
+kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
+  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":false}}}}'
+```
+
+##### Important Notes
+
+- **Scope**: Cluster-wide — the operator propagates these values to all user namespaces automatically.
+- **Restart required**: Changes to the CheCluster CR require a workspace restart (stop and start) to take effect, since environment variables are set at pod creation time.
+- **Do not mix with custom ConfigMaps**: If you configure CLI Watcher via the CheCluster CR, do not also set the same `CLI_ACTIVITY_TRACKER_*` keys in a custom ConfigMap with `controller.devfile.io/mount-to-devworkspace` label. Both ConfigMaps will be mounted, and the effective value depends on unpredictable mount order.
+
+#### Configuring via Kubernetes ConfigMap
+
+**Note**: If the Che operator is deployed and the CheCluster CR includes `cliActivityTracker` fields, the [CheCluster CR approach](#configuring-via-checluster-custom-resource-recommended) is preferred. Use the ConfigMap approach below for environments without the Che operator, or for per-namespace overrides that differ from the cluster-wide CheCluster CR settings (using different, non-overlapping env var keys only).
+
+To inject CLI Watcher env vars into workspace containers, create a labeled ConfigMap in the **user's namespace**. The env vars are mounted into **all DevWorkspace containers** (including the che-machine-exec sidecar).
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cli-watcher-config
+  namespace: <user-namespace>
+  labels:
+    controller.devfile.io/mount-to-devworkspace: "true"
+    controller.devfile.io/watch-configmap: "true"
+  annotations:
+    controller.devfile.io/mount-as: env
+    controller.devfile.io/mount-on-start: "true"
+data:
+  CLI_ACTIVITY_TRACKER_ENABLED: "true"
+  CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW: "15m"
+  CLI_ACTIVITY_TRACKER_GRACE_PERIOD: "3m"
+  CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE: "4h"
+```
+
+**Minimal admin configuration** (enable with all defaults):
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cli-watcher-config
+  namespace: <user-namespace>
+  labels:
+    controller.devfile.io/mount-to-devworkspace: "true"
+    controller.devfile.io/watch-configmap: "true"
+  annotations:
+    controller.devfile.io/mount-as: env
+    controller.devfile.io/mount-on-start: "true"
+data:
+  CLI_ACTIVITY_TRACKER_ENABLED: "true"
+```
+
+**Important notes**:
+
+- **Scope**: The ConfigMap applies to all workspaces in the namespace where it is created. In Eclipse Che, each user has their own namespace — a ConfigMap created in one user's namespace only affects that user's workspaces. To enforce a cluster-wide policy, an administrator must create the ConfigMap in every user's namespace.
+- **Restart behavior**: The `controller.devfile.io/mount-on-start` annotation (included above) ensures the ConfigMap is only mounted when a workspace starts. Without it, creating or updating a ConfigMap with the `controller.devfile.io/mount-to-devworkspace` label **restarts all running workspaces** in that namespace.
+- **Selective targeting**: Use `controller.devfile.io/mount-to-devworkspace-include` or `controller.devfile.io/mount-to-devworkspace-exclude` annotations with comma-separated workspace name patterns to target specific workspaces.
+
+See the Eclipse Che documentation for details:
+- [Mounting ConfigMaps](https://eclipse.dev/che/docs/stable/end-user-guide/mounting-configmaps/)
+- [Customizing Cloud Development Environments](https://che.eclipseprojects.io/2024/02/05/@mario.loriedo-cde-customization.html)
+
+#### Configuring via DevWorkspace Attribute
+
+To configure CLI Watcher for a **single workspace**, use the `workspaceEnv` attribute in the DevWorkspace spec. This injects env vars into all containers in that workspace:
+
+```yaml
+apiVersion: workspace.devfile.io/v1alpha2
+kind: DevWorkspace
+metadata:
+  name: my-workspace
+spec:
+  template:
+    attributes:
+      workspaceEnv:
+        - name: CLI_ACTIVITY_TRACKER_ENABLED
+          value: "true"
+        - name: CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW
+          value: "15m"
+```
+
+**Scope**: Per-workspace only. For namespace-wide or cluster-wide configuration, use the [ConfigMap approach](#configuring-via-kubernetes-configmap) instead.
+
+#### Ceiling Enforcement
+
+When an admin sets a timing env var, it becomes a **ceiling** that users cannot exceed via `.noidle`:
+
+- If a user sets `activityWindow: 30m` in `.noidle` but the admin set `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m`, the value is **clamped to 15m** and a log message explains why.
+- If a user sets `activityWindow: 10m` (stricter than the 15m ceiling), it is **accepted**.
+- If the admin does not set a timing env var, the user's `.noidle` value is used without restriction.
+
+Every resolved parameter is logged with its source (see [Logging](#logging)).
+
+#### Important: Environment Variables Are Immutable
+
+Environment variables are set at **pod creation time** and cannot be changed for a running workspace. Changing env var values in the DevWorkspace spec requires a workspace restart (stop and start). For runtime tuning without restart, users can modify the `.noidle` file (which is hot-reloaded) within admin-defined bounds.
+
+### User Configuration (`.noidle` File)
+
+Users can tune CLI Watcher behavior per-project using a `.noidle` YAML file. This is optional when the administrator has enabled the watcher via `CLI_ACTIVITY_TRACKER_ENABLED`.
+
+#### Configuration File Locations
+
+The CLI Watcher looks for a `.noidle` file in this order:
+
+1. **Explicit override**: Path from `CLI_ACTIVITY_TRACKER_CONFIG` environment variable
 2. **Project directory**: Search upward from `$PROJECT_SOURCE` to `$PROJECTS_ROOT` for `.noidle`
 3. **Home directory**: Fallback to `$HOME/.noidle`
 
-If no config file is found, the watcher runs but does NOT prevent idling (waits for config to appear).
+If no `.noidle` file is found, the watcher uses env var values and adaptive defaults.
 
-### Basic Configuration (Backward Compatible)
+#### Deprecated: `enabled` Field
+
+**The `enabled` field in `.noidle` is deprecated and ignored.** Enablement is controlled exclusively by the `CLI_ACTIVITY_TRACKER_ENABLED` environment variable (or its default value). If `.noidle` contains `enabled: true` or `enabled: false`, a deprecation warning is logged and the value is disregarded.
+
+**Before** (old behavior):
+```yaml
+# .noidle - this no longer controls enablement
+enabled: true
+```
+
+**After** (new behavior):
+```bash
+# Enablement is admin-controlled via environment variable
+CLI_ACTIVITY_TRACKER_ENABLED=true
+```
+
+#### What `.noidle` Still Controls
+
+- **Timing overrides** (within admin ceilings): `checkPeriod`, `activityWindow`, `gracePeriod`, `maxProcessAge`
+- **Command-specific behavior**: `watchedCommands`, `ignoredCommands`
+- **Hot-reload**: The `.noidle` file is re-read on every check cycle. Changes take effect without workspace restart.
+
+#### Basic Configuration
 
 ```yaml
-enabled: true
+# .noidle - timing and command overrides only
 checkPeriod: 30
+activityWindow: 20m
+gracePeriod: 3m
+
 watchedCommands:
   - helm
-  - odo
   - kubectl
 ```
 
-**Note**: The `watchedCommands` list is **optional** - it's used to **override** auto-detection, not to enable watching. Without this list, ALL user processes are still watched with smart defaults.
+**Note**: The `watchedCommands` list is **optional**. It overrides auto-detection for specific commands, not enables watching. Without this list, ALL user processes are still watched with smart defaults.
 
-This simple string format forces listed commands to be **non-interactive** - they always prevent idling when running, regardless of whether they're actively doing work.
+#### Advanced Configuration - Override Auto-Detection (Optional)
 
-### Advanced Configuration - Override Auto-Detection (Optional)
-
-**⚠️ You probably don't need this section!** The CLI Watcher auto-detects process types correctly in most cases.
+**You probably don't need this section.** The CLI Watcher auto-detects process types correctly in most cases.
 
 **Only override auto-detection when:**
 - Auto-detection misclassifies a specific command
@@ -193,17 +295,17 @@ This simple string format forces listed commands to be **non-interactive** - the
 
 **Two escape hatches available:**
 
-#### 1. **`watchedCommands`** - Fix misclassification (process still watched, mode corrected)
+##### 1. `watchedCommands` - Fix misclassification (process still watched, mode corrected)
 ```yaml
 watchedCommands:
   - name: myBuildTool
-    interactive: false  # Auto-detected as interactive, but it's actually a build → force non-interactive
-  
+    interactive: false  # Auto-detected as interactive, but it's actually a build
+
   - name: myREPL
-    interactive: true   # Auto-detected as work process, but it's interactive → force interactive
+    interactive: true   # Auto-detected as work process, but it's interactive
 ```
 
-#### 2. **`ignoredCommands`** - Stop watching entirely (process never prevents idling)
+##### 2. `ignoredCommands` - Stop watching entirely (process never prevents idling)
 ```yaml
 ignoredCommands:
   - weirdSystemDaemon   # Has TTY but shouldn't be watched at all
@@ -211,35 +313,34 @@ ignoredCommands:
 ```
 
 **Warning:** Misconfiguring can break workspace idling:
-- Setting `sleep` as `interactive: true` → Long-running tasks interrupted ❌
-- Setting `vim` as `interactive: false` → Idle editor prevents idling forever ❌
-- Over-using `ignoredCommands` → Important work not tracked ❌
+- Setting `sleep` as `interactive: true` - Long-running tasks interrupted
+- Setting `vim` as `interactive: false` - Idle editor prevents idling forever
+- Over-using `ignoredCommands` - Important work not tracked
 
-#### Full example with time settings:
+#### Full Example with Time Settings
 
 ```yaml
-enabled: true
 checkPeriod: 30                     # How often to check for active processes (default: 60 seconds)
-activityWindow: 25m                 # How long to wait for activity from interactive processes (default: 25m)
-gracePeriod: 5m                     # All processes prevent idling when this young (default: 5m)
+activityWindow: 25m                 # How long to wait for activity from interactive processes
+gracePeriod: 5m                     # All processes prevent idling when this young
 
 # Optional: Override auto-detection for specific commands
 watchedCommands:
   # Force long-running commands to always prevent idling (skip auto-detection)
   - helm
   - kubectl
-  
+
   # Force interactive CLIs to always check for user input activity
   - name: claude
-    interactive: true              # Force interactive (always check for user input)
-  
-  # Let auto-detection decide (foreground + TTY read → interactive)
+    interactive: true
+
+  # Let auto-detection decide (foreground + TTY read -> interactive)
   - name: vim
-    interactive: auto              # Auto-detect (same as unconfigured, but explicit)
-  
+    interactive: auto
+
   # Force non-interactive mode (always prevent idling)
   - name: npm
-    interactive: false             # Force non-interactive (always prevent idling)
+    interactive: false
 
 # Optional: Completely ignore certain commands
 ignoredCommands:
@@ -247,7 +348,7 @@ ignoredCommands:
   - debugHelper
 ```
 
-**Remember**: 
+**Remember**:
 - **Unconfigured commands**: Auto-detected with `interactive: auto` behavior after grace period
 - **`watchedCommands` entries**: Use your explicit `interactive` setting instead of auto-detection
 - **`ignoredCommands` entries**: Never watched, never prevent idling (like `tail`, `watch`, `top`, `htop`)
@@ -260,11 +361,11 @@ The `interactive` field controls how the watcher determines if a process should 
 |------|--------|----------|
 | **Non-interactive** (default) | `false`, `no`, or omit field | Always prevent idling when the process is running. Best for build tools, deployment commands, etc. |
 | **Interactive** | `true`, `yes` | Force activity checking. Only prevent idling if process has recent user input (TTY access time). Best for interactive CLIs like editors, REPLs, or AI assistants. |
-| **Auto-detect** | `auto` | Detect interactivity by checking if process is foreground AND has read from TTY. If yes → check activity; if no → always prevent idling. |
+| **Auto-detect** | `auto` | Detect interactivity by checking if process is foreground AND has read from TTY. If yes - check activity; if no - always prevent idling. |
 
 ## ForceWatch Override Option
 
-**⚠️ USE WITH EXTREME CAUTION ⚠️**
+**USE WITH EXTREME CAUTION**
 
 The `forceWatch` field allows you to override the always-ignored commands list for specific commands. This should **rarely be needed** as always-ignored commands (`tail`, `watch`, `top`, `htop`) are passive monitoring tools that don't indicate active work.
 
@@ -281,89 +382,109 @@ The `forceWatch` field allows you to override the always-ignored commands list f
 - Specialized monitoring tools that indicate active development
 
 **Invalid use cases** (common mistakes):
-- Making `tail -f logfile` prevent idling → Logs aren't active work
-- Making `top` prevent idling → Process monitoring isn't active work  
-- Making `watch kubectl get pods` prevent idling → Passive monitoring isn't active work
-
-### Configuration Example
-
-```yaml
-watchedCommands:
-  # WRONG: Don't do this for actual monitoring tools
-  - name: watch
-    forceWatch: true               # ❌ Bad - passive monitoring shouldn't prevent idling
-  
-  # VALID: Custom work script that happens to be named 'watch'
-  - name: watch
-    interactive: false
-    forceWatch: true               # ✅ OK - custom script that actually does work
-```
+- Making `tail -f logfile` prevent idling - Logs aren't active work
+- Making `top` prevent idling - Process monitoring isn't active work
+- Making `watch kubectl get pods` prevent idling - Passive monitoring isn't active work
 
 ### Accepted Values
 
-- `true`, `yes` → Override always-ignored list (monitor this command)
-- `false`, `no` → Respect always-ignored list (default behavior) 
-- Omit field → Same as `false` (respect always-ignored list)
+- `true`, `yes` - Override always-ignored list (monitor this command)
+- `false`, `no` - Respect always-ignored list (default behavior)
+- Omit field - Same as `false` (respect always-ignored list)
 
-### Warning Messages
+## Default Values and Adaptive Calculation
 
-When you configure always-ignored commands without `forceWatch: true`, you'll see:
+The CLI Watcher uses **smart defaults** that adapt to the workspace idle timeout (`SECONDS_OF_DW_INACTIVITY_BEFORE_IDLING`) when available.
+
+### Fixed Defaults (always the same)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `enabled` | `false` | CLI Watcher is disabled by default |
+| `interactive` | `no` | Backward compatible - always prevent idling |
+| `maxProcessAge` | `6h` | Safety limit to prevent indefinite idling prevention |
+| `checkPeriod` | `60s` | Process scan interval |
+
+### Adaptive Defaults (calculated from workspace idle timeout)
+
+When **workspace idle timeout is available** (e.g., 30 minutes), the timing defaults are calculated to fit within the idle window:
+
+#### Grace Period Calculation
 
 ```
-WARNING: You configured [watch, top] in watchedCommands, but these are globally excluded (always ignored)
+gracePeriod = min(5m, 15% of idleTimeout)
 ```
 
-This usually means you should **remove those commands from your config**, not add `forceWatch: true`.
+- Clamped to minimum `1m`
+- Examples:
+  - 30m idle timeout: `min(5m, 4m30s)` = **4m30s**
+  - 15m idle timeout: `min(5m, 2m15s)` = **2m15s**
+  - 60m idle timeout: `min(5m, 9m)` = **5m**
 
-### Default Values
+#### Activity Window Calculation
 
-The CLI Watcher uses **smart defaults** that adapt to your workspace idle timeout when possible:
+```
+activityWindow = idleTimeout - gracePeriod - safetyBuffer
+safetyBuffer   = min(5m, 20% of idleTimeout)
+```
 
-#### Fixed Defaults (always the same):
-- `interactive`: `no` (backward compatible - always prevent idling)
-- `maxProcessAge`: `6h` (safety limit to prevent indefinite idling prevention)
-- `checkPeriod`: `60` seconds
+- Clamped to minimum `2m`
+- Examples:
+  - 30m idle timeout: `30m - 4m30s - min(5m, 6m)` = `30m - 4m30s - 5m` = **20m30s**
+  - 15m idle timeout: `15m - 2m15s - min(5m, 3m)` = `15m - 2m15s - 3m` = **9m45s**
+  - 60m idle timeout: `60m - 5m - min(5m, 12m)` = `60m - 5m - 5m` = **50m**
 
-#### Adaptive Defaults (calculated from workspace idle timeout):
+#### Why Adaptive?
 
-When **workspace idle timeout is available** (e.g., 30 minutes):
-- `gracePeriod`: Smaller of `5m` or `15%` of idle timeout
-- `activityWindow`: `idle timeout - gracePeriod - buffer`
-  - Buffer is smaller of `5m` or `20%` of idle timeout
-  - Example: 30m idle → 5m grace → 20m activity window
+The goal is to ensure `gracePeriod + activityWindow + safetyBuffer <= idleTimeout`, so that:
+- A new process gets grace period protection immediately
+- An interactive process has enough time to show activity
+- There's a safety buffer before the workspace actually idles
 
 When **workspace idle timeout is unavailable or disabled** (`-1`):
 - `gracePeriod`: `5m`
 - `activityWindow`: `25m`
 
-#### Minimum Values (enforced even for very short idle timeouts):
-- `gracePeriod`: At least `1m`
-- `activityWindow`: At least `2m`
-- `checkPeriod`: At least `10` seconds
+### Minimum Values (enforced even for very short idle timeouts)
 
-**User-specified values always take priority** - smart defaults only apply to unspecified fields.
+| Parameter | Minimum |
+|-----------|---------|
+| `gracePeriod` | `1m` |
+| `activityWindow` | `2m` |
+| `checkPeriod` | `10s` |
 
-### How It Works
+### How Defaults, Env Vars, and `.noidle` Interact
 
-1. **User Process Detection**: Only watches processes with TTY that are children of user terminals (filters out system processes automatically)
-2. **Always-Ignored Check**: Skips passive monitoring tools (`tail`, `watch`, `top`, `htop`) 
-3. **Safety Limit**: Processes older than `maxProcessAge` (default 6h) don't prevent idling - protects against hung/forgotten/misconfigured processes
-4. **Grace Period**: All user processes < 5 minutes old prevent idling (gives builds time to start)
-5. **Interactive Detection** (after grace period):
-   - **Configured commands**: Use their `interactive` setting
-   - **Unconfigured commands**: Auto-detect (foreground + has read from TTY → interactive, otherwise → work process)
-6. **Activity Checking**: Interactive processes only prevent idling if user input detected within `activityWindow`
+For each timing parameter, the resolution order is:
 
-**Note on time formats**: All time settings (`checkPeriod`, `activityWindow`, `gracePeriod`, `maxProcessAge`) accept:
+1. Start with the **adaptive default** (calculated from idle timeout, or fixed if idle timeout unavailable)
+2. If the parameter is specified in `.noidle`, use the `.noidle` value instead
+3. If an admin env var is set, enforce it as a **ceiling**: if the resolved value from steps 1-2 exceeds the env var, clamp it down
+
+The final value and its source are always logged (see [Logging](#logging)).
+
+### Note on Time Formats
+
+All time settings (`checkPeriod`, `activityWindow`, `gracePeriod`, `maxProcessAge`) accept:
 - Duration strings: `6h`, `30m`, `21600s`, `6h30m`
 - Plain integers: `21600` (treated as seconds)
 - Invalid values log a warning and use the calculated or fixed default
+
+## How It Works (Detail)
+
+1. **User Process Detection**: Only watches processes with TTY that are children of user terminals (filters out system processes automatically)
+2. **Always-Ignored Check**: Skips passive monitoring tools (`tail`, `watch`, `top`, `htop`)
+3. **Safety Limit**: Processes older than `maxProcessAge` (default 6h) don't prevent idling - protects against hung/forgotten/misconfigured processes
+4. **Grace Period**: All user processes younger than `gracePeriod` prevent idling (gives builds time to start)
+5. **Interactive Detection** (after grace period):
+   - **Configured commands**: Use their `interactive` setting
+   - **Unconfigured commands**: Auto-detect (foreground + has read from TTY - interactive, otherwise - work process)
+6. **Activity Checking**: Interactive processes only prevent idling if user input detected within `activityWindow`
 
 ### Configuration Validation
 
 The CLI Watcher validates your configuration and warns about potential issues **without changing your specified values**:
 
-**Warnings you might see**:
 ```
 WARN: activityWindow (35m) exceeds workspace idle timeout (30m), may not work as expected
 WARN: gracePeriod (25m) is very close to workspace idle timeout (30m)
@@ -372,8 +493,6 @@ WARN: checkPeriod (10m) may be too long for activityWindow (15m), activity might
 WARN: Workspace idle timeout (8m) is very short, using minimum activity window (2m)
 WARN: Both 'checkPeriod' (30s) and deprecated 'checkPeriodSeconds' (45) are set - using 'checkPeriod' value
 ```
-
-These warnings help you identify misconfigurations but **your specified values are always respected**.
 
 ## Activity Detection
 
@@ -386,8 +505,8 @@ A process is considered interactive if:
    - Has **ever read from its TTY** (TTY access time is after process start time)
 
 This detects:
-- ✅ **Interactive**: `vim`, `python3` (REPL), `node` (REPL), `less` → Check for recent user input
-- ✅ **Work**: `./compile.sh`, `go build`, `npm run build` → Always prevent idling
+- **Interactive**: `vim`, `python3` (REPL), `node` (REPL), `less` - Check for recent user input
+- **Work**: `./compile.sh`, `go build`, `npm run build` - Always prevent idling
 
 ### Activity Monitoring
 
@@ -397,19 +516,19 @@ For interactive processes, recent activity is detected by monitoring **TTY Acces
 - Process prevents idling if Atime is within the `activityWindow`
 
 **Examples**:
-- `claude` actively used → Prevents idling ✅
-- `claude` idle for 30 minutes → Doesn't prevent idling ✅  
-- `vim` with active typing → Prevents idling ✅
-- `vim` left open but untouched → Doesn't prevent idling after activity window ✅
-- `go build` running → Always prevents idling ✅
-- Background `node` (VS Code) → Skipped (system process) ✅
+- `claude` actively used - Prevents idling
+- `claude` idle for 30 minutes - Doesn't prevent idling
+- `vim` with active typing - Prevents idling
+- `vim` left open but untouched - Doesn't prevent idling after activity window
+- `go build` running - Always prevents idling
+- Background `node` (VS Code) - Skipped (system process)
 
 ## Always-Ignored Commands
 
 The following commands are globally excluded and will NEVER prevent workspace idling, even if explicitly configured or detected as user processes:
 
 - `tail` - Log file monitoring
-- `watch` - Repeated command execution monitoring  
+- `watch` - Repeated command execution monitoring
 - `top` - Process monitoring
 - `htop` - Enhanced process monitoring
 
@@ -420,7 +539,7 @@ These are passive monitoring tools that don't indicate active work.
 ### Long-Running Deployments (Override Auto-Detection)
 
 ```yaml
-# Optional: Force these to always prevent idling (skip auto-detection)
+# .noidle
 watchedCommands:
   - helm
   - kubectl
@@ -432,9 +551,9 @@ These always prevent idling during deployment operations, even if auto-detection
 ### Interactive Development with AI (Custom Activity Window)
 
 ```yaml
-activityWindow: 300  # Override global default (25min) to 5 minutes
+# .noidle
+activityWindow: 300  # Override global default to 5 minutes
 
-# Optional: Force claude to be interactive (it would likely auto-detect correctly anyway)
 watchedCommands:
   - name: claude
     interactive: true
@@ -442,101 +561,190 @@ watchedCommands:
 
 Workspace stays alive during active Claude Code sessions, but idles if left idle for 5+ minutes.
 
-**Note**: Without `watchedCommands`, claude would still be watched and likely auto-detected as interactive. This config just makes it explicit and adjusts the activity window.
-
 ### Mixed Workload - Fine-Tuned Control
 
 ```yaml
-activityWindow: 1500         # Global default: 25 minutes
-gracePeriod: 300             # All processes: 5 minute grace period
+# .noidle
+activityWindow: 25m
+gracePeriod: 5m
 
-# Override auto-detection for specific commands only when needed
 watchedCommands:
-  # Force deployment tools to always prevent idling
   - helm
   - kubectl
-  
-  # Force claude interactive with custom activity window
   - name: claude
     interactive: true
-  
-  # Let vim auto-detect (would likely work the same without this entry)
   - name: vim
     interactive: auto
-  
-  # Force npm to always prevent idling (in case auto-detection misclassifies)
   - name: npm
     interactive: false
 ```
 
-**Remember**: All user processes are watched. This config just overrides auto-detection for specific commands.
-
-## Environment Variables
-
-- `CLI_WATCHER_CONFIG`: Override config file path
-- `PROJECT_SOURCE`: Starting point for upward `.noidle` search
-- `PROJECTS_ROOT`: Stop point for upward `.noidle` search (defaults to `/`)
-
 ## Logging
 
-The watcher logs its activity at INFO level:
+### Startup: Admin Config Summary
+
+At startup, the watcher logs all admin env var values:
 
 ```
-CLI Watcher: Started
+CLI Watcher: Admin config from environment:
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ENABLED = true
+CLI Watcher:   CLI_ACTIVITY_TRACKER_CHECK_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW = 15m0s
+CLI Watcher:   CLI_ACTIVITY_TRACKER_GRACE_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_VERBOSE not set (default: false)
+```
+
+### Config Load: Resolved Values with Source
+
+Every parameter is logged with its final value and source. This makes it easy to understand why a particular value is in effect.
+
+**Env var used directly (no `.noidle` override):**
+```
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED)
+CLI Watcher: 'activityWindow' = 15m0s (from CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW)
+CLI Watcher: 'checkPeriod' = 1m0s (default)
+```
+
+**`.noidle` value accepted (stricter than admin ceiling):**
+```
+CLI Watcher: 'activityWindow' = 10m0s (from .noidle; within admin limit 15m0s)
+```
+
+**`.noidle` value rejected (exceeds admin ceiling):**
+```
+CLI Watcher: 'activityWindow' = 15m0s (admin limit; .noidle value 30m0s rejected — exceeds admin ceiling)
+```
+
+**`.noidle` `enabled` deprecated:**
+```
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled' is deprecated — admin-controlled)
+CLI Watcher: 'enabled' = false (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled: true' rejected — deprecated, admin-controlled)
+CLI Watcher: 'enabled' = false (default; .noidle 'enabled: true' rejected — deprecated, use CLI_ACTIVITY_TRACKER_ENABLED env var)
+```
+
+**Default used (no env var, no `.noidle`):**
+```
+CLI Watcher: 'enabled' = false (default)
+CLI Watcher: 'activityWindow' = 25m0s (default)
+```
+
+### Runtime: Activity Detection
+
+```
 CLI Watcher: Config reloaded from /home/user/.noidle
 CLI Watcher:   Watching ALL user processes with 3 explicit override(s):
 CLI Watcher:     - helm (mode: non-interactive (always active))
 CLI Watcher:     - claude (mode: interactive (activity check))
 CLI Watcher:     - vim (mode: auto-detect TTY)
-CLI Watcher:   Detection period: 30 seconds
-CLI Watcher:   Activity window: 1500 seconds
-CLI Watcher:   Grace period: 300 seconds
+CLI Watcher:   Detection period: 30s
+CLI Watcher:   Activity window: 15m0s
+CLI Watcher:   Grace period: 4m30s
+CLI Watcher:   Max process age: 6h0m0s (safety limit)
 CLI Watcher: Detected CLI command: helm — reporting activity tick
 ```
-
-**Note**: The log shows configured overrides, but ALL user processes are monitored.
 
 Use DEBUG level for detailed process scanning:
 
 ```
 CLI Watcher: Process claude (PID 12345) has recent activity
+CLI Watcher: Process vi (PID 12345) found but no recent activity
 ```
 
-## Migration Guide
+### Verbose Activity Logging
 
-### From Simple String List
+By default, detailed activity-detection reasoning (which process was detected, why it does or doesn't prevent idling, interactive/auto-detection decisions) is logged at Debug level. Enabling global `LOG_LEVEL=debug` shows this, but also produces debug output from every other component in che-machine-exec.
 
-**Before:**
-```yaml
-watchedCommands:
-  - helm
-  - claude
+Set `CLI_ACTIVITY_TRACKER_VERBOSE=true` to promote just the CLI Watcher's activity-detection messages to Info level, without touching the global log level:
+
+```
+CLI Watcher: Detected CLI command: helm — reporting activity tick
+CLI Watcher: Process vi (PID 12345) auto-detected as interactive (default policy)
+CLI Watcher: Process vi (PID 12345) is interactive with recent activity (default policy)
+CLI Watcher: Process npm (PID 12346) is in config ignored list, skipping
 ```
 
-**After (to enable activity checking for claude):**
-```yaml
-activityWindow: 300  # Set global activity window
+## Upgrading from Previous Versions
 
-watchedCommands:
-  - helm  # Still simple string - always active (or auto-detected after grace period)
-  - name: claude
-    interactive: true  # Force interactive mode for explicit control
-```
+### Breaking Changes
 
-**Note**: With the new implementation, even unconfigured commands are automatically watched and intelligently classified as interactive or work processes after the grace period. Explicit configuration is only needed to override the auto-detection.
+#### 1. `enabled` Field in `.noidle` is Deprecated
+
+**Before**: The `enabled: true` field in `.noidle` was the only way to enable the CLI Watcher.
+
+**After**: Enablement is controlled exclusively by the `CLI_ACTIVITY_TRACKER_ENABLED` environment variable (or its default). The `.noidle` `enabled` field is **ignored** with a deprecation warning logged.
+
+**Migration**: Ask your cluster administrator to set `CLI_ACTIVITY_TRACKER_ENABLED=true` in the DevWorkspace configuration.
+
+#### 2. Timing Parameters Have Admin Ceilings
+
+**Before**: `.noidle` timing values were always used as-is.
+
+**After**: If an administrator sets timing env vars (`CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW`, etc.), `.noidle` values can only be **stricter** (shorter). Looser values are clamped to the admin ceiling with a warning.
+
+#### 3. ALL User Processes Are Watched by Default
+
+**Before (older versions)**: Only commands listed in `watchedCommands` were monitored.
+
+**After**: **ALL user processes with TTY are monitored automatically**. `watchedCommands` now **overrides auto-detection** for specific commands (not required to enable watching). `tail`, `watch`, `top`, `htop` are **always ignored**.
+
+### Impact on Your Workspace
+
+1. **Workspaces may stay active longer** - processes that were previously ignored (shells, scripts, REPLs) now prevent idling
+2. **Commands in `watchedCommands` may behave differently**:
+   - If you configured `watch`, `top`, or `htop` - now ignored with a warning
+   - If you only listed specific commands - other user processes are now also monitored
+3. **Auto-detection may differ from your expectations** - interactive processes (vim, python REPL) only prevent idling when actively used
+
+### Migration Steps
+
+**If you have an existing `.noidle` configuration:**
+
+1. **Remove `enabled: true`** - enablement is now admin-controlled via `CLI_ACTIVITY_TRACKER_ENABLED` env var
+2. **Review your `watchedCommands` list** - remove `watch`, `top`, `htop` (always ignored now)
+3. **Check timing values** - if admin ceilings are set, your values may be clamped
+
+**If you're an administrator enabling CLI Watcher for the first time:**
+
+1. Set `CLI_ACTIVITY_TRACKER_ENABLED=true` in DevWorkspace env vars
+2. Optionally set timing ceilings to enforce policy bounds
+3. Users can create `.noidle` files to tune within your bounds
+
+### Verification
+
+After updating:
+
+1. Check logs for deprecation warnings about `.noidle` `enabled` field
+2. Check logs for ceiling enforcement messages (rejected/accepted overrides)
+3. Monitor workspace idle timeout behavior
+4. Use `LOG_LEVEL=debug` to see which processes are detected and classified
+
+### Rollback
+
+If the new behavior doesn't suit your workflow:
+
+1. Use `ignoredCommands` to exclude unwanted processes
+2. Set explicit `interactive` modes in `watchedCommands` to override auto-detection
+3. Contact your platform administrator if workspace idle policies need adjustment
 
 ## Deployment Requirements
 
 ### Filesystem Access Time (atime) Dependency
 
-**CRITICAL**: Interactive process detection depends on filesystem access time (atime) updates for TTY devices. 
+**CRITICAL**: Interactive-process classification and activity-freshness tracking both prefer filesystem access time (atime) updates for TTY devices as their primary signal.
 
-**Problem**: If containers or systems run on filesystems mounted with `noatime` or `relatime`:
-- TTY access times won't update when users interact with terminals
-- Interactive processes will appear "idle" even when actively used
-- Workspaces may shutdown unexpectedly during active terminal sessions
+**Problem**: If the `devpts` filesystem (backing `/dev/pts/*`, i.e. workspace terminals) is mounted with `noatime`:
+- TTY access times never update, regardless of real terminal activity
+- Both interactive-process classification and "is this process still active" checks fall back to less precise, atime-independent detection (see below)
 
-**Verification**: Check if `/dev/pts` is mounted with atime support:
+`relatime` (the default on most systems) is generally *not* a problem — atime can lag real activity by up to tens of seconds under heavy load, but it does track it. `noatime` is the actual failure mode: atime freezes at whatever value it had before, forever.
+
+**Automatic Detection**: CLI Watcher checks `/proc/mounts` for the `devpts` mount options once at startup and logs a warning if `noatime` is detected:
+```
+CLI Watcher: devpts (/dev/pts) is mounted with 'noatime' — TTY access-time tracking is disabled, so interactive-process activity will be detected via a CPU-usage fallback instead of keystroke timing (coarser; may keep workspaces alive slightly longer than expected)
+```
+
+**Manual Verification**: Check if `/dev/pts` is mounted with atime support:
 ```bash
 # Check mount options for devpts filesystem
 mount | grep devpts
@@ -556,29 +764,155 @@ devpts on /dev/pts type devpts (rw,nosuid,noexec,noatime,gid=5,mode=620,ptmxmode
   sudo mount -o remount,relatime /dev/pts
   ```
 
-**Robust Fallback Detection**: When atime is unavailable or unreliable, the CLI Watcher automatically uses sophisticated alternative detection methods:
+**Fallback Detection**: When atime hasn't advanced past a process's start time (the sign that it's genuinely unusable — `noatime`, or a TTY never read from at all), CLI Watcher substitutes two independent, atime-free signals for the two different questions it needs to answer:
 
-1. **Process State Analysis** - Analyzes if process is sleeping (waiting for input)
-2. **Enhanced Wait Channel Analysis** - Detects specific input-waiting syscalls:
-   - `poll_schedule_timeout` - polling with timeout (interactive pattern)  
+1. **Classification** ("is this the kind of process that waits for input at all?") — checks the process's wait channel (`wchan`) for patterns consistent with an input-driven event loop:
+   - `poll_schedule_timeout` - polling with timeout (interactive pattern)
    - `pipe_wait` - waiting on pipe input
    - `unix_stream_read_generic` - reading from socket
    - `select`, `ep_poll` - event-driven input waiting
-3. **File Descriptor Activity** - Monitors recent TTY file descriptor usage
 
-**Scoring System**: Multiple detection signals are combined with a scoring threshold to reliably identify interactive processes, even without atime support.
+2. **Activity freshness** ("is this already-classified-interactive process still being used right now?") — tracks CPU time (`utime`+`stime` from `/proc/<pid>/stat`) sampled once per check cycle. If a process has consumed any CPU since it was last observed, it's treated as active.
 
-**Automatic Fallback**: No configuration needed - the system automatically detects atime issues and switches to alternative methods with debug logging.
+The CPU-usage signal can't distinguish "the user typed something" from "the process did something on its own" (e.g. background timers), so it's coarser than atime — but unlike atime under `noatime`, it doesn't get stuck reporting "never active" forever.
 
 **Symptoms Indicating Fallback Mode**:
-- Debug logs show: "TTY atime for PID X unavailable or unreliable, using fallback detection"
-- Debug logs show: "PID X detected as interactive via fallback (score: N, wchan: Y)"
+- Startup log: `"devpts (...) is mounted with 'noatime' ..."` (see Automatic Detection above)
+- `"CLI Watcher: TTY atime for PID X unavailable or unreliable, using fallback detection"` — classification fallback triggered
+- `"CLI Watcher: PID X detected as interactive via fallback (wchan: Y)"` — classified interactive via wchan
+- `"CLI Watcher: TTY atime for PID X unavailable or unreliable, using CPU-activity fallback"` — freshness fallback triggered
+- `"CLI Watcher: PID X CPU-activity fallback: recent=... (last active ... ago)"` — freshness fallback's verdict (set `CLI_ACTIVITY_TRACKER_VERBOSE=true` to see this at Info level instead of Debug — see [Verbose Activity Logging](#verbose-activity-logging))
 
-**Result**: Interactive detection remains highly reliable even on `noatime` filesystems, though atime support is still preferred for optimal performance.
+**Result**: Interactive detection remains reliable even on `noatime` filesystems, though atime support is still preferable for both precision (per-keystroke timing vs. per-check-cycle CPU sampling) and correctness (CPU-based freshness can't tell genuine user input from unrelated background work).
 
 ## Testing
 
-### Monitoring Activity Ticks
+### Testing Administrator Configuration (Environment Variables)
+
+These scenarios verify that admin env vars correctly control CLI Watcher behavior, enforce ceilings, and produce the expected log output.
+
+#### Scenario A1: Enable CLI Watcher via Env Var Only (No `.noidle` File)
+
+**Setup**: No `.noidle` file exists anywhere.
+
+```bash
+# Set env vars before starting che-machine-exec
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+
+# In a DevWorkspace, set in the container spec:
+# env:
+#   - name: CLI_ACTIVITY_TRACKER_ENABLED
+#     value: "true"
+```
+
+**Expected startup logs**:
+```
+CLI Watcher: Admin config from environment:
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ENABLED = true
+CLI Watcher:   CLI_ACTIVITY_TRACKER_CHECK_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_GRACE_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE not set
+```
+
+**Expected config resolution logs** (no `.noidle` file):
+```
+CLI Watcher: Config file not found, waiting for it to appear...
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED)
+CLI Watcher: 'checkPeriod' = 1m0s (default)
+CLI Watcher: 'activityWindow' = 20m30s (default)
+CLI Watcher: 'gracePeriod' = 4m30s (default)
+CLI Watcher: 'maxProcessAge' = 6h0m0s (default)
+```
+
+**Verify**: The watcher is active and scanning processes despite no `.noidle` file.
+
+#### Scenario A2: Admin Disables CLI Watcher, User `.noidle` Says `enabled: true`
+
+**Setup**: Create a `.noidle` file:
+```yaml
+enabled: true
+activityWindow: 20m
+```
+
+```bash
+export CLI_ACTIVITY_TRACKER_ENABLED=false
+```
+
+**Expected config resolution logs**:
+```
+CLI Watcher: 'enabled' = false (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled: true' rejected — deprecated, admin-controlled)
+CLI Watcher: 'activityWindow' = 20m0s (from .noidle)
+...
+```
+
+**Verify**: The watcher is NOT scanning processes despite `.noidle` having `enabled: true`.
+
+#### Scenario A3: Admin Sets Timing Ceilings, User `.noidle` Exceeds Them
+
+**Setup**: Create a `.noidle` file:
+```yaml
+activityWindow: 30m
+gracePeriod: 10m
+checkPeriod: 120
+maxProcessAge: 12h
+```
+
+```bash
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+export CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m
+export CLI_ACTIVITY_TRACKER_GRACE_PERIOD=3m
+export CLI_ACTIVITY_TRACKER_CHECK_PERIOD=45s
+export CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE=4h
+```
+
+**Expected config resolution logs**:
+```
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled' is deprecated — admin-controlled)
+CLI Watcher: 'checkPeriod' = 45s (admin limit; .noidle value 2m0s rejected — exceeds admin ceiling)
+CLI Watcher: 'activityWindow' = 15m0s (admin limit; .noidle value 30m0s rejected — exceeds admin ceiling)
+CLI Watcher: 'gracePeriod' = 3m0s (admin limit; .noidle value 10m0s rejected — exceeds admin ceiling)
+CLI Watcher: 'maxProcessAge' = 4h0m0s (admin limit; .noidle value 12h0m0s rejected — exceeds admin ceiling)
+```
+
+**Verify**: All timing params are clamped to admin values, not `.noidle` values.
+
+#### Scenario A4: Admin Sets Ceilings, User `.noidle` Is Stricter
+
+**Setup**: Create a `.noidle` file:
+```yaml
+activityWindow: 10m
+gracePeriod: 2m
+```
+
+```bash
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+export CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m
+export CLI_ACTIVITY_TRACKER_GRACE_PERIOD=5m
+```
+
+**Expected config resolution logs**:
+```
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED)
+CLI Watcher: 'activityWindow' = 10m0s (from .noidle; within admin limit 15m0s)
+CLI Watcher: 'gracePeriod' = 2m0s (from .noidle; within admin limit 5m0s)
+```
+
+**Verify**: User's stricter values are accepted.
+
+#### Scenario A5: Hot-Reload `.noidle` While Running
+
+**Setup**: Start with `CLI_ACTIVITY_TRACKER_ENABLED=true` and `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m`.
+
+1. Create a `.noidle` file with `activityWindow: 10m` - observe "accepted" log
+2. Edit it to `activityWindow: 30m` - observe "rejected" log on next check cycle
+3. Delete the `.noidle` file - observe config reverts to env var values
+
+**Verify**: Changes take effect on the next check cycle without restart.
+
+### Testing User Configuration (`.noidle` File)
+
+#### Monitoring Activity Ticks
 
 To watch CLI watcher activity ticks in real-time in a DevWorkspace environment, open a terminal and run:
 
@@ -591,19 +925,6 @@ This will show continuous log output including:
 - Config reload events
 - Detected CLI commands and activity ticks
 - Process scanning debug messages (if `LOG_LEVEL=debug`)
-
-Example output:
-```
-CLI Watcher: Started
-CLI Watcher: Config reloaded from /projects/.noidle
-CLI Watcher:   Watching 3 command(s):
-CLI Watcher:     - sleep (mode: non-interactive (always active))
-CLI Watcher:     - vi (mode: auto-detect TTY, activity window: 120s)
-CLI Watcher:   Detection period is 15 seconds
-CLI Watcher: Detected CLI command: sleep — reporting activity tick
-```
-
-### Test Scenarios
 
 #### Available Commands in UBI9 Go-Toolset
 
@@ -621,11 +942,10 @@ Typically available:
 - **Interactive**: `vi`, `less`, `more`, `bash`, `sh`
 - **Non-interactive**: `sleep`, `ping`, `curl`, `wget`, `yes`
 
-#### Scenario 1: Non-Interactive Long-Running Commands
+#### Scenario U1: Non-Interactive Long-Running Commands
 
 **Test Config** (`/tmp/.noidle.test`):
 ```yaml
-enabled: true
 checkPeriod: 15
 
 watchedCommands:
@@ -635,7 +955,8 @@ watchedCommands:
 
 **Test Steps**:
 ```bash
-export CLI_WATCHER_CONFIG=/tmp/.noidle.test
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.test
 
 # Start a long-running background process (no TTY)
 sleep 1800 &
@@ -648,11 +969,10 @@ tail -f /checode/entrypoint-logs.txt
 
 **Cleanup**: `pkill sleep`
 
-#### Scenario 2: Interactive Command with Activity Tracking
+#### Scenario U2: Interactive Command with Activity Tracking
 
 **Test Config** (`/tmp/.noidle.interactive`):
 ```yaml
-enabled: true
 checkPeriod: 15
 activityWindow: 120  # 2 minutes for easy testing
 
@@ -663,7 +983,8 @@ watchedCommands:
 
 **Test Steps**:
 ```bash
-export CLI_WATCHER_CONFIG=/tmp/.noidle.interactive
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.interactive
 
 # Terminal 1: Watch logs
 tail -f /checode/entrypoint-logs.txt
@@ -675,13 +996,12 @@ vi /tmp/testfile.txt
 # Stop typing for 3+ minutes - activity ticks should stop
 ```
 
-#### Scenario 3: Auto-Detection of Interactive vs Work Processes
+#### Scenario U3: Auto-Detection of Interactive vs Work Processes
 
 **Purpose**: Verify that the watcher correctly distinguishes between interactive CLIs (vim, REPLs) and work processes (builds, scripts) without explicit configuration.
 
 **Test Config** (`/tmp/.noidle.autodetect`):
 ```yaml
-enabled: true
 checkPeriod: 15
 activityWindow: 120  # 2 minutes for easy testing
 gracePeriod: 1m      # Short grace period for faster testing
@@ -691,7 +1011,8 @@ gracePeriod: 1m      # Short grace period for faster testing
 
 **Test Steps**:
 ```bash
-export CLI_WATCHER_CONFIG=/tmp/.noidle.autodetect
+export CLI_ACTIVITY_TRACKER_ENABLED=true
+export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.autodetect
 
 # Terminal 1: Watch logs
 tail -f /checode/entrypoint-logs.txt
@@ -707,8 +1028,8 @@ sleep 300
 ```
 
 **Expected behavior**:
-- `vi` detected as **interactive** (foreground + reads from TTY) → Only ticks when typing
-- `sleep` detected as **work process** (not interactive) → Always ticks while running
+- `vi` detected as **interactive** (foreground + reads from TTY) - Only ticks when typing
+- `sleep` detected as **work process** (not interactive) - Always ticks while running
 - Grace period (1min): Both prevent idling immediately when started
 
 **Debugging**: Set `LOG_LEVEL=debug` to see detailed detection:
@@ -718,11 +1039,10 @@ CLI Watcher: Process vi (PID 12345) has recent activity
 CLI Watcher: Process sleep (PID 12346) auto-detected as work process
 ```
 
-#### Scenario 4: Excluded Commands (Negative Test)
+#### Scenario U4: Excluded Commands (Negative Test)
 
 **Test Config** (`/tmp/.noidle.exclusion`):
 ```yaml
-enabled: true
 checkPeriod: 10
 
 watchedCommands:
@@ -751,13 +1071,14 @@ CLI Watcher: Process vi (PID 12345) has recent activity
 CLI Watcher: Process vi (PID 12345) found but no recent activity
 ```
 
+**Scoped alternative**: To see CLI Watcher activity-detection details without enabling debug logging application-wide, set `CLI_ACTIVITY_TRACKER_VERBOSE=true` instead. This promotes only the CLI Watcher's own detection/reasoning messages to Info level.
+
 ### Quick Test Setup
 
 Create a test configuration file:
 
 ```yaml
 # /tmp/.noidle.quicktest
-enabled: true
 checkPeriod: 10
 activityWindow: 120  # 2 minutes for easy testing
 watchedCommands:
@@ -772,7 +1093,8 @@ watchedCommands:
 
 2. **Start server with test config**:
    ```bash
-   export CLI_WATCHER_CONFIG=/tmp/.noidle.quicktest
+   export CLI_ACTIVITY_TRACKER_ENABLED=true
+   export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.quicktest
    ```
    Then run devfile command: `start-exec-server`
 
@@ -785,7 +1107,7 @@ watchedCommands:
    ```bash
    # Terminal 1: Non-interactive (always active)
    sleep 600 &
-   
+
    # Terminal 2: Interactive (activity tracked)
    vi /tmp/test.txt
    ```
@@ -802,10 +1124,10 @@ watchedCommands:
 
 | Command | Mode | Has TTY? | Active I/O? | Prevents Idling? |
 |---------|------|----------|-------------|------------------|
-| `sleep 3600 &` | default (no) | No | N/A | ✅ Always |
-| `vi file.txt` (typing) | auto | Yes | Yes | ✅ Yes |
-| `vi file.txt` (idle) | auto | Yes | No | ❌ No (after window) |
-| `tail -f file` | any | any | any | ❌ Never (excluded) |
+| `sleep 3600 &` | default (no) | No | N/A | Always |
+| `vi file.txt` (typing) | auto | Yes | Yes | Yes |
+| `vi file.txt` (idle) | auto | Yes | No | No (after window) |
+| `tail -f file` | any | any | any | Never (excluded) |
 
 ### Developer Testing
 
@@ -822,7 +1144,7 @@ go test ./timeout -cover
 ```
 
 **Note on test coverage:**
-- **Unit tests cover pure functions** (parsing, configuration, validation, defaults, YAML unmarshaling)
+- **Unit tests cover pure functions** (parsing, configuration, validation, defaults, YAML unmarshaling, env var loading, ceiling enforcement)
 - **Core detection logic is untested** (process tree walking, TTY analysis, interactive process detection, `isWatchedProcessRunning`, `isUserInitiatedProcess`)
 
 **Why core detection logic requires manual testing:**
