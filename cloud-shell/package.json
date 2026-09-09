@@ -21,7 +21,7 @@
   "dependencies": {
     "reconnecting-websocket": "^4.2.0",
     "vscode-uri": "^2.1.1",
-    "vscode-ws-jsonrpc": "^0.1.1",
+    "vscode-ws-jsonrpc": "^3.5.0",
     "xterm": "^4.3.0",
     "xterm-addon-fit": "^0.3.0"
   },
