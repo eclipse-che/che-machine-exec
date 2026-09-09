@@ -79,7 +79,7 @@ COPY . .
 ENV CGO_ENABLED=1
 RUN GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-FROM docker.io/node:22-alpine as cloud_shell_builder
+FROM docker.io/node:22-bookworm as cloud_shell_builder
 RUN corepack enable && corepack prepare yarn@4.0.0 --activate
 COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
 WORKDIR cloud-shell-src
