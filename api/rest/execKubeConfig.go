@@ -15,6 +15,7 @@ package rest
 import (
 	"net/http"
 
+	"github.com/eclipse-che/che-machine-exec/api/validation"
 	"github.com/eclipse-che/che-machine-exec/auth"
 	"github.com/eclipse-che/che-machine-exec/common/rest"
 
@@ -42,6 +43,16 @@ func HandleKubeConfig(c *gin.Context) {
 
 	kubeConfigParams := initConfigParams.KubeConfigParams
 	kubeConfigParams.BearerToken = token
+
+	// Validate inputs to prevent command injection
+	if err := validation.ValidateNoShellMetacharacters(kubeConfigParams.Username, "username"); err != nil {
+		rest.WriteResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validation.ValidateNoShellMetacharacters(kubeConfigParams.Namespace, "namespace"); err != nil {
+		rest.WriteResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	if initConfigParams.ContainerName == "" {
 		c.Writer.WriteHeader(http.StatusBadRequest)

@@ -15,6 +15,7 @@ package jsonrpc
 import (
 	"errors"
 
+	"github.com/eclipse-che/che-machine-exec/api/validation"
 	"github.com/eclipse-che/che-machine-exec/auth"
 
 	"github.com/eclipse-che/che-machine-exec/api/events"
@@ -53,6 +54,14 @@ var (
 
 func jsonRpcCreateExec(tunnel *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
+
+	// Validate Cwd to prevent command injection
+	if err := validation.ValidateNoShellMetacharacters(machineExec.Cwd, "cwd"); err != nil {
+		logrus.Errorf("Invalid cwd parameter: %s", err.Error())
+		t.SendError(jsonrpc.NewArgsError(err))
+		return
+	}
+
 	err := setToken(tunnel, machineExec)
 	if err != nil {
 		logrus.Errorf("%s", err.Error())
