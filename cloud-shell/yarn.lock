@@ -923,7 +923,7 @@ __metadata:
     webpack: "npm:^4.0.0"
     webpack-cli: "npm:^3.2.1"
     xterm: "npm:^4.3.0"
-    xterm-addon-fit: "npm:^0.3.0"
+    xterm-addon-fit: "npm:^0.8.0"
   languageName: unknown
   linkType: soft
 
@@ -4585,12 +4585,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xterm-addon-fit@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "xterm-addon-fit@npm:0.3.0"
+"xterm-addon-fit@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "xterm-addon-fit@npm:0.8.0"
   peerDependencies:
-    xterm: ^4.0.0
-  checksum: 10c0/a7bb2e1e3f2357cafc798c0493f0c502446aab924cda2a4ae79eb35e367b95edcdfbfdea517ce382d5478bf22fa4c5de21089330f7f6c5058d1c38e9d7d1648a
+    xterm: ^5.0.0
+  checksum: 10c0/39f77c9ec74bcc048ad74fbc4b9d610070c0a67971837f7edf92a8d21d65189c887986713d6ab22c04e2704253022488324d27fdb2425dc8aa95a9b679703101
   languageName: node
   linkType: hard
 
