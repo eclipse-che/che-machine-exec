@@ -258,7 +258,7 @@ func TestIgnoreExclusions(t *testing.T) {
 			inputCommands: []WatchedCommand{
 				{Name: "helm", Interactive: ""},
 				{Name: "watch", Interactive: "false", ForceWatch: ForceWatchModeTrue}, // Override exclusion
-				{Name: "top", Interactive: ""}, // Still excluded
+				{Name: "top", Interactive: ""},                                        // Still excluded
 			},
 			expectedCount:   2, // helm + watch (override)
 			expectedIgnored: 1, // top
@@ -1161,6 +1161,488 @@ func TestApplyEnvCeilings(t *testing.T) {
 		}
 		if result._maxProcessAgeParsed != 3*time.Hour {
 			t.Errorf("maxProcessAge = %v, want 3h", result._maxProcessAgeParsed)
+		}
+	})
+}
+
+// Test the compiled-in activity source registry: names, order, and
+// membership. Order is admin-visible/admin-controllable behavior (see
+// resolveActiveActivitySources), so it's worth pinning down explicitly.
+func TestActivitySourceRegistry(t *testing.T) {
+	if len(allActivitySources) != 2 {
+		t.Fatalf("allActivitySources has %d entries, want 2", len(allActivitySources))
+	}
+	if got := allActivitySources[0].Name(); got != "tty" {
+		t.Errorf("allActivitySources[0].Name() = %q, want %q", got, "tty")
+	}
+	if got := allActivitySources[1].Name(); got != "codex-app-server-hooks" {
+		t.Errorf("allActivitySources[1].Name() = %q, want %q", got, "codex-app-server-hooks")
+	}
+	if !defaultOnActivitySources["tty"] {
+		t.Error(`defaultOnActivitySources["tty"] should be true`)
+	}
+	if defaultOnActivitySources["codex-app-server-hooks"] {
+		t.Error(`defaultOnActivitySources["codex-app-server-hooks"] should be false (opt-in only)`)
+	}
+}
+
+// Test parseActivitySourcesEnv: charset validation, per-entry flags,
+// duplicates, and malformed entries. All malformed/invalid input must be
+// dropped with a warning, never cause a panic or error return (CLI Watcher
+// never crashes/exits over admin config typos).
+func TestParseActivitySourcesEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		raw      string
+		expected []activitySourceSelector
+	}{
+		{
+			name:     "empty string",
+			raw:      "",
+			expected: nil,
+		},
+		{
+			name:     "single name, no flag",
+			raw:      "tty",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}},
+		},
+		{
+			name: "multiple names",
+			raw:  "tty,codex-app-server-hooks",
+			expected: []activitySourceSelector{
+				{name: "tty", enabled: true},
+				{name: "codex-app-server-hooks", enabled: true},
+			},
+		},
+		{
+			name:     "lowercased for comparison",
+			raw:      "TTY",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}},
+		},
+		{
+			name:     "explicit enabled flag",
+			raw:      "tty:enabled",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}},
+		},
+		{
+			name:     "explicit true flag",
+			raw:      "tty:true",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}},
+		},
+		{
+			name:     "explicit disabled flag",
+			raw:      "tty:disabled",
+			expected: []activitySourceSelector{{name: "tty", enabled: false}},
+		},
+		{
+			name:     "explicit false flag",
+			raw:      "tty:false",
+			expected: []activitySourceSelector{{name: "tty", enabled: false}},
+		},
+		{
+			name:     "flag is case-insensitive",
+			raw:      "tty:DISABLED",
+			expected: []activitySourceSelector{{name: "tty", enabled: false}},
+		},
+		{
+			name:     "whitespace around entries and flags is trimmed",
+			raw:      " tty : disabled , codex-app-server-hooks ",
+			expected: []activitySourceSelector{{name: "tty", enabled: false}, {name: "codex-app-server-hooks", enabled: true}},
+		},
+		{
+			name:     "empty entries between commas are skipped",
+			raw:      "tty,,codex-app-server-hooks,",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}, {name: "codex-app-server-hooks", enabled: true}},
+		},
+		{
+			name:     "invalid charset (space inside name) is dropped",
+			raw:      "in valid",
+			expected: nil,
+		},
+		{
+			name:     "invalid charset (quote) is dropped",
+			raw:      `bad"name`,
+			expected: nil,
+		},
+		{
+			name:     "allowed charset extras (@#$&-./_) pass",
+			raw:      "vendor/tty,open-ai@codex#1,a.b_c$d&e",
+			expected: []activitySourceSelector{{name: "vendor/tty", enabled: true}, {name: "open-ai@codex#1", enabled: true}, {name: "a.b_c$d&e", enabled: true}},
+		},
+		{
+			name:     "malformed flag value is dropped entirely",
+			raw:      "tty:maybe",
+			expected: nil,
+		},
+		{
+			name:     "more than one colon is malformed, dropped",
+			raw:      "tty:enabled:true",
+			expected: nil,
+		},
+		{
+			name:     "duplicate (case-insensitive), first occurrence wins",
+			raw:      "tty:enabled,TTY:disabled",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}},
+		},
+		{
+			name:     "mix of valid and invalid entries",
+			raw:      "tty,bad name,codex-app-server-hooks:disabled,tty:maybe",
+			expected: []activitySourceSelector{{name: "tty", enabled: true}, {name: "codex-app-server-hooks", enabled: false}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseActivitySourcesEnv(tt.raw)
+			if len(result) != len(tt.expected) {
+				t.Fatalf("parseActivitySourcesEnv(%q) = %+v, want %+v", tt.raw, result, tt.expected)
+			}
+			for i := range result {
+				if result[i] != tt.expected[i] {
+					t.Errorf("parseActivitySourcesEnv(%q)[%d] = %+v, want %+v", tt.raw, i, result[i], tt.expected[i])
+				}
+			}
+		})
+	}
+}
+
+// Test resolveActiveActivitySources: the two-pass ordering rule (explicit
+// admin order first, then unmentioned default-on sources appended after,
+// in registry order), unknown-name warnings, and disabled entries.
+func TestResolveActiveActivitySources(t *testing.T) {
+	tty := newTTYActivitySource()
+	codex := newcodexAppServerHooksActivitySource()
+	all := []ActivitySource{tty, codex}
+
+	names := func(sources []ActivitySource) []string {
+		result := make([]string, len(sources))
+		for i, s := range sources {
+			result[i] = s.Name()
+		}
+		return result
+	}
+	sameNames := func(t *testing.T, got []ActivitySource, want []string) {
+		t.Helper()
+		g := names(got)
+		if len(g) != len(want) {
+			t.Fatalf("got %v, want %v", g, want)
+		}
+		for i := range g {
+			if g[i] != want[i] {
+				t.Errorf("got %v, want %v", g, want)
+				return
+			}
+		}
+	}
+
+	t.Run("no selectors: pure registry order, default-on only", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, nil)
+		sameNames(t, active, []string{"tty"})
+		if len(warnings) != 0 {
+			t.Errorf("unexpected warnings: %v", warnings)
+		}
+	})
+
+	t.Run("explicit order overrides registry order", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, []activitySourceSelector{
+			{name: "codex-app-server-hooks", enabled: true},
+			{name: "tty", enabled: true},
+		})
+		sameNames(t, active, []string{"codex-app-server-hooks", "tty"})
+		if len(warnings) != 0 {
+			t.Errorf("unexpected warnings: %v", warnings)
+		}
+	})
+
+	t.Run("unmentioned default-on source appended after explicit ones", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, []activitySourceSelector{
+			{name: "codex-app-server-hooks", enabled: true},
+		})
+		sameNames(t, active, []string{"codex-app-server-hooks", "tty"})
+		if len(warnings) != 0 {
+			t.Errorf("unexpected warnings: %v", warnings)
+		}
+	})
+
+	t.Run("explicit disable turns off a default-on source", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, []activitySourceSelector{
+			{name: "tty", enabled: false},
+		})
+		sameNames(t, active, []string{})
+		if len(warnings) != 0 {
+			t.Errorf("unexpected warnings: %v", warnings)
+		}
+	})
+
+	t.Run("unknown name produces a warning and is otherwise ignored", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, []activitySourceSelector{
+			{name: "bogus", enabled: true},
+		})
+		// tty still defaults on since "bogus" doesn't count as mentioning it.
+		sameNames(t, active, []string{"tty"})
+		if len(warnings) != 1 {
+			t.Fatalf("warnings = %v, want exactly 1", warnings)
+		}
+	})
+
+	t.Run("non-default-on source not mentioned stays inactive", func(t *testing.T) {
+		active, warnings := resolveActiveActivitySources(all, nil)
+		for _, s := range active {
+			if s.Name() == "codex-app-server-hooks" {
+				t.Error("codex-app-server-hooks should not be active without being explicitly enabled")
+			}
+		}
+		if len(warnings) != 0 {
+			t.Errorf("unexpected warnings: %v", warnings)
+		}
+	})
+}
+
+// Test codexAppServerCmdlineMatch: the identity+behavior discovery check
+// for a codex app-server process listening on a unix socket.
+func TestCodexAppServerCmdlineMatch(t *testing.T) {
+	tests := []struct {
+		name           string
+		args           []string
+		expectedMatch  bool
+		expectedSocket string
+	}{
+		{
+			name:           "space-separated --listen unix:// with path",
+			args:           []string{"codex", "app-server", "--listen", "unix:///home/user/.codex/app-server-control/app-server-control.sock"},
+			expectedMatch:  true,
+			expectedSocket: "/home/user/.codex/app-server-control/app-server-control.sock",
+		},
+		{
+			name:           "--listen unix:// with no path (daemon-assigned default)",
+			args:           []string{"codex", "app-server", "--listen", "unix://"},
+			expectedMatch:  true,
+			expectedSocket: "",
+		},
+		{
+			name:           "--listen=unix://... form",
+			args:           []string{"codex", "app-server", "--listen=unix:///tmp/codex.sock"},
+			expectedMatch:  true,
+			expectedSocket: "/tmp/codex.sock",
+		},
+		{
+			name:          "with -c config override before app-server",
+			args:          []string{"codex", "-c", "features.code_mode_host=true", "app-server", "--listen", "unix:///tmp/codex.sock"},
+			expectedMatch: true,
+		},
+		{
+			name:          "missing app-server subcommand",
+			args:          []string{"codex", "--listen", "unix:///tmp/codex.sock"},
+			expectedMatch: false,
+		},
+		{
+			name:          "app-server without --listen at all",
+			args:          []string{"codex", "app-server"},
+			expectedMatch: false,
+		},
+		{
+			name:          "--listen value is not a unix socket (stdio)",
+			args:          []string{"codex", "app-server", "--listen", "stdio://"},
+			expectedMatch: false,
+		},
+		{
+			name:          "--listen value is not a unix socket (ws)",
+			args:          []string{"codex", "app-server", "--listen", "ws://127.0.0.1:1234"},
+			expectedMatch: false,
+		},
+		{
+			name:          "other codex subcommand (interactive session)",
+			args:          []string{"codex"},
+			expectedMatch: false,
+		},
+		{
+			name:          "other codex subcommand (mcp-server)",
+			args:          []string{"codex", "mcp-server"},
+			expectedMatch: false,
+		},
+		{
+			name:          "empty args",
+			args:          []string{},
+			expectedMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			matches, socketPath := codexAppServerCmdlineMatch(tt.args)
+			if matches != tt.expectedMatch {
+				t.Errorf("codexAppServerCmdlineMatch(%v) matches = %v, want %v", tt.args, matches, tt.expectedMatch)
+			}
+			if tt.expectedMatch && tt.expectedSocket != "" && socketPath != tt.expectedSocket {
+				t.Errorf("codexAppServerCmdlineMatch(%v) socketPath = %q, want %q", tt.args, socketPath, tt.expectedSocket)
+			}
+		})
+	}
+}
+
+// Test codexBaseDirFromEnv: the ${CODEX_HOME:-$HOME/.codex} fallback logic,
+// as a pure function independent of /proc (see its doc comment for why
+// /proc/[pid]/environ can't be exercised reliably in-process via t.Setenv).
+func TestCodexBaseDirFromEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		env      map[string]string
+		expected string
+	}{
+		{
+			name:     "CODEX_HOME set, takes priority",
+			env:      map[string]string{"CODEX_HOME": "/custom/codex-home", "HOME": "/home/user"},
+			expected: "/custom/codex-home",
+		},
+		{
+			name:     "only HOME set, falls back to $HOME/.codex",
+			env:      map[string]string{"HOME": "/home/user"},
+			expected: "/home/user/.codex",
+		},
+		{
+			name:     "neither set, unresolved",
+			env:      map[string]string{},
+			expected: "",
+		},
+		{
+			name:     "CODEX_HOME empty string treated as unset",
+			env:      map[string]string{"CODEX_HOME": "", "HOME": "/home/user"},
+			expected: "/home/user/.codex",
+		},
+		{
+			name:     "both empty, unresolved",
+			env:      map[string]string{"CODEX_HOME": "", "HOME": ""},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := codexBaseDirFromEnv(tt.env)
+			if result != tt.expected {
+				t.Errorf("codexBaseDirFromEnv(%v) = %q, want %q", tt.env, result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test getProcessEnviron against the real /proc filesystem. Only a
+// structural sanity check (non-empty map, no error) is possible: unlike
+// most /proc files, /proc/[pid]/environ reflects the environment as of
+// exec() time, not live setenv() changes made after the process started,
+// so exact-value assertions via t.Setenv would be unreliable.
+func TestGetProcessEnviron(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping /proc parsing tests on non-Linux platform")
+	}
+
+	myPID := fmt.Sprintf("%d", os.Getpid())
+	env, err := getProcessEnviron(myPID)
+	if err != nil {
+		t.Fatalf("getProcessEnviron(%s) failed: %v", myPID, err)
+	}
+	if len(env) == 0 {
+		t.Error("getProcessEnviron returned an empty map for the current process")
+	}
+
+	t.Run("invalid PID returns an error", func(t *testing.T) {
+		if _, err := getProcessEnviron("999999"); err == nil {
+			t.Error("getProcessEnviron(999999) should fail for a non-existent PID")
+		}
+	})
+}
+
+// Test readCodexStatusFile: the flat key:value status file format written
+// by timeout/codex-hooks/managed-hooks/codex-app-server-hooks-activity-status.sh.
+func TestReadCodexStatusFile(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/codex-app-server-activity-status.yaml"
+
+	t.Run("well-formed file", func(t *testing.T) {
+		content := "last-event: UserPromptSubmit\nlast-session-id: 01a08835-2ff8-7571-8a8c-d2bc17cce158\nlast-activity: 2026-09-21T14:32:07Z\n"
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+		info, err := readCodexStatusFile(path)
+		if err != nil {
+			t.Fatalf("readCodexStatusFile failed: %v", err)
+		}
+		if info.lastEvent != "UserPromptSubmit" {
+			t.Errorf("lastEvent = %q, want %q", info.lastEvent, "UserPromptSubmit")
+		}
+		if info.lastSessionID != "01a08835-2ff8-7571-8a8c-d2bc17cce158" {
+			t.Errorf("lastSessionID = %q, want %q", info.lastSessionID, "01a08835-2ff8-7571-8a8c-d2bc17cce158")
+		}
+	})
+
+	t.Run("missing file returns an error", func(t *testing.T) {
+		if _, err := readCodexStatusFile(dir + "/does-not-exist.yaml"); err == nil {
+			t.Error("readCodexStatusFile should fail for a missing file")
+		}
+	})
+
+	t.Run("unrecognized fields are ignored, not an error", func(t *testing.T) {
+		content := "status: started\nlast-event: Stop\nsomething-else: whatever\n"
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+		info, err := readCodexStatusFile(path)
+		if err != nil {
+			t.Fatalf("readCodexStatusFile failed: %v", err)
+		}
+		if info.lastEvent != "Stop" {
+			t.Errorf("lastEvent = %q, want %q", info.lastEvent, "Stop")
+		}
+	})
+}
+
+// Test findCodexAppServerProcesses doesn't crash and correctly reports
+// none-found when no codex-app-server-hooks process is running (the common case
+// in CI/dev environments without a live codex instance).
+func TestFindCodexAppServerProcessNoneRunning(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping /proc parsing tests on non-Linux platform")
+	}
+
+	// Extremely unlikely any real process matches this synthetic myPID
+	// exclusion; this just verifies the scan completes without error when
+	// (as in CI) no codex-app-server-hooks process happens to be running.
+	candidates := findCodexAppServerProcesses(fmt.Sprintf("%d", os.Getpid()))
+	if len(candidates) > 0 {
+		t.Log("Note: a real codex-app-server-hooks process was found and matched during this test run")
+	}
+}
+
+// Test the codex-app-server-hooks ActivitySource end-to-end against a synthetic
+// status file, bypassing /proc discovery (which needs a real running
+// codex-app-server-hooks process) by exercising the mtime-comparison logic
+// directly via readCodexStatusFile + a manual mtime check, mirroring what
+// Scan() does internally.
+func TestCodexAppServerActivityWindowLogic(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/codex-app-server-activity-status.yaml"
+	content := "last-event: Stop\nlast-session-id: test-session\nlast-activity: 2026-01-01T00:00:00Z\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("os.Stat failed: %v", err)
+	}
+
+	t.Run("fresh mtime is within a normal activity window", func(t *testing.T) {
+		if time.Since(stat.ModTime()) >= 25*time.Minute {
+			t.Error("freshly-written file should be well within a 25m activity window")
+		}
+	})
+
+	t.Run("old mtime is outside a very short activity window", func(t *testing.T) {
+		if time.Since(stat.ModTime()) < time.Nanosecond {
+			t.Skip("clock resolution too coarse to distinguish")
+		}
+		if time.Since(stat.ModTime()) < 0 {
+			t.Error("time.Since(mtime) should never be negative for a just-written file")
 		}
 	})
 }

@@ -1,0 +1,75 @@
+# Managed Codex hooks for che-machine-exec's CLI Watcher activity detection.
+#
+# This file must be installed at the fixed system path
+# /etc/codex/requirements.toml (Unix) - that is the ONLY discovery location
+# for managed requirements; there is no per-user or $CODEX_HOME-relative
+# equivalent, no env var override, and no way to install it at runtime via
+# the codex app-server API. It must be baked into the workspace image (or
+# written by a privileged init step) BEFORE `codex app-server` ever starts.
+# See README.md in this directory for the full rationale and install steps.
+#
+# Hooks defined here get HookSource "System" / HookTrustStatus "Managed":
+# they run without requiring interactive `/hooks` trust review in the CLI,
+# and cannot be disabled by the user during the session (verified against
+# codex-rs source: codex-rs/app-server-protocol/src/protocol/v2/hook.rs,
+# codex-rs/hooks/src/engine/discovery.rs).
+#
+# The hook script itself only maintains a status file
+# ($CODEX_HOME/app-server-control/codex-app-server-activity-status.yaml) -
+# it deliberately does NOT report activity directly (e.g. via a tick HTTP
+# call), so CLI Watcher's own config (activity window, grace period,
+# verbose logging, admin source enable/disable) stays authoritative. See
+# managed-hooks/codex-app-server-activity-status.sh and README.md.
+
+[features]
+# Pin hooks on even if a user/project layer tries to opt out locally.
+hooks = true
+
+[hooks]
+# Absolute path to the directory containing the managed hook script below.
+# Codex requires managed hook commands to be absolute paths under this dir.
+managed_dir = "/etc/codex/managed-hooks"
+
+# Fires once per new session/thread - sets status: started.
+[[hooks.SessionStart]]
+matcher = "*"
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "/etc/codex/managed-hooks/codex-app-server-activity-status.sh"
+timeout = 5
+
+# Fires once a session/thread ends - sets status: stopped.
+[[hooks.SessionEnd]]
+matcher = "*"
+[[hooks.SessionEnd.hooks]]
+type = "command"
+command = "/etc/codex/managed-hooks/codex-app-server-activity-status.sh"
+timeout = 5
+
+# Fires whenever the user submits a prompt - the clearest possible signal of
+# real interactive use. Refreshes last-activity.
+[[hooks.UserPromptSubmit]]
+matcher = "*"
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "/etc/codex/managed-hooks/codex-app-server-activity-status.sh"
+timeout = 5
+
+# Fires after each tool call completes - covers the agent actively doing
+# work on the user's behalf between prompts (edits, shell commands, etc.).
+# Refreshes last-activity.
+[[hooks.PostToolUse]]
+matcher = "*"
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "/etc/codex/managed-hooks/codex-app-server-activity-status.sh"
+timeout = 5
+
+# Fires when the agent finishes responding - still recent, real activity.
+# Refreshes last-activity.
+[[hooks.Stop]]
+matcher = "*"
+[[hooks.Stop.hooks]]
+type = "command"
+command = "/etc/codex/managed-hooks/codex-app-server-activity-status.sh"
+timeout = 5

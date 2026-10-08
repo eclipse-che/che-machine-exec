@@ -8,6 +8,12 @@
 #
 # NOTE: Comments (lines starting with #) are part of YAML syntax and work fine.
 #       Copy any section below directly into your .noidle file.
+#
+# NOTE: watchedCommands/ignoredCommands below only affect the "tty" activity
+#       source (TTY-attached user processes). Which activity sources run at
+#       all (e.g. also enabling "codex-app-server-hooks") is admin-controlled via
+#       the CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES env var, not this file —
+#       see CLI-WATCHER.md's "Activity Sources" section.
 
 # enabled: true                      # DEPRECATED: Use CLI_ACTIVITY_TRACKER_ENABLED env var instead (admin-controlled)
 checkPeriod: 30                     # How often to check for active processes (accepts: 30, 30s, etc.)
