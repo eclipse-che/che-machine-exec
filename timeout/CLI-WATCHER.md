@@ -27,8 +27,9 @@ Environment variables (admin)  >  .noidle file (user, stricter only)  >  Adaptiv
 
 - **`enabled`**: Always controlled by the `CLI_ACTIVITY_TRACKER_ENABLED` env var or its default. The `.noidle` `enabled` field is **deprecated and ignored**.
 - **Timing params** (`checkPeriod`, `activityWindow`, `gracePeriod`, `maxProcessAge`): Admin env vars set ceilings. Users can make values **stricter** (shorter) via `.noidle`, but **cannot loosen** (lengthen) beyond the admin ceiling.
-- **`watchedCommands` / `ignoredCommands`**: User-only (`.noidle` file). Not configurable via env vars.
+- **`watchedCommands` / `ignoredCommands`**: User-only (`.noidle` file). Not configurable via env vars. These only affect the `tty` activity source (see [Activity Sources](#activity-sources)) — other sources ignore them.
 - **`verbose`**: Admin/env-only (`CLI_ACTIVITY_TRACKER_VERBOSE`). Not configurable via `.noidle` — it's an operational logging toggle, not a per-project idling policy.
+- **Activity sources** (`CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES`): Admin/env-only, same posture as `enabled` — which detection backends run at all is a capability/security-boundary decision, not a per-project idling policy. See [Activity Sources](#activity-sources).
 
 ### Administrator Configuration (Environment Variables)
 
@@ -44,6 +45,7 @@ Cluster and DevWorkspace administrators control CLI Watcher behavior through env
 | `CLI_ACTIVITY_TRACKER_GRACE_PERIOD` | duration | adaptive (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)) | All processes unconditionally prevent idling when younger than this. |
 | `CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE` | duration | `6h` | Safety limit. Processes older than this stop preventing idling. |
 | `CLI_ACTIVITY_TRACKER_VERBOSE` | boolean | `false` | Promotes activity-detection details (which process was detected, why it does or doesn't prevent idling) from Debug to Info level, without needing `LOG_LEVEL=debug` for the whole application. |
+| `CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES` | comma-separated list | `tty` | Which activity-detection backends run, and in what order. See [Activity Sources](#activity-sources). |
 
 **Duration format**: Accepts Go duration strings (`30s`, `5m`, `1h`, `1h30m`) or plain integers (treated as seconds).
 
@@ -232,6 +234,43 @@ Every resolved parameter is logged with its source (see [Logging](#logging)).
 #### Important: Environment Variables Are Immutable
 
 Environment variables are set at **pod creation time** and cannot be changed for a running workspace. Changing env var values in the DevWorkspace spec requires a workspace restart (stop and start). For runtime tuning without restart, users can modify the `.noidle` file (which is hot-reloaded) within admin-defined bounds.
+
+### Activity Sources
+
+CLI Watcher detects activity through pluggable **activity sources** — each one watches a different kind of channel and reports whether it's currently active. On every check cycle, CLI Watcher scans the enabled sources in order and reports a single activity tick as soon as the first one reports active (no need to check the rest that cycle).
+
+| Source | Default | What it watches |
+|---|---|---|
+| `tty` | **on** | TTY-attached user processes (the original detection strategy — see [Activity Detection](#activity-detection) below). |
+| `codex-app-server-api` | off (opt-in) | A running `codex app-server` instance, via its own JSON-RPC control socket (`thread/loaded/list` + `thread/read`'s `updatedAt` field — live-tested as the only reliable per-turn signal; `status` is diagnostic-only, see below). No image provisioning or root needed — only requires the app-server's `--listen unix://...` socket to be reachable. This source honors `activityWindow` (active whenever any loaded thread's `updatedAt` is within the window, same convention as `tty`) — it does not honor `gracePeriod`/`maxProcessAge`. |
+
+Which sources run is admin-only — same posture as `enabled`, since this controls what CLI Watcher is allowed to introspect, not per-project idling policy. Not configurable via `.noidle`.
+
+#### `CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES` syntax
+
+Comma-separated list of `name` or `name:flag` entries:
+
+```
+CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES=tty,codex-app-server-api
+CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES=codex-app-server-api             # tty still runs — see below
+CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES=tty:disabled               # turn off a default-on source
+```
+
+- **Name**: case-insensitive, must match `^[A-Za-z0-9._/@#$&-]+$` (letters, digits, `.`, `_`, `/`, `@`, `#`, `$`, `&`, `-`). Invalid names/entries are dropped with a warning — CLI Watcher never crashes/exits over a config typo.
+- **Flag** (optional, after a `:`): `enabled`, `disabled`, `true`, or `false` (case-insensitive). No flag means `enabled`.
+- **Unknown names**: warned about (with the list of valid names) and ignored.
+- **Duplicates**: warned about; the first occurrence wins.
+
+#### Resolution order (admin-controllable)
+
+The variable controls **both** which sources are active and the order they're scanned in, via a two-pass rule:
+
+1. **Explicit pass**: sources you list, in the exact order given.
+2. **Implicit pass**: any default-on source (currently just `tty`) you *didn't* mention, appended after, in its built-in registry order.
+
+So `CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES=codex-app-server-api` scans `codex-app-server-api` first, then `tty` (still on by default, just unmentioned). To turn `tty` off entirely, you must say so explicitly: `codex-app-server-api,tty:disabled`. Leaving the variable unset entirely behaves identically to mentioning no sources at all — both just run the default-on set in registry order.
+
+The resolved list is always logged at startup (see [Logging](#logging)) — copy-paste the exact names shown there if you're unsure what's valid.
 
 ### User Configuration (`.noidle` File)
 
@@ -593,7 +632,20 @@ CLI Watcher:   CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW = 15m0s
 CLI Watcher:   CLI_ACTIVITY_TRACKER_GRACE_PERIOD not set
 CLI Watcher:   CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE not set
 CLI Watcher:   CLI_ACTIVITY_TRACKER_VERBOSE not set (default: false)
+CLI Watcher: Compiled-in activity sources:
+CLI Watcher:   tty
+CLI Watcher:   codex-app-server-api
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES not set (default: tty)
+CLI Watcher: Activity source scan order: tty
 ```
+
+If `CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES` names an unknown source or a malformed entry, a warning is logged right here, e.g.:
+
+```
+CLI Watcher: Unknown activity source "codex" in CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES (valid: tty, codex-app-server-api), ignoring
+```
+
+(A common mistake: the source is named `codex-app-server-api`, not `codex`.)
 
 ### Config Load: Resolved Values with Source
 
@@ -641,7 +693,13 @@ CLI Watcher:   Detection period: 30s
 CLI Watcher:   Activity window: 15m0s
 CLI Watcher:   Grace period: 4m30s
 CLI Watcher:   Max process age: 6h0m0s (safety limit)
-CLI Watcher: Detected CLI command: helm — reporting activity tick
+CLI Watcher: [tty] Detected activity: helm — reporting activity tick
+```
+
+The `[source-name]` prefix identifies which activity source detected it — useful once more than one is enabled, e.g. with `codex-app-server-api` also active:
+
+```
+CLI Watcher: [codex-app-server-api] Detected activity: codex-app-server-api (pid 12345, socket /home/user/.codex/app-server-control/app-server-control.sock) — reporting activity tick
 ```
 
 Use DEBUG level for detailed process scanning:
@@ -658,10 +716,29 @@ By default, detailed activity-detection reasoning (which process was detected, w
 Set `CLI_ACTIVITY_TRACKER_VERBOSE=true` to promote just the CLI Watcher's activity-detection messages to Info level, without touching the global log level:
 
 ```
-CLI Watcher: Detected CLI command: helm — reporting activity tick
+CLI Watcher: [tty] Detected activity: helm — reporting activity tick
 CLI Watcher: Process vi (PID 12345) auto-detected as interactive (default policy)
 CLI Watcher: Process vi (PID 12345) is interactive with recent activity (default policy)
 CLI Watcher: Process npm (PID 12346) is in config ignored list, skipping
+```
+
+For `codex-app-server-api`, verbose mode logs almost its entire scan reasoning — not just the final outcome — since there's no file or hook event log an admin could otherwise inspect to sanity-check "is this source even seeing my app-server": the loaded-thread-ID list, each thread's `status`/`activeFlags`/`updatedAt` as it's checked, a per-thread `thread/read` failure (without aborting the rest), and the freshness decision either way. `connected` is logged once per fresh connection (not on every scan, since the connection is cached across ticks).
+
+**The activity decision is based on `updatedAt` freshness, not `status`.** `status`/`activeFlags` are logged for diagnostic context only (e.g. spotting `systemError`) — live testing found `status` is never reliably observable as `active` via `thread/read` even polling every 5 seconds through real completed interactions, while `updatedAt` precisely tracks each turn's real completion time (cross-checked against `thread/turns/list`'s per-turn `completedAt`). See the activity-sources-plan project history for the full investigation.
+
+```
+CLI Watcher: codex-app-server-api (pid 12345, socket /home/user/.codex/app-server-control/app-server-control.sock): connected
+CLI Watcher: codex-app-server-api (pid 12345, socket ...): 1 loaded thread(s): [01a08835-2ff8-7571-8a8c-d2bc17cce158]
+CLI Watcher: codex-app-server-api (pid 12345, socket ...): thread 01a08835-2ff8-7571-8a8c-d2bc17cce158 status=idle activeFlags=[] updatedAt=1790875500
+CLI Watcher: codex-app-server-api (pid 12345, socket ...): thread 01a08835-2ff8-7571-8a8c-d2bc17cce158 updated 12s ago (within 20m30s activity window) - reporting active
+CLI Watcher: [codex-app-server-api] Detected activity: codex-app-server-api (pid 12345, socket /home/user/.codex/app-server-control/app-server-control.sock) — reporting activity tick
+```
+
+Once no loaded thread's `updatedAt` is within the window:
+
+```
+CLI Watcher: codex-app-server-api (pid 12345, socket ...): thread 01a08835-2ff8-7571-8a8c-d2bc17cce158 status=idle activeFlags=[] updatedAt=1790875500
+CLI Watcher: codex-app-server-api (pid 12345, socket ...): most recently updated thread 01a08835-2ff8-7571-8a8c-d2bc17cce158 was updated 25m0s ago, outside 20m30s activity window - none active
 ```
 
 ## Upgrading from Previous Versions
@@ -964,7 +1041,7 @@ sleep 1800 &
 # Watch logs in another terminal
 tail -f /checode/entrypoint-logs.txt
 
-# Expected: "Detected CLI command: sleep — reporting activity tick" every 15s
+# Expected: "[tty] Detected activity: sleep — reporting activity tick" every 15s
 ```
 
 **Cleanup**: `pkill sleep`
@@ -1115,7 +1192,7 @@ watchedCommands:
 5. **Watch logs** - you should see:
    ```
    CLI Watcher: Config reloaded from /tmp/.noidle.quicktest
-   CLI Watcher: Detected CLI command: sleep — reporting activity tick
+   CLI Watcher: [tty] Detected activity: sleep — reporting activity tick
    ```
 
 6. **Cleanup**: Stop the server using `stop-exec-server` command
@@ -1144,12 +1221,12 @@ go test ./timeout -cover
 ```
 
 **Note on test coverage:**
-- **Unit tests cover pure functions** (parsing, configuration, validation, defaults, YAML unmarshaling, env var loading, ceiling enforcement)
-- **Core detection logic is untested** (process tree walking, TTY analysis, interactive process detection, `isWatchedProcessRunning`, `isUserInitiatedProcess`)
+- **Unit tests cover pure functions** (parsing, configuration, validation, defaults, YAML unmarshaling, env var loading, ceiling enforcement, activity-source selection/ordering (`parseActivitySourcesEnv`, `resolveActiveActivitySources`), codex-app-server cmdline matching/env-fallback logic, and `codex-app-server-api`'s JSON-RPC request/response marshaling and active-thread decision logic — including an integration-style test against a fake codex app-server served over a real Unix socket, see `codex_app_server_api_test.go`)
+- **Core detection logic is untested by the automated suite** (process tree walking, TTY analysis, interactive process detection in `activity_source_tty.go` — the `(*ttyActivitySource).Scan` method and its helpers)
 
 **Why core detection logic requires manual testing:**
 - Requires real `/proc` filesystem (not available in standard Go test environment)
 - Needs multiple process scenarios (shells, interactive CLIs, work processes, TTY states)
 - Depends on actual system process behavior and file descriptor states
 
-**For detection logic verification**: Use the manual test scenarios described above with real processes in a containerized development environment.
+**For detection logic verification**: Use the manual test scenarios described above with real processes in a containerized development environment. For `codex-app-server-api`, start a real `codex app-server --listen unix://...` instance, set `CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES=codex-app-server-api` and `CLI_ACTIVITY_TRACKER_VERBOSE=true`, and confirm in the logs (see [Verbose Activity Logging](#verbose-activity-logging)) that activity ticks track a live conversation's `updatedAt` timestamp — appearing shortly after each turn completes, and continuing to appear until `activityWindow` elapses after the last turn's completion (not gated on `status`, which was found live-untrustworthy as a polling signal — see that section for why).
