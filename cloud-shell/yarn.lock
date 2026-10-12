@@ -918,7 +918,7 @@ __metadata:
     style-loader: "npm:^2.0.0"
     ts-loader: "npm:^8.4.0"
     typescript: "npm:4.9.5"
-    vscode-uri: "npm:^2.1.1"
+    vscode-uri: "npm:^3.1.0"
     vscode-ws-jsonrpc: "npm:^0.1.1"
     webpack: "npm:^4.0.0"
     webpack-cli: "npm:^3.2.1"
@@ -4394,10 +4394,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-uri@npm:^2.1.1":
-  version: 2.1.2
-  resolution: "vscode-uri@npm:2.1.2"
-  checksum: 10c0/4ed01e79f8caee5518d7dce567280001a00c87ff75c29421ac3693c735834f17950e79f818981c591e58c6efe681e13928470037b6ae75c948bec9b398e4c8db
+"vscode-uri@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "vscode-uri@npm:3.1.0"
+  checksum: 10c0/5f6c9c10fd9b1664d71fab4e9fbbae6be93c7f75bb3a1d9d74399a88ab8649e99691223fd7cef4644376cac6e94fa2c086d802521b9a8e31c5af3e60f0f35624
   languageName: node
   linkType: hard
 
