@@ -15,8 +15,7 @@
             "program": "${workspaceFolder}",
             "cwd": "${workspaceFolder}",
             "args": [
-                "--url", "0.0.0.0:3130",
-                "--static", "${workspaceFolder}/cloud-shell"
+                "--url", "0.0.0.0:3130"
             ]
         }
     ]

@@ -17,12 +17,6 @@ updates:
     schedule:
       interval: "weekly"
 
-  # Enable version updates for npm
-  - package-ecosystem: "npm"
-    directory: "/cloud-shell"
-    schedule:
-      interval: "daily"
-
   # Enable version updates for go
   - package-ecosystem: "gomod"
     directory: "/"

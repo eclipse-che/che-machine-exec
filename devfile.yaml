@@ -18,10 +18,6 @@ components:
 
   - container:
       endpoints:
-        - name: cloud-shell
-          targetPort: 3130
-          exposure: public
-          protocol: http
         - exposure: none
           name: debug
           targetPort: 5858
@@ -51,16 +47,6 @@ components:
       memoryLimit: 2.5Gi
       mountSources: true
     name: dev
-
-  - name: node
-    container:
-      image: docker.io/node:22-alpine
-      args:
-        - tail
-        - '-f'
-        - /dev/null
-      mountSources: true
-      memoryLimit: 1.5Gi
 
 commands:
   - id: compile
@@ -106,32 +92,6 @@ commands:
         pid=$(pidof che-machine-exec) && kill ${pid} &&
         printf "\033[32mDone.\033[0m" ||
         printf "\033[32mNothing to stop... Done.\033[0m"
-      group:
-        kind: run
-        isDefault: false
-
-  - id: build-cloud-shell
-    exec:
-      component: node
-      commandLine: >-
-        export HOME=/projects &&
-        export GOPATH=/projects/.go &&
-        export GOMODCACHE=/var/tmp/.go/pkg/mod &&
-        export GOCACHE=/var/tmp/.go/build &&
-        export XDG_CACHE_HOME=/var/tmp/.go/xdg &&
-        YARN_NETWORK_CONCURRENCY=1 corepack yarn install --immutable &&
-        corepack yarn run build
-      workingDir: /projects/che-machine-exec/cloud-shell
-      group:
-        kind: build
-        isDefault: false
-
-  - id: start-cloud-shell
-    exec:
-      component: dev
-      commandLine: >-
-        ./che-machine-exec --url 0.0.0.0:3130 --static /projects/che-machine-exec/cloud-shell
-      workingDir: /projects/che-machine-exec
       group:
         kind: run
         isDefault: false

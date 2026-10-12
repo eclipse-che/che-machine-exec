@@ -44,13 +44,6 @@ func main() {
 
 	r := gin.Default()
 
-	if cfg.StaticPath != "" {
-		r.StaticFS("/static", http.Dir(cfg.StaticPath))
-		r.GET("/", func(c *gin.Context) {
-			c.Redirect(http.StatusMovedPermanently, "/static")
-		})
-	}
-
 	// connect to exec api endpoint(websocket with json-rpc)
 	r.GET("/connect", func(c *gin.Context) {
 		websocket.HandleConnect(c)

@@ -79,15 +79,6 @@ COPY . .
 ENV CGO_ENABLED=1
 RUN GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
 
-FROM docker.io/node:22-bookworm as cloud_shell_builder
-RUN corepack enable && corepack prepare yarn@4.0.0 --activate
-COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
-WORKDIR cloud-shell-src
-RUN yarn install --immutable && \
-    yarn run build && \
-    mkdir /app && \
-    cp -rf index.html dist node_modules /app
-
 FROM scratch
 COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=go_builder /etc/passwd /etc/passwd
@@ -97,5 +88,4 @@ USER machine-exec
 COPY --from=ubi8-machineexec-builder --chown=0:0 /rootfs/go/bin/che-machine-exec /go/ubi8/bin/che-machine-exec
 COPY --from=ubi9-machineexec-builder --chown=0:0 /rootfs/go/bin/che-machine-exec /go/ubi9/bin/che-machine-exec
 COPY --from=go_builder --chown=0:0 /go/bin/che-machine-exec /go/bin/che-machine-exec
-COPY --from=cloud_shell_builder /app /cloud-shell
-ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
+ENTRYPOINT ["/go/bin/che-machine-exec"]

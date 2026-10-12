@@ -25,8 +25,6 @@ import (
 var (
 	// URL che-machine-exec api server url
 	URL string
-	// StaticPath path to serve static resources
-	StaticPath string
 	// UseBearerToken - flag to enable/disable using bearer token to avoid users impersonation while accessing to k8s API.
 	// if enabled - authenticated user ID must be configured
 	UseBearerToken bool
@@ -58,13 +56,6 @@ func init() {
 		defaultURLValue = urlEnvValue
 	}
 	flag.StringVar(&URL, "url", defaultURLValue, "Host:Port address.")
-
-	defaultStaticPath := ""
-	staticPathEnvValue, isFound := os.LookupEnv("STATIC_RESOURCES_PATH")
-	if isFound && len(staticPathEnvValue) > 0 {
-		defaultStaticPath = staticPathEnvValue
-	}
-	flag.StringVar(&StaticPath, "static", defaultStaticPath, "/home/user/frontend - absolute path to folder with static resources.")
 
 	defaultUseTokenValue := false
 	useTokenEnv := "USE_BEARER_TOKEN"
@@ -168,7 +159,6 @@ func Print() {
 
 	logrus.Infof("==> Debug level %s", logrus.GetLevel().String())
 	logrus.Infof("==> Application url %s", URL)
-	logrus.Infof("==> Absolute path to folder with static resources %s", StaticPath)
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
 	logrus.Infof("==> Pod selector: %s", PodSelector)
 	if UseBearerToken {
