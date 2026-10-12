@@ -919,7 +919,7 @@ __metadata:
     ts-loader: "npm:^8.4.0"
     typescript: "npm:4.9.5"
     vscode-uri: "npm:^2.1.1"
-    vscode-ws-jsonrpc: "npm:^0.1.1"
+    vscode-ws-jsonrpc: "npm:^3.5.0"
     webpack: "npm:^4.0.0"
     webpack-cli: "npm:^3.2.1"
     xterm: "npm:^4.3.0"
@@ -4387,10 +4387,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-jsonrpc@npm:^4.1.0-next":
-  version: 4.1.0-next.3
-  resolution: "vscode-jsonrpc@npm:4.1.0-next.3"
-  checksum: 10c0/8609a7cc79b77c8a6ef2f130eb14f2b4e746a2e1c919ac085cf58383f2bff893ad90ab6b952bdf9a3c9cb37ac72dd2c5ad94ffc9c4e3195d36bf9e1cae5d11b9
+"vscode-jsonrpc@npm:~8.2.1":
+  version: 8.2.1
+  resolution: "vscode-jsonrpc@npm:8.2.1"
+  checksum: 10c0/595e07f779112d979d9cd37a00e4b973c39da09dd7c35b149f9fb7857c87db00d0ece7772c5a6f65cc19e38afc4fc64f8130d2f0e6b5f7fc160a0fc6b94e8c07
   languageName: node
   linkType: hard
 
@@ -4401,12 +4401,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-ws-jsonrpc@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "vscode-ws-jsonrpc@npm:0.1.1"
+"vscode-ws-jsonrpc@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "vscode-ws-jsonrpc@npm:3.5.0"
   dependencies:
-    vscode-jsonrpc: "npm:^4.1.0-next"
-  checksum: 10c0/6146d7dc24f789da94c2fec483052391d676034eaf4e8a077f8d17cb11b6a0b5bed978f4357d774af5c3e3cd862f8605de5581ba32cdf6dc11a84646818fb275
+    vscode-jsonrpc: "npm:~8.2.1"
+  checksum: 10c0/be2297cddeb3850218b1c4529345e2335ead38f8114036eb02f754911a833af6d18f3b7f19ee3596692386f8f00f7d94cb85f3e65ff44381525f0e174b249cfb
   languageName: node
   linkType: hard
 
