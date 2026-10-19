@@ -12,6 +12,9 @@
 
 name: Machine Exec Next Build
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
