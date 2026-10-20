@@ -11,6 +11,10 @@
 #
 
 name: Che Machine Exec
+
+permissions:
+  contents: read
+
 on: [pull_request]
 
 jobs:

@@ -11,6 +11,10 @@
 #
 
 name: Code Coverage Report
+
+permissions:
+  contents: read
+
 on: [push]
 jobs:
   build-and-deploy:

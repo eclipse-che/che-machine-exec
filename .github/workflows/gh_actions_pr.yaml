@@ -12,6 +12,9 @@
 
 name: Docker Build PR
 
+permissions:
+  contents: read
+
 on: pull_request
 jobs:
   build:
