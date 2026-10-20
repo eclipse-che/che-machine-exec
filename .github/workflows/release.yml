@@ -12,6 +12,9 @@
 
 name: Release Che Machine Exec
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     # Inputs the workflow accepts.
