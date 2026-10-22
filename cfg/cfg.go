@@ -13,6 +13,7 @@
 package cfg
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -31,6 +32,13 @@ var (
 	UseBearerToken bool
 	// AuthenticatedUserID is a user's ID who is authenticated to use API. Is ignored if useBearerToken is disabled
 	AuthenticatedUserID string
+	// NoAuth explicitly disables authentication. It is mutually exclusive with
+	// UseBearerToken. One of the two must be chosen explicitly, otherwise the
+	// server refuses to start (see Parse), so there is no silent unauthenticated
+	// default. Running with NoAuth and no AllowedOrigins leaves the API open to
+	// any client that can reach the port, so it must only be used on a loopback
+	// or otherwise trusted network (as che-code does over 127.0.0.1).
+	NoAuth bool
 
 	// IdleTimeout is a inactivity period after which workspace should be stopped
 	// Default value is 30 minutes
@@ -106,6 +114,18 @@ func init() {
 		}
 	}
 	flag.BoolVar(&UseBearerToken, "use-bearer-token", defaultUseTokenValue, "to avoid users impersonation while accessing to k8s API. When enabled - authenticated user id must be configured")
+
+	defaultNoAuthValue := false
+	noAuthEnv := "NO_AUTH"
+	noAuthEnvValue, isFound := os.LookupEnv(noAuthEnv)
+	if isFound && len(noAuthEnvValue) > 0 {
+		if v, err := strconv.ParseBool(noAuthEnvValue); err == nil {
+			defaultNoAuthValue = v
+		} else {
+			logrus.Errorf("Invalid value '%s' for env variable key '%s'. Value should be boolean", noAuthEnvValue, noAuthEnv)
+		}
+	}
+	flag.BoolVar(&NoAuth, "no-auth", defaultNoAuthValue, "Explicitly disable authentication. Mutually exclusive with -use-bearer-token; one of the two must be set. Without an allowed-origins list the API is open to any client that can reach the port, so -no-auth must only be used on a loopback or otherwise trusted network.")
 
 	defaultAuthenticatedUserID := ""
 	authenticatedUserID, isFound := os.LookupEnv("AUTHENTICATED_USER_ID")
@@ -187,6 +207,8 @@ func Parse() {
 
 	AllowedOrigins = allowedOriginsFlag
 
+	validateAuthMode()
+
 	if PodSelector == "" {
 		logrus.Fatal("pod selector is required. Configure custom pod selector or che workspace/devworkspace id env var to activate defaults")
 	}
@@ -196,6 +218,36 @@ func Parse() {
 	}
 }
 
+// validateAuthMode enforces that an authentication mode is chosen explicitly, so
+// che-machine-exec never starts in a silently unauthenticated state. Exactly one
+// of -use-bearer-token or -no-auth must be set, otherwise the server refuses to
+// start. When authentication is disabled it warns about the exposure risk.
+func validateAuthMode() {
+	if err := checkAuthMode(NoAuth, UseBearerToken); err != nil {
+		logrus.Fatal(err)
+	}
+
+	if NoAuth {
+		if len(AllowedOrigins) > 0 {
+			logrus.Warnf("Authentication is DISABLED (-no-auth). Access is restricted to the configured origins (%s), which only blocks browsers; a direct client that omits the Origin header is not stopped. Do not rely on this alone on an untrusted network.", strings.Join(AllowedOrigins, ", "))
+		} else {
+			logrus.Warn("Authentication is DISABLED (-no-auth) and no allowed origins are configured. The API is open to any client that can reach the port. Only use this on a loopback or otherwise trusted network - do NOT expose this port, especially in production.")
+		}
+	}
+}
+
+// checkAuthMode returns an error when the authentication mode is not chosen
+// explicitly. Exactly one of noAuth or useBearer must be set.
+func checkAuthMode(noAuth, useBearer bool) error {
+	switch {
+	case noAuth && useBearer:
+		return errors.New("-no-auth and -use-bearer-token are mutually exclusive: choose exactly one authentication mode")
+	case !noAuth && !useBearer:
+		return errors.New("no authentication mode selected: start che-machine-exec with -use-bearer-token (recommended) or, only on a loopback/trusted network, with -no-auth")
+	}
+	return nil
+}
+
 // Print configuration information
 func Print() {
 	logrus.Info("Exec containers configuration:")
@@ -203,6 +255,7 @@ func Print() {
 	logrus.Infof("==> Debug level %s", logrus.GetLevel().String())
 	logrus.Infof("==> Application url %s", URL)
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
+	logrus.Infof("==> Authentication disabled (no-auth): %t", NoAuth)
 	logrus.Infof("==> Pod selector: %s", PodSelector)
 	if len(AllowedOrigins) > 0 {
 		logrus.Infof("==> Allowed WebSocket origins: %s", strings.Join(AllowedOrigins, ", "))
