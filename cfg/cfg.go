@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -47,7 +48,44 @@ var (
 	// PodSelector set of labels to be used as selector for getting workspace pod.
 	// Default value is che.workspace_id=${CHE_WORKSPACE_ID}
 	PodSelector string
+
+	// AllowedOrigins is an optional list of browser origins (scheme://host[:port])
+	// that are allowed to open the WebSocket endpoints. It is a defense-in-depth
+	// measure against Cross-Site WebSocket Hijacking. A request with no Origin
+	// header (non-browser clients) or a same-origin request is always allowed, so
+	// leaving this empty keeps the current behavior for the supported deployments
+	// (che-code connects over loopback without an Origin header).
+	AllowedOrigins []string
+
+	// allowedOriginsFlag backs both the ALLOWED_ORIGINS env var (default) and the
+	// -allowed-origins flag. Its value is copied into AllowedOrigins by Parse(),
+	// after flag.Parse() has run.
+	allowedOriginsFlag stringSliceFlag
 )
+
+// stringSliceFlag is a flag.Value that parses a comma-separated list of strings.
+type stringSliceFlag []string
+
+func (s *stringSliceFlag) String() string {
+	return strings.Join(*s, ",")
+}
+
+func (s *stringSliceFlag) Set(value string) error {
+	*s = parseAllowedOrigins(value)
+	return nil
+}
+
+// parseAllowedOrigins splits a comma-separated list, trimming whitespace and
+// dropping empty entries. A blank input yields an empty (nil) slice.
+func parseAllowedOrigins(value string) []string {
+	var origins []string
+	for _, origin := range strings.Split(value, ",") {
+		if trimmed := strings.TrimSpace(origin); trimmed != "" {
+			origins = append(origins, trimmed)
+		}
+	}
+	return origins
+}
 
 func init() {
 	defaultURLValue := ":4444"
@@ -120,6 +158,9 @@ func init() {
 	}
 	flag.StringVar(&PodSelector, "pod-selector", defaultPodSelector, "Selector that is used to find workspace pod. Default value is `che.workspace_id=${CHE_WORKSPACE_ID}` or controller.devfile.io/devworkspace_id={DEVWORKSPACE_ID} if che env var is not defined")
 
+	allowedOriginsFlag = parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
+	flag.Var(&allowedOriginsFlag, "allowed-origins", "Comma-separated list of browser origins (scheme://host[:port]) allowed to open the WebSocket endpoints. Requests with no Origin header or same-origin requests are always allowed. Defaults to the ALLOWED_ORIGINS env var.")
+
 	setLogLevel()
 }
 
@@ -144,6 +185,8 @@ func setLogLevel() {
 func Parse() {
 	flag.Parse()
 
+	AllowedOrigins = allowedOriginsFlag
+
 	if PodSelector == "" {
 		logrus.Fatal("pod selector is required. Configure custom pod selector or che workspace/devworkspace id env var to activate defaults")
 	}
@@ -161,6 +204,11 @@ func Print() {
 	logrus.Infof("==> Application url %s", URL)
 	logrus.Infof("==> Use bearer token: %t", UseBearerToken)
 	logrus.Infof("==> Pod selector: %s", PodSelector)
+	if len(AllowedOrigins) > 0 {
+		logrus.Infof("==> Allowed WebSocket origins: %s", strings.Join(AllowedOrigins, ", "))
+	} else {
+		logrus.Infof("==> Allowed WebSocket origins: <none configured; only same-origin and origin-less requests accepted>")
+	}
 	if UseBearerToken {
 		logrus.Infof("==> Authenticated user ID: %s", AuthenticatedUserID)
 	}
