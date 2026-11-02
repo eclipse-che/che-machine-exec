@@ -35,6 +35,10 @@ func HandleKubeConfig(c *gin.Context) {
 		}
 	}
 
+	if rest.RejectCrossSiteContentType(c) {
+		return
+	}
+
 	var initConfigParams model.InitConfigParams
 	if c.BindJSON(&initConfigParams) != nil {
 		rest.WriteResponse(c, http.StatusInternalServerError, "Failed to convert body args into internal structure")

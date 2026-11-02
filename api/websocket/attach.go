@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/eclipse-che/che-machine-exec/auth"
+	"github.com/eclipse-che/che-machine-exec/common/origin"
 	"github.com/eclipse-che/che-machine-exec/common/rest"
 	"github.com/eclipse-che/che-machine-exec/exec"
 	"github.com/gin-gonic/gin"
@@ -27,9 +28,7 @@ import (
 
 var (
 	upgrader = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
+		CheckOrigin: origin.IsOriginAllowed,
 	}
 )
 
