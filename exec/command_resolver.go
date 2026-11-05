@@ -20,6 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/eclipse-che/che-machine-exec/api/model"
+	"github.com/eclipse-che/che-machine-exec/api/validation"
 	"github.com/eclipse-che/che-machine-exec/client"
 	exec_info "github.com/eclipse-che/che-machine-exec/exec-info"
 	"github.com/eclipse-che/che-machine-exec/shell"
@@ -78,6 +79,9 @@ func (cmdRslv *CmdResolver) ResolveCmd(exec model.MachineExec, containerInfo *mo
 			if res, err := url.Parse(exec.Cwd); err == nil {
 				exec.Cwd = res.Path
 			}
+		}
+		if err := validation.ValidateNoShellMetacharacters(exec.Cwd, "cwd"); err != nil {
+			return nil, err
 		}
 		cdCommand = fmt.Sprintf("cd %s; ", exec.Cwd)
 	}
