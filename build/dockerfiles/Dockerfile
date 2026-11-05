@@ -47,7 +47,7 @@ RUN GOOS=linux go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o ch
 #########################################################################
 ############################# BUILD: alpine-machine-exec ################
 #########################################################################
-FROM docker.io/golang:1.26.10-alpine as go_builder
+FROM docker.io/golang:1.26.10-alpine AS go_builder
 
 ENV USER=machine-exec
 ENV UID=12345
