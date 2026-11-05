@@ -226,6 +226,35 @@ func TestShouldUseDefaultShellToLaunchCommandWithCwdWhenShellIsNotDefined(t *tes
 	assert.Equal(t, []string{"sh", "-c", "cd /projects/testprj; yarn run build"}, resolvedCmd)
 }
 
+func TestShouldRejectCwdWithPercentEncodedShellMetacharacters(t *testing.T) {
+	// Regression test for the incomplete fix of CVE-2026-114278 / GHSA-rq96-f9wc-rppm.
+	// url.Parse percent-decodes the file:// path, so encoded shell metacharacters
+	// must not survive into the resolved "sh -c" command.
+	maliciousCwds := []string{
+		"file:///dev/null%3Bid",       // %3B -> ;
+		"file:///tmp%7Cid",            // %7C -> |
+		"file:///tmp/%60id%60",        // %60 -> `
+		"file:///tmp/%24%28id%29",     // %24%28..%29 -> $(..)
+		"file:///tmp%0Aid",            // %0A -> newline
+	}
+
+	for _, cwd := range maliciousCwds {
+		t.Run(cwd, func(t *testing.T) {
+			exec := model.MachineExec{
+				Type: "shell",
+				Cmd:  []string{"sh", "-c", "echo terminal_ready"},
+				Cwd:  cwd,
+			}
+
+			cmdResolver := &CmdResolver{&mocks.ContainerShellDetector{}, &mocks.InfoExecCreator{}}
+			resolvedCmd, err := cmdResolver.ResolveCmd(exec, containerInfo)
+
+			assert.Error(t, err, "expected ResolveCmd to reject percent-encoded injection in cwd")
+			assert.Nil(t, resolvedCmd)
+		})
+	}
+}
+
 func TestThrowAnErrorWhenEvenDefaultShellDoesNotWork(t *testing.T) {
 	shellDetectorMock := &mocks.ContainerShellDetector{}
 	shellDetectorMock.On("DetectShell", containerInfo).Return("/sbin/nologin", nil)
