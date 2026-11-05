@@ -16,7 +16,7 @@
 ############################# BUILD: ubi8-machine-exec ##################
 #########################################################################
 
-FROM registry.access.redhat.com/ubi8/go-toolset:1782923914 AS ubi8-machineexec-builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.26.10-1793808960 AS ubi8-machineexec-builder
 ENV GOPATH=/go/
 ENV CGO_ENABLED=1
 USER root
@@ -32,7 +32,7 @@ RUN GOOS=linux go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o ch
 ############################# BUILD: ubi9-machine-exec ##################
 #########################################################################
 
-FROM registry.access.redhat.com/ubi9/go-toolset:9.8-1783442369 AS ubi9-machineexec-builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.26.10-1793736700 AS ubi9-machineexec-builder
 ENV GOPATH=/go/
 ENV CGO_ENABLED=1
 USER root
@@ -47,7 +47,7 @@ RUN GOOS=linux go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o ch
 #########################################################################
 ############################# BUILD: alpine-machine-exec ################
 #########################################################################
-FROM docker.io/golang:1.25.7-alpine as go_builder
+FROM docker.io/golang:1.26.10-alpine AS go_builder
 
 ENV USER=machine-exec
 ENV UID=12345
