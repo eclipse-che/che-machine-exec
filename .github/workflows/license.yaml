@@ -22,10 +22,10 @@ jobs:
     name: License
     runs-on: ubuntu-22.04
     steps:
-      - name: Set up Go 1.25
+      - name: Set up Go 1.26
         uses: actions/setup-go@v6
         with:
-          go-version: 1.25.7
+          go-version: 1.26.10
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Check Eclipse license headers
