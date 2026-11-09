@@ -1,6 +1,6 @@
 # CLI Watcher - Prevent Workspace Idling During Long-Running Commands
 
-The CLI Watcher monitors running CLI processes and prevents workspace idling during active development. This is particularly useful in containerized development environments like Eclipse Che where long-running deployments, builds, or interactive sessions shouldn't trigger automatic workspace shutdown.
+The CLI Watcher monitors running CLI processes and prevents workspace idling during active development. This is particularly useful in containerized development environments like Eclipse Che where long-running deployments, builds, or interactive sessions shouldn't trigger automatic workspace shutdown. The CLI Watcher is **enabled by default**; administrators can opt out via `CLI_ACTIVITY_TRACKER_ENABLED=false`.
 
 ## How It Works
 
@@ -39,7 +39,7 @@ Cluster and DevWorkspace administrators control CLI Watcher behavior through env
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `CLI_ACTIVITY_TRACKER_ENABLED` | boolean | `false` | Master switch. Set to `true` to enable CLI Watcher cluster-wide. |
+| `CLI_ACTIVITY_TRACKER_ENABLED` | boolean | `true` | Master switch. Enabled by default; set to `false` to disable CLI Watcher cluster-wide. |
 | `CLI_ACTIVITY_TRACKER_CHECK_PERIOD` | duration | `60s` | How often to scan `/proc` for active processes. |
 | `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW` | duration | adaptive (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)) | How long to wait for input from interactive processes before considering them idle. |
 | `CLI_ACTIVITY_TRACKER_GRACE_PERIOD` | duration | adaptive (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)) | All processes unconditionally prevent idling when younger than this. |
@@ -67,7 +67,7 @@ The recommended way to configure CLI Watcher cluster-wide is through the CheClus
 
 | Field (under `spec.devEnvironments.cliActivityTracker`) | Type | Default | Maps to env var |
 |---|---|---|---|
-| `enabled` | bool | `false` | `CLI_ACTIVITY_TRACKER_ENABLED` |
+| `enabled` | bool | `true` | `CLI_ACTIVITY_TRACKER_ENABLED` |
 | `secondsOfCheckPeriod` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_CHECK_PERIOD` |
 | `secondsOfActivityWindow` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW` |
 | `secondsOfGracePeriod` | int32 | not set (adaptive) | `CLI_ACTIVITY_TRACKER_GRACE_PERIOD` |
@@ -88,7 +88,7 @@ metadata:
 spec:
   devEnvironments:
     cliActivityTracker:
-      enabled: true
+      enabled: true                   # default; set to false to disable
       secondsOfCheckPeriod: 60
       secondsOfActivityWindow: 900    # 15 minutes
       secondsOfGracePeriod: 180       # 3 minutes
@@ -101,9 +101,11 @@ Apply with:
 kubectl apply -f cli-watcher-config.yaml
 ```
 
-##### Minimal Example (enable with adaptive defaults)
+##### Minimal Example (disable with default settings)
 
-Save as `cli-watcher-enable.yaml`:
+The CLI Watcher is enabled by default, so the minimal configuration is the opt-out:
+
+Save as `cli-watcher-disable.yaml`:
 
 ```yaml
 apiVersion: org.eclipse.che/v2
@@ -114,13 +116,13 @@ metadata:
 spec:
   devEnvironments:
     cliActivityTracker:
-      enabled: true
+      enabled: false
 ```
 
 Apply with:
 
 ```bash
-kubectl apply -f cli-watcher-enable.yaml
+kubectl apply -f cli-watcher-disable.yaml
 ```
 
 ##### Quick Changes with `kubectl patch`
@@ -128,17 +130,17 @@ kubectl apply -f cli-watcher-enable.yaml
 For one-off changes without a file:
 
 ```bash
-# Enable CLI Watcher with adaptive defaults
-kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
-  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":true}}}}'
-
-# Enable with custom timing
-kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
-  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":true,"secondsOfActivityWindow":900,"secondsOfGracePeriod":180}}}}'
-
-# Disable CLI Watcher
+# Disable CLI Watcher (it is enabled by default)
 kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
   -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":false}}}}'
+
+# Tune timing (the watcher stays enabled by default)
+kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
+  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"secondsOfActivityWindow":900,"secondsOfGracePeriod":180}}}}'
+
+# Re-enable CLI Watcher after disabling it
+kubectl patch checluster/eclipse-che -n eclipse-che --type=merge \
+  -p '{"spec":{"devEnvironments":{"cliActivityTracker":{"enabled":true}}}}'
 ```
 
 ##### Important Notes
@@ -166,13 +168,12 @@ metadata:
     controller.devfile.io/mount-as: env
     controller.devfile.io/mount-on-start: "true"
 data:
-  CLI_ACTIVITY_TRACKER_ENABLED: "true"
   CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW: "15m"
   CLI_ACTIVITY_TRACKER_GRACE_PERIOD: "3m"
   CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE: "4h"
 ```
 
-**Minimal admin configuration** (enable with all defaults):
+**Minimal admin configuration** (disable — opt out of the default):
 
 ```yaml
 apiVersion: v1
@@ -187,7 +188,7 @@ metadata:
     controller.devfile.io/mount-as: env
     controller.devfile.io/mount-on-start: "true"
 data:
-  CLI_ACTIVITY_TRACKER_ENABLED: "true"
+  CLI_ACTIVITY_TRACKER_ENABLED: "false"
 ```
 
 **Important notes**:
@@ -213,8 +214,6 @@ spec:
   template:
     attributes:
       workspaceEnv:
-        - name: CLI_ACTIVITY_TRACKER_ENABLED
-          value: "true"
         - name: CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW
           value: "15m"
 ```
@@ -274,7 +273,7 @@ The resolved list is always logged at startup (see [Logging](#logging)) — copy
 
 ### User Configuration (`.noidle` File)
 
-Users can tune CLI Watcher behavior per-project using a `.noidle` YAML file. This is optional when the administrator has enabled the watcher via `CLI_ACTIVITY_TRACKER_ENABLED`.
+Users can tune CLI Watcher behavior per-project using a `.noidle` YAML file. This is optional — the watcher is enabled by default, and the file only tunes timing and command behavior within admin-defined bounds.
 
 #### Configuration File Locations
 
@@ -298,8 +297,9 @@ enabled: true
 
 **After** (new behavior):
 ```bash
-# Enablement is admin-controlled via environment variable
-CLI_ACTIVITY_TRACKER_ENABLED=true
+# Enablement is admin-controlled via environment variable;
+# the watcher is enabled by default — set to false to opt out
+CLI_ACTIVITY_TRACKER_ENABLED=false
 ```
 
 #### What `.noidle` Still Controls
@@ -439,7 +439,7 @@ The CLI Watcher uses **smart defaults** that adapt to the workspace idle timeout
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `enabled` | `false` | CLI Watcher is disabled by default |
+| `enabled` | `true` | CLI Watcher is enabled by default |
 | `interactive` | `no` | Backward compatible - always prevent idling |
 | `maxProcessAge` | `6h` | Safety limit to prevent indefinite idling prevention |
 | `checkPeriod` | `60s` | Process scan interval |
@@ -668,16 +668,15 @@ CLI Watcher: 'activityWindow' = 10m0s (from .noidle; within admin limit 15m0s)
 CLI Watcher: 'activityWindow' = 15m0s (admin limit; .noidle value 30m0s rejected — exceeds admin ceiling)
 ```
 
-**`.noidle` `enabled` deprecated:**
+**`.noidle` `enabled` deprecated (warning):**
 ```
-CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled' is deprecated — admin-controlled)
-CLI Watcher: 'enabled' = false (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled: true' rejected — deprecated, admin-controlled)
-CLI Watcher: 'enabled' = false (default; .noidle 'enabled: true' rejected — deprecated, use CLI_ACTIVITY_TRACKER_ENABLED env var)
+CLI Watcher: the 'enabled' property in .noidle is deprecated and ignored — remove it from your .noidle config; enablement is controlled by the CLI_ACTIVITY_TRACKER_ENABLED env var
+CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED)
 ```
 
 **Default used (no env var, no `.noidle`):**
 ```
-CLI Watcher: 'enabled' = false (default)
+CLI Watcher: 'enabled' = true (default)
 CLI Watcher: 'activityWindow' = 25m0s (default)
 ```
 
@@ -751,7 +750,7 @@ CLI Watcher: codex-app-server (pid 12345, socket ...): most recently updated thr
 
 **After**: Enablement is controlled exclusively by the `CLI_ACTIVITY_TRACKER_ENABLED` environment variable (or its default). The `.noidle` `enabled` field is **ignored** with a deprecation warning logged.
 
-**Migration**: Ask your cluster administrator to set `CLI_ACTIVITY_TRACKER_ENABLED=true` in the DevWorkspace configuration.
+**Migration**: No action needed — the CLI Watcher is enabled by default. To opt out, ask your cluster administrator to set `CLI_ACTIVITY_TRACKER_ENABLED=false` in the DevWorkspace configuration.
 
 #### 2. Timing Parameters Have Admin Ceilings
 
@@ -781,11 +780,12 @@ CLI Watcher: codex-app-server (pid 12345, socket ...): most recently updated thr
 2. **Review your `watchedCommands` list** - remove `watch`, `top`, `htop` (always ignored now)
 3. **Check timing values** - if admin ceilings are set, your values may be clamped
 
-**If you're an administrator enabling CLI Watcher for the first time:**
+**If you're an administrator:**
 
-1. Set `CLI_ACTIVITY_TRACKER_ENABLED=true` in DevWorkspace env vars
+1. No action needed to enable CLI Watcher — it is enabled by default
 2. Optionally set timing ceilings to enforce policy bounds
-3. Users can create `.noidle` files to tune within your bounds
+3. Set `CLI_ACTIVITY_TRACKER_ENABLED=false` in DevWorkspace env vars to disable it
+4. Users can create `.noidle` files to tune within your bounds
 
 ### Verification
 
@@ -868,6 +868,36 @@ The CPU-usage signal can't distinguish "the user typed something" from "the proc
 
 These scenarios verify that admin env vars correctly control CLI Watcher behavior, enforce ceilings, and produce the expected log output.
 
+**Note**: The CLI Watcher is enabled by default, so scenarios that test other settings omit `CLI_ACTIVITY_TRACKER_ENABLED` — it only needs to be set explicitly to opt out (`false`) or to re-enable after a disable. Scenarios A1 and A2 still set it deliberately, since they test the env var itself.
+
+#### Scenario A0: Default Enablement (No Env Vars, No `.noidle` File)
+
+**Setup**: Do not set any `CLI_ACTIVITY_TRACKER_*` env vars; no `.noidle` file exists.
+
+**Expected startup logs**:
+```
+CLI Watcher: Admin config from environment:
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ENABLED not set (default: true)
+CLI Watcher:   CLI_ACTIVITY_TRACKER_CHECK_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_GRACE_PERIOD not set
+CLI Watcher:   CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE not set
+```
+
+**Expected config resolution logs** (no `.noidle` file):
+```
+CLI Watcher: Config file not found, waiting for it to appear...
+CLI Watcher: 'enabled' = true (default)
+CLI Watcher: 'checkPeriod' = 1m0s (default)
+CLI Watcher: 'activityWindow' = 20m30s (default)
+CLI Watcher: 'gracePeriod' = 4m30s (default)
+CLI Watcher: 'maxProcessAge' = 6h0m0s (default)
+```
+
+**Note**: The adaptive timing values shown (`activityWindow` 20m30s, `gracePeriod` 4m30s) assume a 30-minute workspace idle timeout (`SECONDS_OF_DW_INACTIVITY_BEFORE_IDLING`); they differ for other timeouts (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)).
+
+**Verify**: The watcher is active and scanning processes with no configuration at all.
+
 #### Scenario A1: Enable CLI Watcher via Env Var Only (No `.noidle` File)
 
 **Setup**: No `.noidle` file exists anywhere.
@@ -902,6 +932,8 @@ CLI Watcher: 'gracePeriod' = 4m30s (default)
 CLI Watcher: 'maxProcessAge' = 6h0m0s (default)
 ```
 
+**Note**: The adaptive timing values shown (`activityWindow` 20m30s, `gracePeriod` 4m30s) assume a 30-minute workspace idle timeout (`SECONDS_OF_DW_INACTIVITY_BEFORE_IDLING`); they differ for other timeouts (see [Adaptive Defaults](#adaptive-defaults-calculated-from-workspace-idle-timeout)).
+
 **Verify**: The watcher is active and scanning processes despite no `.noidle` file.
 
 #### Scenario A2: Admin Disables CLI Watcher, User `.noidle` Says `enabled: true`
@@ -918,7 +950,8 @@ export CLI_ACTIVITY_TRACKER_ENABLED=false
 
 **Expected config resolution logs**:
 ```
-CLI Watcher: 'enabled' = false (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled: true' rejected — deprecated, admin-controlled)
+CLI Watcher: the 'enabled' property in .noidle is deprecated and ignored — remove it from your .noidle config; enablement is controlled by the CLI_ACTIVITY_TRACKER_ENABLED env var
+CLI Watcher: 'enabled' = false (from CLI_ACTIVITY_TRACKER_ENABLED)
 CLI Watcher: 'activityWindow' = 20m0s (from .noidle)
 ...
 ```
@@ -936,7 +969,6 @@ maxProcessAge: 12h
 ```
 
 ```bash
-export CLI_ACTIVITY_TRACKER_ENABLED=true
 export CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m
 export CLI_ACTIVITY_TRACKER_GRACE_PERIOD=3m
 export CLI_ACTIVITY_TRACKER_CHECK_PERIOD=45s
@@ -945,7 +977,7 @@ export CLI_ACTIVITY_TRACKER_MAX_PROCESS_AGE=4h
 
 **Expected config resolution logs**:
 ```
-CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED; .noidle 'enabled' is deprecated — admin-controlled)
+CLI Watcher: 'enabled' = true (default)
 CLI Watcher: 'checkPeriod' = 45s (admin limit; .noidle value 2m0s rejected — exceeds admin ceiling)
 CLI Watcher: 'activityWindow' = 15m0s (admin limit; .noidle value 30m0s rejected — exceeds admin ceiling)
 CLI Watcher: 'gracePeriod' = 3m0s (admin limit; .noidle value 10m0s rejected — exceeds admin ceiling)
@@ -963,14 +995,13 @@ gracePeriod: 2m
 ```
 
 ```bash
-export CLI_ACTIVITY_TRACKER_ENABLED=true
 export CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m
 export CLI_ACTIVITY_TRACKER_GRACE_PERIOD=5m
 ```
 
 **Expected config resolution logs**:
 ```
-CLI Watcher: 'enabled' = true (from CLI_ACTIVITY_TRACKER_ENABLED)
+CLI Watcher: 'enabled' = true (default)
 CLI Watcher: 'activityWindow' = 10m0s (from .noidle; within admin limit 15m0s)
 CLI Watcher: 'gracePeriod' = 2m0s (from .noidle; within admin limit 5m0s)
 ```
@@ -979,7 +1010,7 @@ CLI Watcher: 'gracePeriod' = 2m0s (from .noidle; within admin limit 5m0s)
 
 #### Scenario A5: Hot-Reload `.noidle` While Running
 
-**Setup**: Start with `CLI_ACTIVITY_TRACKER_ENABLED=true` and `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m`.
+**Setup**: Start with `CLI_ACTIVITY_TRACKER_ACTIVITY_WINDOW=15m` (the watcher is enabled by default — no need to set `CLI_ACTIVITY_TRACKER_ENABLED`).
 
 1. Create a `.noidle` file with `activityWindow: 10m` - observe "accepted" log
 2. Edit it to `activityWindow: 30m` - observe "rejected" log on next check cycle
@@ -988,6 +1019,8 @@ CLI Watcher: 'gracePeriod' = 2m0s (from .noidle; within admin limit 5m0s)
 **Verify**: Changes take effect on the next check cycle without restart.
 
 ### Testing User Configuration (`.noidle` File)
+
+**Note**: The CLI Watcher is enabled by default, so the scenarios below don't set `CLI_ACTIVITY_TRACKER_ENABLED` — it would only be needed to explicitly disable the watcher (`false`).
 
 #### Monitoring Activity Ticks
 
@@ -1032,7 +1065,6 @@ watchedCommands:
 
 **Test Steps**:
 ```bash
-export CLI_ACTIVITY_TRACKER_ENABLED=true
 export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.test
 
 # Start a long-running background process (no TTY)
@@ -1060,7 +1092,6 @@ watchedCommands:
 
 **Test Steps**:
 ```bash
-export CLI_ACTIVITY_TRACKER_ENABLED=true
 export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.interactive
 
 # Terminal 1: Watch logs
@@ -1088,7 +1119,6 @@ gracePeriod: 1m      # Short grace period for faster testing
 
 **Test Steps**:
 ```bash
-export CLI_ACTIVITY_TRACKER_ENABLED=true
 export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.autodetect
 
 # Terminal 1: Watch logs
@@ -1170,7 +1200,6 @@ watchedCommands:
 
 2. **Start server with test config**:
    ```bash
-   export CLI_ACTIVITY_TRACKER_ENABLED=true
    export CLI_ACTIVITY_TRACKER_CONFIG=/tmp/.noidle.quicktest
    ```
    Then run devfile command: `start-exec-server`

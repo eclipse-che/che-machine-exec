@@ -75,8 +75,10 @@ const (
 	EnvCliWatcherActivitySources = "CLI_ACTIVITY_TRACKER_ACTIVITY_SOURCES"
 )
 
-// DefaultCliWatcherEnabled is the default for CLI_ACTIVITY_TRACKER_ENABLED (flip to true when ready for general rollout)
-const DefaultCliWatcherEnabled = false
+// DefaultCliWatcherEnabled is the default for CLI_ACTIVITY_TRACKER_ENABLED.
+// The CLI Watcher is enabled by default; administrators can opt out by setting
+// CLI_ACTIVITY_TRACKER_ENABLED=false (via env var, CheCluster CR, or ConfigMap).
+const DefaultCliWatcherEnabled = true
 
 type WatchedCommand struct {
 	Name        string          `yaml:"name"`
@@ -121,6 +123,32 @@ type cliWatcherConfig struct {
 	_maxProcessAgeParsed  time.Duration    `json:"-"`
 	_fromFile             bool             `json:"-"` // true only if loaded from an actual .noidle file
 	_verbose              bool             `json:"-"` // resolved from CLI_ACTIVITY_TRACKER_VERBOSE
+	_enabledSet           bool             `json:"-"` // true only if 'enabled' was explicitly present in the .noidle YAML
+}
+
+// UnmarshalYAML unmarshals cliWatcherConfig and records whether the deprecated
+// 'enabled' property was explicitly present in the YAML, so that the
+// deprecation warning is only emitted for files that actually set it (an
+// omitted property must not be reported as a deprecated setting).
+func (c *cliWatcherConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	type rawCliWatcherConfig cliWatcherConfig
+	var raw rawCliWatcherConfig
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	*c = cliWatcherConfig(raw)
+
+	// Probe for the 'enabled' key. yaml.v2 matches struct fields by exact
+	// key (a mixed-case 'Enabled' is silently ignored and never decoded
+	// into c.Enabled), so the probe uses exact matching to stay consistent
+	// with the decoded value.
+	var probe map[string]interface{}
+	if err := unmarshal(&probe); err == nil {
+		if _, ok := probe["enabled"]; ok {
+			c._enabledSet = true
+		}
+	}
+	return nil
 }
 
 // cliWatcherEnvConfig holds admin-level configuration from environment variables.
@@ -484,7 +512,6 @@ func findUpward(start, stop, filename string) string {
 // Example configuraiton file:
 // ```yaml
 //
-//	enabled: true
 //	checkPeriodSeconds: 30
 //	watchedCommands:
 //	  - helm
@@ -492,6 +519,8 @@ func findUpward(start, stop, filename string) string {
 //	  - sleep
 //
 // ````
+// Note: the 'enabled' field is deprecated and ignored — enablement is controlled
+// by the CLI_ACTIVITY_TRACKER_ENABLED env var (enabled by default).
 func (w *cliWatcher) loadConfig(path string, current *cliWatcherConfig) (*cliWatcherConfig, error) {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
@@ -818,24 +847,16 @@ func (w *cliWatcher) applyEnvCeilings(c cliWatcherConfig, noidle bool) cliWatche
 		resolvedEnabled = *env.enabled
 	}
 
-	if noidle && c.Enabled != resolvedEnabled {
-		if env.enabled != nil {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s; .noidle 'enabled: %t' rejected — deprecated, admin-controlled)", resolvedEnabled, EnvCliWatcherEnabled, c.Enabled)
-		} else {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (default; .noidle 'enabled: %t' rejected — deprecated, use %s env var)", resolvedEnabled, c.Enabled, EnvCliWatcherEnabled)
-		}
-	} else if noidle {
-		if env.enabled != nil {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s; .noidle 'enabled' is deprecated — admin-controlled)", resolvedEnabled, EnvCliWatcherEnabled)
-		} else {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (default; .noidle 'enabled' is deprecated — use %s env var)", resolvedEnabled, EnvCliWatcherEnabled)
-		}
+	// The deprecated 'enabled' property in .noidle is always ignored — just
+	// tell the user to remove it; its value is never compared with the
+	// resolved enablement we actually use.
+	if noidle && c._enabledSet {
+		logrus.Warnf("CLI Watcher: the 'enabled' property in .noidle is deprecated and ignored — remove it from your .noidle config; enablement is controlled by the %s env var", EnvCliWatcherEnabled)
+	}
+	if env.enabled != nil {
+		logrus.Infof("CLI Watcher: 'enabled' = %t (from %s)", resolvedEnabled, EnvCliWatcherEnabled)
 	} else {
-		if env.enabled != nil {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (from %s)", resolvedEnabled, EnvCliWatcherEnabled)
-		} else {
-			logrus.Infof("CLI Watcher: 'enabled' = %t (default)", resolvedEnabled)
-		}
+		logrus.Infof("CLI Watcher: 'enabled' = %t (default)", resolvedEnabled)
 	}
 	c.Enabled = resolvedEnabled
 
