@@ -1,7 +1,8 @@
 # Example .noidle configuration for CLI Watcher
 #
 # This file shows all available configuration options.
-# Enablement is admin-controlled via CLI_ACTIVITY_TRACKER_ENABLED env var (CheCluster CR or ConfigMap).
+# The CLI Watcher is enabled by default; administrators can disable it via
+# the CLI_ACTIVITY_TRACKER_ENABLED env var (CheCluster CR or ConfigMap).
 #
 # Place this file in your project directory, or in $HOME/.noidle
 # You can also set CLI_ACTIVITY_TRACKER_CONFIG environment variable to specify a custom path.
