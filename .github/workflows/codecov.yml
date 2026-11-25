@@ -14,6 +14,7 @@ name: Code Coverage Report
 
 permissions:
   contents: read
+  id-token: write
 
 on: [push]
 jobs:
