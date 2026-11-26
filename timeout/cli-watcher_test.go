@@ -973,6 +973,40 @@ func TestBackwardCompatibility(t *testing.T) {
 	}
 }
 
+// TestCliWatcherConfigEnabledSetTracking verifies that UnmarshalYAML records
+// whether the deprecated 'enabled' key was explicitly present in the YAML
+// (exact key matching, consistent with yaml.v2 field decoding — a mixed-case
+// 'Enabled' key is ignored) and that it stays false when omitted.
+func TestCliWatcherConfigEnabledSetTracking(t *testing.T) {
+	tests := []struct {
+		name       string
+		yaml       string
+		enabledSet bool
+		enabled    bool
+	}{
+		{name: "enabled omitted", yaml: "checkPeriod: 30\nactivityWindow: 20m\n", enabledSet: false},
+		{name: "empty file", yaml: "", enabledSet: false},
+		{name: "enabled true", yaml: "enabled: true\n", enabledSet: true, enabled: true},
+		{name: "enabled false", yaml: "enabled: false\n", enabledSet: true},
+		{name: "enabled mixed case", yaml: "Enabled: true\n", enabledSet: false}, // yaml.v2 exact key matching: key is ignored entirely
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var cfg cliWatcherConfig
+			if err := yaml.Unmarshal([]byte(tt.yaml), &cfg); err != nil {
+				t.Fatalf("Unmarshal error: %v", err)
+			}
+			if cfg._enabledSet != tt.enabledSet {
+				t.Errorf("_enabledSet = %t, want %t", cfg._enabledSet, tt.enabledSet)
+			}
+			if cfg.Enabled != tt.enabled {
+				t.Errorf("Enabled = %t, want %t", cfg.Enabled, tt.enabled)
+			}
+		})
+	}
+}
+
 // Test loadEnvConfig parsing
 func TestLoadEnvConfig(t *testing.T) {
 	t.Run("no env vars set", func(t *testing.T) {
@@ -1057,7 +1091,7 @@ func TestApplyEnvCeilings(t *testing.T) {
 
 	t.Run("enabled from env var overrides noidle", func(t *testing.T) {
 		w := &cliWatcher{envConfig: cliWatcherEnvConfig{enabled: boolPtr(false)}}
-		cfg := cliWatcherConfig{Enabled: true}
+		cfg := cliWatcherConfig{Enabled: true, _enabledSet: true}
 		result := w.applyEnvCeilings(cfg, true)
 		if result.Enabled {
 			t.Error("enabled should be false (admin override)")
@@ -1066,10 +1100,28 @@ func TestApplyEnvCeilings(t *testing.T) {
 
 	t.Run("enabled uses default when env var not set", func(t *testing.T) {
 		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
-		cfg := cliWatcherConfig{Enabled: true}
+		cfg := cliWatcherConfig{Enabled: true, _enabledSet: true}
 		result := w.applyEnvCeilings(cfg, true)
-		if result.Enabled != DefaultCliWatcherEnabled {
-			t.Errorf("enabled should be %t (default), got %t", DefaultCliWatcherEnabled, result.Enabled)
+		if !result.Enabled {
+			t.Error("enabled should be true (default)")
+		}
+	})
+
+	t.Run("timing-only noidle (enabled omitted) uses default true", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
+		cfg := cliWatcherConfig{} // no Enabled, no _enabledSet — field omitted in .noidle
+		result := w.applyEnvCeilings(cfg, true)
+		if !result.Enabled {
+			t.Error("enabled should be true (default) when .noidle omits the deprecated 'enabled' field")
+		}
+	})
+
+	t.Run("explicit enabled false in noidle ignored, default applies", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
+		cfg := cliWatcherConfig{_enabledSet: true} // explicit 'enabled: false' in .noidle
+		result := w.applyEnvCeilings(cfg, true)
+		if !result.Enabled {
+			t.Error("enabled should be true (default; .noidle 'enabled: false' ignored)")
 		}
 	})
 
@@ -1079,6 +1131,15 @@ func TestApplyEnvCeilings(t *testing.T) {
 		result := w.applyEnvCeilings(cfg, false)
 		if !result.Enabled {
 			t.Error("enabled should be true (from env var)")
+		}
+	})
+
+	t.Run("enabled without noidle and without env var uses default true", func(t *testing.T) {
+		w := &cliWatcher{envConfig: cliWatcherEnvConfig{}}
+		cfg := cliWatcherConfig{}
+		result := w.applyEnvCeilings(cfg, false)
+		if !result.Enabled {
+			t.Error("enabled should be true (default)")
 		}
 	})
 

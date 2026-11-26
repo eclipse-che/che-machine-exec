@@ -1,7 +1,7 @@
 # Minimal .noidle configuration
 #
-# CLI Watcher enablement is controlled by the CLI_ACTIVITY_TRACKER_ENABLED environment
-# variable (set by the administrator via CheCluster CR or ConfigMap).
+# The CLI Watcher is enabled by default. Administrators can disable it via the
+# CLI_ACTIVITY_TRACKER_ENABLED environment variable (CheCluster CR or ConfigMap).
 # The 'enabled' field in .noidle is deprecated and ignored.
 #
 # This file is optional — use it only to tune timing or command behavior
@@ -12,7 +12,7 @@
 
 # enabled: true                      # DEPRECATED: Use CLI_ACTIVITY_TRACKER_ENABLED env var instead
 
-# With the CLI Watcher enabled by the administrator, it will:
+# With the CLI Watcher enabled (the default), it will:
 #
 # ✅ Watch ALL user-initiated processes (processes with TTY from user terminals)
 # ✅ Auto-detect interactive processes (vim, python REPL, etc.) vs work processes (builds, deploys)
